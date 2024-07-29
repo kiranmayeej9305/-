@@ -37,12 +37,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 interface CreatePipelineFormProps {
   defaultData?: Pipeline
-  subAccountId: string
+  chatbotId: string
 }
 
 const CreatePipelineForm: React.FC<CreatePipelineFormProps> = ({
   defaultData,
-  subAccountId,
+  chatbotId,
 }) => {
   const { data, isOpen, setOpen, setClose } = useModal()
   const router = useRouter()
@@ -65,18 +65,18 @@ const CreatePipelineForm: React.FC<CreatePipelineFormProps> = ({
   const isLoading = form.formState.isLoading
 
   const onSubmit = async (values: z.infer<typeof CreatePipelineFormSchema>) => {
-    if (!subAccountId) return
+    if (!chatbotId) return
     try {
       const response = await upsertPipeline({
         ...values,
         id: defaultData?.id,
-        subAccountId: subAccountId,
+        chatbotId: chatbotId,
       })
 
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Updates a pipeline | ${response?.name}`,
-        subaccountId: subAccountId,
+        chatbotId: chatbotId,
       })
 
       toast({

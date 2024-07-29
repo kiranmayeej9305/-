@@ -28,7 +28,7 @@ const SubscriptionForm = ({ selectedPriceId }: Props) => {
       const { error } = await stripeHook.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${process.env.NEXT_PUBLIC_URL}/agency`,
+          return_url: `${process.env.NEXT_PUBLIC_URL}/account`,
         },
       })
       if (error) {

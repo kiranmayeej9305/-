@@ -29,10 +29,10 @@ import { useRouter } from 'next/navigation'
 import { useModal } from '@/providers/modal-provider'
 
 interface ContactUserFormProps {
-  subaccountId: string
+  chatbotId: string
 }
 
-const ContactUserForm: React.FC<ContactUserFormProps> = ({ subaccountId }) => {
+const ContactUserForm: React.FC<ContactUserFormProps> = ({ chatbotId }) => {
   const { setClose, data } = useModal()
   const router = useRouter()
   const form = useForm<z.infer<typeof ContactUserFormSchema>>({
@@ -58,13 +58,13 @@ const ContactUserForm: React.FC<ContactUserFormProps> = ({ subaccountId }) => {
     try {
       const response = await upsertContact({
         email: values.email,
-        subAccountId: subaccountId,
+        chatbotId: chatbotId,
         name: values.name,
       })
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Updated a contact | ${response?.name}`,
-        subaccountId: subaccountId,
+        chatbotId: chatbotId,
       })
       toast({
         title: 'Success',

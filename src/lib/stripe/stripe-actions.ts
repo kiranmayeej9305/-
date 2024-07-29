@@ -8,21 +8,21 @@ export const subscriptionCreated = async (
   customerId: string
 ) => {
   try {
-    const agency = await db.agency.findFirst({
+    const account = await db.account.findFirst({
       where: {
         customerId,
       },
       include: {
-        SubAccount: true,
+        Chatbot: true,
       },
     })
-    if (!agency) {
-      throw new Error('Could not find and agency to upsert the subscription')
+    if (!account) {
+      throw new Error('Could not find and account to upsert the subscription')
     }
 
     const data = {
       active: subscription.status === 'active',
-      agencyId: agency.id,
+      accountId: account.id,
       customerId,
       currentPeriodEndDate: new Date(subscription.current_period_end * 1000),
       //@ts-ignore
@@ -34,7 +34,7 @@ export const subscriptionCreated = async (
 
     const res = await db.subscription.upsert({
       where: {
-        agencyId: agency.id,
+        accountId: account.id,
       },
       create: data,
       update: data,

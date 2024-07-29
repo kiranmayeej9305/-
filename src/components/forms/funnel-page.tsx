@@ -39,14 +39,14 @@ interface CreateFunnelPageProps {
   defaultData?: FunnelPage
   funnelId: string
   order: number
-  subaccountId: string
+  chatbotId: string
 }
 
 const CreateFunnelPage: React.FC<CreateFunnelPageProps> = ({
   defaultData,
   funnelId,
   order,
-  subaccountId,
+  chatbotId,
 }) => {
   const { toast } = useToast()
   const router = useRouter()
@@ -74,7 +74,7 @@ const CreateFunnelPage: React.FC<CreateFunnelPageProps> = ({
       })
     try {
       const response = await upsertFunnelPage(
-        subaccountId,
+        chatbotId,
         {
           ...values,
           id: defaultData?.id || v4(),
@@ -85,9 +85,9 @@ const CreateFunnelPage: React.FC<CreateFunnelPageProps> = ({
       )
 
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Updated a funnel page | ${response?.name}`,
-        subaccountId: subaccountId,
+        chatbotId: chatbotId,
       })
 
       toast({
@@ -173,9 +173,9 @@ const CreateFunnelPage: React.FC<CreateFunnelPageProps> = ({
                   onClick={async () => {
                     const response = await deleteFunnelePage(defaultData.id)
                     await saveActivityLogsNotification({
-                      agencyId: undefined,
+                      accountId: undefined,
                       description: `Deleted a funnel page | ${response?.name}`,
-                      subaccountId: subaccountId,
+                      chatbotId: chatbotId,
                     })
                     router.refresh()
                   }}
@@ -190,13 +190,13 @@ const CreateFunnelPage: React.FC<CreateFunnelPageProps> = ({
                   disabled={form.formState.isSubmitting}
                   type="button"
                   onClick={async () => {
-                    const response = await getFunnels(subaccountId)
+                    const response = await getFunnels(chatbotId)
                     const lastFunnelPage = response.find(
                       (funnel) => funnel.id === funnelId
                     )?.FunnelPages.length
 
                     await upsertFunnelPage(
-                      subaccountId,
+                      chatbotId,
                       {
                         ...defaultData,
                         id: v4(),

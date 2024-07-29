@@ -1,10 +1,10 @@
 'use client'
 import {
-  AuthUserWithAgencySigebarOptionsSubAccounts,
-  UserWithPermissionsAndSubAccounts,
+  AuthUserWithAccountSigebarOptionsChatbots,
+  UserWithPermissionsAndChatbots,
 } from '@/lib/types'
 import { useModal } from '@/providers/modal-provider'
-import { SubAccount, User } from '@prisma/client'
+import { Chatbot, User } from '@prisma/client'
 import React, { useEffect, useState } from 'react'
 import { useToast } from '../ui/use-toast'
 import { useRouter } from 'next/navigation'
@@ -52,20 +52,20 @@ import { v4 } from 'uuid'
 
 type Props = {
   id: string | null
-  type: 'agency' | 'subaccount'
+  type: 'account' | 'Chatbot'
   userData?: Partial<User>
-  subAccounts?: SubAccount[]
+  chatbots?: Chatbot[]
 }
 
-const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
-  const [subAccountPermissions, setSubAccountsPermissions] =
-    useState<UserWithPermissionsAndSubAccounts | null>(null)
+const UserDetails = ({ id, type, chatbots, userData }: Props) => {
+  const [chatbotPermissions, setChatbotsPermissions] =
+    useState<UserWithPermissionsAndChatbots | null>(null)
 
   const { data, setClose } = useModal()
   const [roleState, setRoleState] = useState('')
   const [loadingPermissions, setLoadingPermissions] = useState(false)
   const [authUserData, setAuthUserData] =
-    useState<AuthUserWithAgencySigebarOptionsSubAccounts | null>(null)
+    useState<AuthUserWithAccountSigebarOptionsChatbots | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -86,10 +86,10 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
     email: z.string().email(),
     avatarUrl: z.string(),
     role: z.enum([
-      'AGENCY_OWNER',
-      'AGENCY_ADMIN',
-      'SUBACCOUNT_USER',
-      'SUBACCOUNT_GUEST',
+      'ACCOUNT_OWNER',
+      'ACCOUNT_ADMIN',
+      'CHATBOT_USER',
+      'CHATBOT_GUEST',
     ]),
   })
 
@@ -109,7 +109,7 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
     const getPermissions = async () => {
       if (!data.user) return
       const permission = await getUserPermissions(data.user.id)
-      setSubAccountsPermissions(permission)
+      setChatbotsPermissions(permission)
     }
     getPermissions()
   }, [data, form])
@@ -124,7 +124,7 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
   }, [userData, data])
 
   const onChangePermission = async (
-    subAccountId: string,
+    chatbotId: string,
     val: boolean,
     permissionsId: string | undefined
   ) => {
@@ -133,20 +133,20 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
     const response = await changeUserPermissions(
       permissionsId ? permissionsId : v4(),
       data.user.email,
-      subAccountId,
+      chatbotId,
       val
     )
-    if (type === 'agency') {
+    if (type === 'account') {
       await saveActivityLogsNotification({
-        agencyId: authUserData?.Agency?.id,
+        accountId: authUserData?.Account?.id,
         description: `Gave ${userData?.name} access to | ${
-          subAccountPermissions?.Permissions.find(
-            (p) => p.subAccountId === subAccountId
-          )?.SubAccount.name
+          chatbotPermissions?.Permissions.find(
+            (p) => p.chatbotId === chatbotId
+          )?.Chatbot.name
         } `,
-        subaccountId: subAccountPermissions?.Permissions.find(
-          (p) => p.subAccountId === subAccountId
-        )?.SubAccount.id,
+        chatbotId: chatbotPermissions?.Permissions.find(
+          (p) => p.chatbotId === chatbotId
+        )?.Chatbot.id,
       })
     }
 
@@ -155,9 +155,9 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
         title: 'Success',
         description: 'The request was successfull',
       })
-      if (subAccountPermissions) {
-        subAccountPermissions.Permissions.find((perm) => {
-          if (perm.subAccountId === subAccountId) {
+      if (chatbotPermissions) {
+        chatbotPermissions.Permissions.find((perm) => {
+          if (perm.chatbotId === chatbotId) {
             return { ...perm, access: !perm.access }
           }
           return perm
@@ -178,15 +178,15 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
     if (!id) return
     if (userData || data?.user) {
       const updatedUser = await updateUser(values)
-      authUserData?.Agency?.SubAccount.filter((subacc) =>
+      authUserData?.Account?.Chatbot.filter((subacc) =>
         authUserData.Permissions.find(
-          (p) => p.subAccountId === subacc.id && p.access
+          (p) => p.chatbotId === subacc.id && p.access
         )
-      ).forEach(async (subaccount) => {
+      ).forEach(async (Chatbot) => {
         await saveActivityLogsNotification({
-          agencyId: undefined,
+          accountId: undefined,
           description: `Updated ${userData?.name} information`,
-          subaccountId: subaccount.id,
+          chatbotId: Chatbot.id,
         })
       })
 
@@ -268,7 +268,7 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
                   <FormControl>
                     <Input
                       readOnly={
-                        userData?.role === 'AGENCY_OWNER' ||
+                        userData?.role === 'ACCOUNT_OWNER' ||
                         form.formState.isSubmitting
                       }
                       placeholder="Email"
@@ -287,14 +287,14 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
                 <FormItem className="flex-1">
                   <FormLabel> User Role</FormLabel>
                   <Select
-                    disabled={field.value === 'AGENCY_OWNER'}
+                    disabled={field.value === 'ACCOUNT_OWNER'}
                     onValueChange={(value) => {
                       if (
-                        value === 'SUBACCOUNT_USER' ||
-                        value === 'SUBACCOUNT_GUEST'
+                        value === 'CHATBOT_USER' ||
+                        value === 'CHATBOT_GUEST'
                       ) {
                         setRoleState(
-                          'You need to have subaccounts to assign Subaccount access to team members.'
+                          'You need to have chatbots to assign Chatbot access to team members.'
                         )
                       } else {
                         setRoleState('')
@@ -309,19 +309,19 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="AGENCY_ADMING">
-                        Agency Admin
+                      <SelectItem value="ACCOUNT_ADMING">
+                        Account Admin
                       </SelectItem>
-                      {(data?.user?.role === 'AGENCY_OWNER' ||
-                        userData?.role === 'AGENCY_OWNER') && (
-                        <SelectItem value="AGENCY_OWNER">
-                          Agency Owner
+                      {(data?.user?.role === 'ACCOUNT_OWNER' ||
+                        userData?.role === 'ACCOUNT_OWNER') && (
+                        <SelectItem value="ACCOUNT_OWNER">
+                          Account Owner
                         </SelectItem>
                       )}
-                      <SelectItem value="SUBACCOUNT_USER">
+                      <SelectItem value="CHATBOT_USER">
                         Sub Account User
                       </SelectItem>
-                      <SelectItem value="SUBACCOUNT_GUEST">
+                      <SelectItem value="CHATBOT_GUEST">
                         Sub Account Guest
                       </SelectItem>
                     </SelectContent>
@@ -337,37 +337,37 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
             >
               {form.formState.isSubmitting ? <Loading /> : 'Save User Details'}
             </Button>
-            {authUserData?.role === 'AGENCY_OWNER' && (
+            {authUserData?.role === 'ACCOUNT_OWNER' && (
               <div>
                 <Separator className="my-4" />
                 <FormLabel> User Permissions</FormLabel>
                 <FormDescription className="mb-4">
                   You can give Sub Account access to team member by turning on
                   access control for each Sub Account. This is only visible to
-                  agency owners
+                  account owners
                 </FormDescription>
                 <div className="flex flex-col gap-4">
-                  {subAccounts?.map((subAccount) => {
-                    const subAccountPermissionsDetails =
-                      subAccountPermissions?.Permissions.find(
-                        (p) => p.subAccountId === subAccount.id
+                  {chatbots?.map((Chatbot) => {
+                    const chatbotPermissionsDetails =
+                      chatbotPermissions?.Permissions.find(
+                        (p) => p.chatbotId === Chatbot.id
                       )
                     return (
                       <div
-                        key={subAccount.id}
+                        key={Chatbot.id}
                         className="flex items-center justify-between rounded-lg border p-4"
                       >
                         <div>
-                          <p>{subAccount.name}</p>
+                          <p>{Chatbot.name}</p>
                         </div>
                         <Switch
                           disabled={loadingPermissions}
-                          checked={subAccountPermissionsDetails?.access}
+                          checked={chatbotPermissionsDetails?.access}
                           onCheckedChange={(permission) => {
                             onChangePermission(
-                              subAccount.id,
+                              Chatbot.id,
                               permission,
-                              subAccountPermissionsDetails?.id
+                              chatbotPermissionsDetails?.id
                             )
                           }}
                         />

@@ -19,7 +19,7 @@ import { toast } from '../ui/use-toast'
 import { v4 } from 'uuid'
 import {
   deleteTag,
-  getTagsForSubaccount,
+  getTagsForChatbot,
   saveActivityLogsNotification,
   upsertTag,
 } from '@/lib/queries'
@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/command'
 
 type Props = {
-  subAccountId: string
+  chatbotId: string
   getSelectedTags: (tags: Tag[]) => void
   defaultTags?: Tag[]
 }
@@ -43,7 +43,7 @@ type Props = {
 const TagColors = ['BLUE', 'ORANGE', 'ROSE', 'PURPLE', 'GREEN'] as const
 export type TagColor = (typeof TagColors)[number]
 
-const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
+const TagCreator = ({ getSelectedTags, chatbotId, defaultTags }: Props) => {
   const [selectedTags, setSelectedTags] = useState<Tag[]>(defaultTags || [])
   const [tags, setTags] = useState<Tag[]>([])
   const router = useRouter()
@@ -55,14 +55,14 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
   }, [selectedTags])
 
   useEffect(() => {
-    if (subAccountId) {
+    if (chatbotId) {
       const fetchData = async () => {
-        const response = await getTagsForSubaccount(subAccountId)
+        const response = await getTagsForChatbot(chatbotId)
         if (response) setTags(response.Tags)
       }
       fetchData()
     }
-  }, [subAccountId])
+  }, [chatbotId])
 
   const handleDeleteSelection = (tagId: string) => {
     setSelectedTags(selectedTags.filter((tag) => tag.id !== tagId))
@@ -88,7 +88,7 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
       createdAt: new Date(),
       id: v4(),
       name: value,
-      subAccountId,
+      chatbotId,
       updatedAt: new Date(),
     }
 
@@ -96,15 +96,15 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
     setValue('')
     setSelectedColor('')
     try {
-      const response = await upsertTag(subAccountId, tagData)
+      const response = await upsertTag(chatbotId, tagData)
       toast({
         title: 'Created the tag',
       })
 
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Updated a tag | ${response?.name}`,
-        subaccountId: subAccountId,
+        chatbotId: chatbotId,
       })
     } catch (error) {
       toast({
@@ -125,13 +125,13 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
       const response = await deleteTag(tagId)
       toast({
         title: 'Deleted tag',
-        description: 'The tag is deleted from your subaccount.',
+        description: 'The tag is deleted from your Chatbot.',
       })
 
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Deleted a tag | ${response?.name}`,
-        subaccountId: subAccountId,
+        chatbotId: chatbotId,
       })
 
       router.refresh()

@@ -353,20 +353,20 @@ export type EditorContextData = {
 export const EditorContext = createContext<{
   state: EditorState
   dispatch: Dispatch<EditorAction>
-  subaccountId: string
+  chatbotId: string
   funnelId: string
   pageDetails: FunnelPage | null
 }>({
   state: initialState,
   dispatch: () => undefined,
-  subaccountId: '',
+  chatbotId: '',
   funnelId: '',
   pageDetails: null,
 })
 
 type EditorProps = {
   children: React.ReactNode
-  subaccountId: string
+  chatbotId: string
   funnelId: string
   pageDetails: FunnelPage
 }
@@ -379,7 +379,7 @@ const EditorProvider = (props: EditorProps) => {
       value={{
         state,
         dispatch,
-        subaccountId: props.subaccountId,
+        chatbotId: props.chatbotId,
         funnelId: props.funnelId,
         pageDetails: props.pageDetails,
       }}

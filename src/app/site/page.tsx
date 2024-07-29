@@ -101,7 +101,7 @@ export default async function Home() {
                     ))}
                 </div>
                 <Link
-                  href={`/agency?plan=${card.id}`}
+                  href={`/account?plan=${card.id}`}
                   className={clsx(
                     'w-full text-center bg-primary p-2 rounded-md',
                     {
@@ -145,7 +145,7 @@ export default async function Home() {
                   ))}
               </div>
               <Link
-                href="/agency"
+                href="/account"
                 className={clsx(
                   'w-full text-center bg-primary p-2 rounded-md',
                   {

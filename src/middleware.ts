@@ -30,7 +30,7 @@ export default authMiddleware({
     }
 
     if (url.pathname === '/sign-in' || url.pathname === '/sign-up') {
-      return NextResponse.redirect(new URL(`/agency/sign-in`, req.url))
+      return NextResponse.redirect(new URL(`/account/sign-in`, req.url))
     }
 
     if (
@@ -41,8 +41,8 @@ export default authMiddleware({
     }
 
     if (
-      url.pathname.startsWith('/agency') ||
-      url.pathname.startsWith('/subaccount')
+      url.pathname.startsWith('/account') ||
+      url.pathname.startsWith('/chatbot')
     ) {
       return NextResponse.rewrite(new URL(`${pathWithSearchParams}`, req.url))
     }

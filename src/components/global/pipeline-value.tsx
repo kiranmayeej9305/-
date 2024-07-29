@@ -15,10 +15,10 @@ import {
 } from '../ui/select'
 
 type Props = {
-  subaccountId: string
+  chatbotId: string
 }
 
-const PipelineValue = ({ subaccountId }: Props) => {
+const PipelineValue = ({ chatbotId }: Props) => {
   const [pipelines, setPipelines] = useState<
     Prisma.PromiseReturnType<typeof getPipelines>
   >([])
@@ -28,12 +28,12 @@ const PipelineValue = ({ subaccountId }: Props) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getPipelines(subaccountId)
+      const res = await getPipelines(chatbotId)
       setPipelines(res)
       setselectedPipelineId(res[0]?.id)
     }
     fetchData()
-  }, [subaccountId])
+  }, [chatbotId])
 
   const totalPipelineValue = useMemo(() => {
     if (pipelines.length) {

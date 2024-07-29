@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       status: 400,
     })
 
-  const subscriptionExists = await db.agency.findFirst({
+  const subscriptionExists = await db.account.findFirst({
     where: { customerId },
     include: { Subscription: true },
   })

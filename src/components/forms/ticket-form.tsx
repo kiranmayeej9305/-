@@ -1,6 +1,6 @@
 'use client'
 import {
-  getSubAccountTeamMembers,
+  getChatbotTeamMembers,
   saveActivityLogsNotification,
   searchContacts,
   upsertTicket,
@@ -52,11 +52,11 @@ import TagCreator from '../global/tag-creator'
 
 type Props = {
   laneId: string
-  subaccountId: string
+  chatbotId: string
   getNewTicket: (ticket: TicketWithTags[0]) => void
 }
 
-const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
+const TicketForm = ({ getNewTicket, laneId, chatbotId }: Props) => {
   const { data: defaultData, setClose } = useModal()
   const router = useRouter()
   const [tags, setTags] = useState<Tag[]>([])
@@ -80,14 +80,14 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
   const isLoading = form.formState.isLoading
 
   useEffect(() => {
-    if (subaccountId) {
+    if (chatbotId) {
       const fetchData = async () => {
-        const response = await getSubAccountTeamMembers(subaccountId)
+        const response = await getChatbotTeamMembers(chatbotId)
         if (response) setAllTeamMembers(response)
       }
       fetchData()
     }
-  }, [subaccountId])
+  }, [chatbotId])
 
   useEffect(() => {
     if (defaultData.ticket) {
@@ -125,9 +125,9 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
       )
 
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Updated a ticket | ${response?.name}`,
-        subaccountId,
+        chatbotId,
       })
 
       toast({
@@ -210,7 +210,7 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
             />
             <h3>Add tags</h3>
             <TagCreator
-              subAccountId={subaccountId}
+              chatbotId={chatbotId}
               getSelectedTags={setTags}
               defaultTags={defaultData.ticket?.Tags || []}
             />

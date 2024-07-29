@@ -11,7 +11,7 @@ import { DialogTitle } from '@radix-ui/react-dialog'
 
 type Props = {
   title: string
-  subheading: string
+  subheading: string 
   children: React.ReactNode
   defaultOpen?: boolean
 }

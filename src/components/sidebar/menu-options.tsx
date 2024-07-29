@@ -1,10 +1,10 @@
 'use client'
 
 import {
-  Agency,
-  AgencySidebarOption,
-  SubAccount,
-  SubAccountSidebarOption,
+  Account,
+  AccountSidebarOption,
+  Chatbot,
+  ChatbotSidebarOption,
 } from '@prisma/client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet'
@@ -26,14 +26,14 @@ import Link from 'next/link'
 import { twMerge } from 'tailwind-merge'
 import { useModal } from '@/providers/modal-provider'
 import CustomModal from '../global/custom-modal'
-import SubAccountDetails from '../forms/subaccount-details'
+import ChatbotDetails from '../forms/chatbot-details'
 import { Separator } from '../ui/separator'
 import { icons } from '@/lib/constants'
 
 type Props = {
   defaultOpen?: boolean
-  subAccounts: SubAccount[]
-  sidebarOpt: AgencySidebarOption[] | SubAccountSidebarOption[]
+  chatbots: Chatbot[]
+  sidebarOpt: AccountSidebarOption[] | ChatbotSidebarOption[]
   sidebarLogo: string
   details: any
   user: any
@@ -45,7 +45,7 @@ const MenuOptions = ({
   id,
   sidebarLogo,
   sidebarOpt,
-  subAccounts,
+  chatbots,
   user,
   defaultOpen,
 }: Props) => {
@@ -128,49 +128,49 @@ const MenuOptions = ({
                 <CommandInput placeholder="Search Accounts..." />
                 <CommandList className="pb-16">
                   <CommandEmpty> No results found</CommandEmpty>
-                  {(user?.role === 'AGENCY_OWNER' ||
-                    user?.role === 'AGENCY_ADMIN') &&
-                    user?.Agency && (
-                      <CommandGroup heading="Agency">
+                  {(user?.role === 'ACCOUNT_OWNER' ||
+                    user?.role === 'ACCOUNT_ADMIN') &&
+                    user?.Account && (
+                      <CommandGroup heading="Account">
                         <CommandItem className="!bg-transparent my-2 text-primary broder-[1px] border-border p-2 rounded-md hover:!bg-muted cursor-pointer transition-all">
                           {defaultOpen ? (
                             <Link
-                              href={`/agency/${user?.Agency?.id}`}
+                              href={`/account/${user?.Account?.id}`}
                               className="flex gap-4 w-full h-full"
                             >
                               <div className="relative w-16">
                                 <Image
-                                  src={user?.Agency?.agencyLogo}
-                                  alt="Agency Logo"
+                                  src={user?.Account?.accountLogo}
+                                  alt="Account Logo"
                                   fill
                                   className="rounded-md object-contain"
                                 />
                               </div>
                               <div className="flex flex-col flex-1">
-                                {user?.Agency?.name}
+                                {user?.Account?.name}
                                 <span className="text-muted-foreground">
-                                  {user?.Agency?.address}
+                                  {user?.Account?.address}
                                 </span>
                               </div>
                             </Link>
                           ) : (
                             <SheetClose asChild>
                               <Link
-                                href={`/agency/${user?.Agency?.id}`}
+                                href={`/account/${user?.Account?.id}`}
                                 className="flex gap-4 w-full h-full"
                               >
                                 <div className="relative w-16">
                                   <Image
-                                    src={user?.Agency?.agencyLogo}
-                                    alt="Agency Logo"
+                                    src={user?.Account?.accountLogo}
+                                    alt="Account Logo"
                                     fill
                                     className="rounded-md object-contain"
                                   />
                                 </div>
                                 <div className="flex flex-col flex-1">
-                                  {user?.Agency?.name}
+                                  {user?.Account?.name}
                                   <span className="text-muted-foreground">
-                                    {user?.Agency?.address}
+                                    {user?.Account?.address}
                                   </span>
                                 </div>
                               </Link>
@@ -180,47 +180,47 @@ const MenuOptions = ({
                       </CommandGroup>
                     )}
                   <CommandGroup heading="Accounts">
-                    {!!subAccounts
-                      ? subAccounts.map((subaccount) => (
-                          <CommandItem key={subaccount.id}>
+                    {!!chatbots
+                      ? chatbots.map((Chatbot) => (
+                          <CommandItem key={Chatbot.id}>
                             {defaultOpen ? (
                               <Link
-                                href={`/subaccount/${subaccount.id}`}
+                                href={`/Chatbot/${Chatbot.id}`}
                                 className="flex gap-4 w-full h-full"
                               >
                                 <div className="relative w-16">
                                   <Image
-                                    src={subaccount.subAccountLogo}
-                                    alt="subaccount Logo"
+                                    src={Chatbot.chatbotLogo}
+                                    alt="Chatbot Logo"
                                     fill
                                     className="rounded-md object-contain"
                                   />
                                 </div>
                                 <div className="flex flex-col flex-1">
-                                  {subaccount.name}
+                                  {Chatbot.name}
                                   <span className="text-muted-foreground">
-                                    {subaccount.address}
+                                    {Chatbot.address}
                                   </span>
                                 </div>
                               </Link>
                             ) : (
                               <SheetClose asChild>
                                 <Link
-                                  href={`/subaccount/${subaccount.id}`}
+                                  href={`/Chatbot/${Chatbot.id}`}
                                   className="flex gap-4 w-full h-full"
                                 >
                                   <div className="relative w-16">
                                     <Image
-                                      src={subaccount.subAccountLogo}
-                                      alt="subaccount Logo"
+                                      src={Chatbot.chatbotLogo}
+                                      alt="Chatbot Logo"
                                       fill
                                       className="rounded-md object-contain"
                                     />
                                   </div>
                                   <div className="flex flex-col flex-1">
-                                    {subaccount.name}
+                                    {Chatbot.name}
                                     <span className="text-muted-foreground">
-                                      {subaccount.address}
+                                      {Chatbot.address}
                                     </span>
                                   </div>
                                 </Link>
@@ -231,19 +231,19 @@ const MenuOptions = ({
                       : 'No Accounts'}
                   </CommandGroup>
                 </CommandList>
-                {(user?.role === 'AGENCY_OWNER' ||
-                  user?.role === 'AGENCY_ADMIN') && (
+                {(user?.role === 'ACCOUNT_OWNER' ||
+                  user?.role === 'ACCOUNT_ADMIN') && (
                   <SheetClose>
                     <Button
                       className="w-full flex gap-2"
                       onClick={() => {
                         setOpen(
                           <CustomModal
-                            title="Create A Subaccount"
-                            subheading="You can switch between your agency account and the subaccount from the sidebar"
+                            title="Create A Chatbot"
+                            subheading="You can switch between your account account and the Chatbot from the sidebar"
                           >
-                            <SubAccountDetails
-                              agencyDetails={user?.Agency as Agency}
+                            <ChatbotDetails
+                              accountDetails={user?.Account as Account}
                               userId={user?.id as string}
                               userName={user?.name}
                             />

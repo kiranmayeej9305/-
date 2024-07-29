@@ -3,8 +3,8 @@ import { getDomainContent } from '@/lib/queries'
 import EditorProvider from '@/providers/editor/editor-provider'
 import { notFound } from 'next/navigation'
 import React from 'react'
-import FunnelEditorNavigation from '../(main)/subaccount/[subaccountId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor-navigation'
-import FunnelEditor from '../(main)/subaccount/[subaccountId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor'
+import FunnelEditorNavigation from '../(main)/Chatbot/[chatbotId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor-navigation'
+import FunnelEditor from '../(main)/Chatbot/[chatbotId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor'
 
 const Page = async ({ params }: { params: { domain: string } }) => {
   const domainData = await getDomainContent(params.domain.slice(0, -1))
@@ -27,7 +27,7 @@ const Page = async ({ params }: { params: { domain: string } }) => {
 
   return (
     <EditorProvider
-      subaccountId={domainData.subAccountId}
+      chatbotId={domainData.chatbotId}
       pageDetails={pageData}
       funnelId={domainData.id}
     >

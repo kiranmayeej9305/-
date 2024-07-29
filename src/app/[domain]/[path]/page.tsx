@@ -1,4 +1,4 @@
-import FunnelEditor from '@/app/(main)/subaccount/[subaccountId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor'
+import FunnelEditor from '@/app/(main)/Chatbot/[chatbotId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor'
 import { getDomainContent } from '@/lib/queries'
 import EditorProvider from '@/providers/editor/editor-provider'
 import { notFound } from 'next/navigation'
@@ -18,7 +18,7 @@ const Page = async ({
 
   return (
     <EditorProvider
-      subaccountId={domainData.subAccountId}
+      chatbotId={domainData.chatbotId}
       pageDetails={pageData}
       funnelId={domainData.id}
     >

@@ -32,14 +32,14 @@ import { saveActivityLogsNotification, sendInvitation } from '@/lib/queries'
 import { useToast } from '../ui/use-toast'
 
 interface SendInvitationProps {
-  agencyId: string
+  accountId: string
 }
 
-const SendInvitation: React.FC<SendInvitationProps> = ({ agencyId }) => {
+const SendInvitation: React.FC<SendInvitationProps> = ({ accountId }) => {
   const { toast } = useToast()
   const userDataSchema = z.object({
     email: z.string().email(),
-    role: z.enum(['AGENCY_ADMIN', 'SUBACCOUNT_USER', 'SUBACCOUNT_GUEST']),
+    role: z.enum(['ACCOUNT_ADMIN', 'CHATBOT_USER', 'CHATBOT_GUEST']),
   })
 
   const form = useForm<z.infer<typeof userDataSchema>>({
@@ -47,17 +47,17 @@ const SendInvitation: React.FC<SendInvitationProps> = ({ agencyId }) => {
     mode: 'onChange',
     defaultValues: {
       email: '',
-      role: 'SUBACCOUNT_USER',
+      role: 'CHATBOT_USER',
     },
   })
 
   const onSubmit = async (values: z.infer<typeof userDataSchema>) => {
     try {
-      const res = await sendInvitation(values.role, values.email, agencyId)
+      const res = await sendInvitation(values.role, values.email, accountId)
       await saveActivityLogsNotification({
-        agencyId: agencyId,
+        accountId: accountId,
         description: `Invited ${res.email}`,
-        subaccountId: undefined,
+        chatbotId: undefined,
       })
       toast({
         title: 'Success',
@@ -123,11 +123,11 @@ const SendInvitation: React.FC<SendInvitationProps> = ({ agencyId }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="AGENCY_ADMIN">Agency Admin</SelectItem>
-                      <SelectItem value="SUBACCOUNT_USER">
+                      <SelectItem value="ACCOUNT_ADMIN">Account Admin</SelectItem>
+                      <SelectItem value="CHATBOT_USER">
                         Sub Account User
                       </SelectItem>
-                      <SelectItem value="SUBACCOUNT_GUEST">
+                      <SelectItem value="CHATBOT_GUEST">
                         Sub Account Guest
                       </SelectItem>
                     </SelectContent>

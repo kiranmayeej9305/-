@@ -26,7 +26,7 @@ import FileUpload from '../global/file-upload'
 import { Button } from '../ui/button'
 
 type Props = {
-  subaccountId: string
+  chatbotId: string
 }
 
 const formSchema = z.object({
@@ -34,7 +34,7 @@ const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
 })
 
-const UploadMediaForm = ({ subaccountId }: Props) => {
+const UploadMediaForm = ({ chatbotId }: Props) => {
   const { toast } = useToast()
   const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -48,11 +48,11 @@ const UploadMediaForm = ({ subaccountId }: Props) => {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const response = await createMedia(subaccountId, values)
+      const response = await createMedia(chatbotId, values)
       await saveActivityLogsNotification({
-        agencyId: undefined,
+        accountId: undefined,
         description: `Uploaded a media file | ${response.name}`,
-        subaccountId,
+        chatbotId,
       })
 
       toast({ title: 'Succes', description: 'Uploaded media' })
@@ -86,7 +86,7 @@ const UploadMediaForm = ({ subaccountId }: Props) => {
                   <FormLabel>File Name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Your agency name"
+                      placeholder="Your account name"
                       {...field}
                     />
                   </FormControl>
@@ -103,7 +103,7 @@ const UploadMediaForm = ({ subaccountId }: Props) => {
                   <FormLabel>Media File</FormLabel>
                   <FormControl>
                     <FileUpload
-                      apiEndpoint="subaccountLogo"
+                      apiEndpoint="chatbotLogo"
                       value={field.value}
                       onChange={field.onChange}
                     />

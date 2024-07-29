@@ -4,17 +4,17 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const {
-    subAccountConnectAccId,
+    chatbotConnectAccId,
     prices,
-    subaccountId,
+    chatbotId,
   }: {
-    subAccountConnectAccId: string
+    chatbotConnectAccId: string
     prices: { recurring: boolean; productId: string }[]
-    subaccountId: string
+    chatbotId: string
   } = await req.json()
 
   const origin = req.headers.get('origin')
-  if (!subAccountConnectAccId || !prices.length)
+  if (!chatbotConnectAccId || !prices.length)
     return new NextResponse('Stripe Account Id or price id is missing', {
       status: 400,
     })
@@ -29,15 +29,15 @@ export async function POST(req: Request) {
 
   // Not needed unless we want to send payments to this account.
   //CHALLENGE Transfer money to a connected
-  // const agencyIdConnectedAccountId = await db.subAccount.findUnique({
-  //   where: { id: subaccountId },
-  //   include: { Agency: true },
+  // const accountIdConnectedAccountId = await db.Chatbot.findUnique({
+  //   where: { id: chatbotId },
+  //   include: { Account: true },
   // })
 
   const subscriptionPriceExists = prices.find((price) => price.recurring)
-  // if (!agencyIdConnectedAccountId?.Agency.connectAccountId) {
-  //   console.log('Agency is not connected')
-  //   return NextResponse.json({ error: 'Agency account is not connected' })
+  // if (!accountIdConnectedAccountId?.Account.connectAccountId) {
+  //   console.log('Account is not connected')
+  //   return NextResponse.json({ error: 'Account account is not connected' })
   // }
 
   try {
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
         ui_mode: 'embedded',
         redirect_on_completion: 'never',
       },
-      { stripeAccount: subAccountConnectAccId }
+      { stripeAccount: chatbotConnectAccId }
     )
 
     return NextResponse.json(

@@ -5,43 +5,43 @@ import MenuOptions from './menu-options'
 
 type Props = {
   id: string
-  type: 'agency' | 'subaccount'
+  type: 'account' | 'Chatbot'
 }
 
 const Sidebar = async ({ id, type }: Props) => {
   const user = await getAuthUserDetails()
   if (!user) return null
 
-  if (!user.Agency) return
+  if (!user.Account) return
 
   const details =
-    type === 'agency'
-      ? user?.Agency
-      : user?.Agency.SubAccount.find((subaccount) => subaccount.id === id)
+    type === 'account'
+      ? user?.Account
+      : user?.Account.Chatbot.find((Chatbot) => Chatbot.id === id)
 
-  const isWhiteLabeledAgency = user.Agency.whiteLabel
+  const isWhiteLabeledAccount = user.Account.whiteLabel
   if (!details) return
 
-  let sideBarLogo = user.Agency.agencyLogo || '/assets/plura-logo.svg'
+  let sideBarLogo = user.Account.accountLogo || '/assets/plura-logo.svg'
 
-  if (!isWhiteLabeledAgency) {
-    if (type === 'subaccount') {
+  if (!isWhiteLabeledAccount) {
+    if (type === 'Chatbot') {
       sideBarLogo =
-        user?.Agency.SubAccount.find((subaccount) => subaccount.id === id)
-          ?.subAccountLogo || user.Agency.agencyLogo
+        user?.Account.Chatbot.find((Chatbot) => Chatbot.id === id)
+          ?.chatbotLogo || user.Account.accountLogo
     }
   }
 
   const sidebarOpt =
-    type === 'agency'
-      ? user.Agency.SidebarOption || []
-      : user.Agency.SubAccount.find((subaccount) => subaccount.id === id)
+    type === 'account'
+      ? user.Account.SidebarOption || []
+      : user.Account.Chatbot.find((Chatbot) => Chatbot.id === id)
           ?.SidebarOption || []
 
-  const subaccounts = user.Agency.SubAccount.filter((subaccount) =>
+  const chatbots = user.Account.Chatbot.filter((Chatbot) =>
     user.Permissions.find(
       (permission) =>
-        permission.subAccountId === subaccount.id && permission.access
+        permission.chatbotId === Chatbot.id && permission.access
     )
   )
 
@@ -53,7 +53,7 @@ const Sidebar = async ({ id, type }: Props) => {
         id={id}
         sidebarLogo={sideBarLogo}
         sidebarOpt={sidebarOpt}
-        subAccounts={subaccounts}
+        chatbots={chatbots}
         user={user}
       />
       <MenuOptions
@@ -61,7 +61,7 @@ const Sidebar = async ({ id, type }: Props) => {
         id={id}
         sidebarLogo={sideBarLogo}
         sidebarOpt={sidebarOpt}
-        subAccounts={subaccounts}
+        chatbots={chatbots}
         user={user}
       />
     </>

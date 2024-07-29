@@ -29,14 +29,14 @@ import FileUpload from '../global/file-upload'
 
 interface CreateFunnelProps {
   defaultData?: Funnel
-  subAccountId: string
+  chatbotId: string
 }
 
 //CHALLENGE: Use favicons
 
 const FunnelForm: React.FC<CreateFunnelProps> = ({
   defaultData,
-  subAccountId,
+  chatbotId,
 }) => {
   const { setClose } = useModal()
   const router = useRouter()
@@ -65,16 +65,16 @@ const FunnelForm: React.FC<CreateFunnelProps> = ({
   const isLoading = form.formState.isLoading
 
   const onSubmit = async (values: z.infer<typeof CreateFunnelFormSchema>) => {
-    if (!subAccountId) return
+    if (!chatbotId) return
     const response = await upsertFunnel(
-      subAccountId,
+      chatbotId,
       { ...values, liveProducts: defaultData?.liveProducts || '[]' },
       defaultData?.id || v4()
     )
     await saveActivityLogsNotification({
-      agencyId: undefined,
+      accountId: undefined,
       description: `Update funnel | ${response.name}`,
-      subaccountId: subAccountId,
+      chatbotId: chatbotId,
     })
     if (response)
       toast({
@@ -158,7 +158,7 @@ const FunnelForm: React.FC<CreateFunnelProps> = ({
                   <FormLabel>Favicon</FormLabel>
                   <FormControl>
                     <FileUpload
-                      apiEndpoint="subaccountLogo"
+                      apiEndpoint="chatbotLogo"
                       value={field.value}
                       onChange={field.onChange}
                     />

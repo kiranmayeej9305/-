@@ -4,12 +4,12 @@ import { clerkClient, currentUser } from '@clerk/nextjs'
 import { db } from './db'
 import { redirect } from 'next/navigation'
 import {
-  Agency,
+  Account,
   Lane,
   Plan,
   Prisma,
   Role,
-  SubAccount,
+  Chatbot,
   Tag,
   Ticket,
   User,
@@ -34,10 +34,10 @@ export const getAuthUserDetails = async () => {
       email: user.emailAddresses[0].emailAddress,
     },
     include: {
-      Agency: {
+      Account: {
         include: {
           SidebarOption: true,
-          SubAccount: {
+          Chatbot: {
             include: {
               SidebarOption: true,
             },
@@ -52,22 +52,22 @@ export const getAuthUserDetails = async () => {
 }
 
 export const saveActivityLogsNotification = async ({
-  agencyId,
+  accountId,
   description,
-  subaccountId,
+  chatbotId,
 }: {
-  agencyId?: string
+  accountId?: string
   description: string
-  subaccountId?: string
+  chatbotId?: string
 }) => {
   const authUser = await currentUser()
   let userData
   if (!authUser) {
     const response = await db.user.findFirst({
       where: {
-        Agency: {
-          SubAccount: {
-            some: { id: subaccountId },
+        Account: {
+          Chatbot: {
+            some: { id: chatbotId },
           },
         },
       },
@@ -86,19 +86,19 @@ export const saveActivityLogsNotification = async ({
     return
   }
 
-  let foundAgencyId = agencyId
-  if (!foundAgencyId) {
-    if (!subaccountId) {
+  let foundAccountId = accountId
+  if (!foundAccountId) {
+    if (!chatbotId) {
       throw new Error(
-        'You need to provide atleast an agency Id or subaccount Id'
+        'You need to provide atleast an account Id or chatbot Id'
       )
     }
-    const response = await db.subAccount.findUnique({
-      where: { id: subaccountId },
+    const response = await db.chatbot.findUnique({
+      where: { id: chatbotId },
     })
-    if (response) foundAgencyId = response.agencyId
+    if (response) foundAccountId = response.accountId
   }
-  if (subaccountId) {
+  if (chatbotId) {
     await db.notification.create({
       data: {
         notification: `${userData.name} | ${description}`,
@@ -107,13 +107,13 @@ export const saveActivityLogsNotification = async ({
             id: userData.id,
           },
         },
-        Agency: {
+        Account: {
           connect: {
-            id: foundAgencyId,
+            id: foundAccountId,
           },
         },
-        SubAccount: {
-          connect: { id: subaccountId },
+        Chatbot: {
+          connect: { id: chatbotId },
         },
       },
     })
@@ -126,9 +126,9 @@ export const saveActivityLogsNotification = async ({
             id: userData.id,
           },
         },
-        Agency: {
+        Account: {
           connect: {
-            id: foundAgencyId,
+            id: foundAccountId,
           },
         },
       },
@@ -136,8 +136,8 @@ export const saveActivityLogsNotification = async ({
   }
 }
 
-export const createTeamUser = async (agencyId: string, user: User) => {
-  if (user.role === 'AGENCY_OWNER') return null
+export const createTeamUser = async (accountId: string, user: User) => {
+  if (user.role === 'ACCOUNT_OWNER') return null
   const response = await db.user.create({ data: { ...user } })
   return response
 }
@@ -153,9 +153,9 @@ export const verifyAndAcceptInvitation = async () => {
   })
 
   if (invitationExists) {
-    const userDetails = await createTeamUser(invitationExists.agencyId, {
+    const userDetails = await createTeamUser(invitationExists.accountId, {
       email: invitationExists.email,
-      agencyId: invitationExists.agencyId,
+      accountId: invitationExists.accountId,
       avatarUrl: user.imageUrl,
       id: user.id,
       name: `${user.firstName} ${user.lastName}`,
@@ -164,15 +164,15 @@ export const verifyAndAcceptInvitation = async () => {
       updatedAt: new Date(),
     })
     await saveActivityLogsNotification({
-      agencyId: invitationExists?.agencyId,
+      accountId: invitationExists?.accountId,
       description: `Joined`,
-      subaccountId: undefined,
+      chatbotId: undefined,
     })
 
     if (userDetails) {
       await clerkClient.users.updateUserMetadata(user.id, {
         privateMetadata: {
-          role: userDetails.role || 'SUBACCOUNT_USER',
+          role: userDetails.role || 'CHATBOT_USER',
         },
       })
 
@@ -180,31 +180,31 @@ export const verifyAndAcceptInvitation = async () => {
         where: { email: userDetails.email },
       })
 
-      return userDetails.agencyId
+      return userDetails.accountId
     } else return null
   } else {
-    const agency = await db.user.findUnique({
+    const account = await db.user.findUnique({
       where: {
         email: user.emailAddresses[0].emailAddress,
       },
     })
-    return agency ? agency.agencyId : null
+    return account ? account.accountId : null
   }
 }
 
-export const updateAgencyDetails = async (
-  agencyId: string,
-  agencyDetails: Partial<Agency>
+export const updateAccountDetails = async (
+  accountId: string,
+  accountDetails: Partial<Account>
 ) => {
-  const response = await db.agency.update({
-    where: { id: agencyId },
-    data: { ...agencyDetails },
+  const response = await db.account.update({
+    where: { id: accountId },
+    data: { ...accountDetails },
   })
   return response
 }
 
-export const deleteAgency = async (agencyId: string) => {
-  const response = await db.agency.delete({ where: { id: agencyId } })
+export const deleteAccount = async (accountId: string) => {
+  const response = await db.account.delete({ where: { id: accountId } })
   return response
 }
 
@@ -222,78 +222,78 @@ export const initUser = async (newUser: Partial<User>) => {
       avatarUrl: user.imageUrl,
       email: user.emailAddresses[0].emailAddress,
       name: `${user.firstName} ${user.lastName}`,
-      role: newUser.role || 'SUBACCOUNT_USER',
+      role: newUser.role || 'CHATBOT_USER',
     },
   })
 
   await clerkClient.users.updateUserMetadata(user.id, {
     privateMetadata: {
-      role: newUser.role || 'SUBACCOUNT_USER',
+      role: newUser.role || 'CHATBOT_USER',
     },
   })
 
   return userData
 }
 
-export const upsertAgency = async (agency: Agency, price?: Plan) => {
-  if (!agency.companyEmail) return null
+export const upsertAccount = async (account: Account, price?: Plan) => {
+  if (!account.companyEmail) return null
   try {
-    const agencyDetails = await db.agency.upsert({
+    const accountDetails = await db.account.upsert({
       where: {
-        id: agency.id,
+        id: account.id,
       },
-      update: agency,
+      update: account,
       create: {
         users: {
-          connect: { email: agency.companyEmail },
+          connect: { email: account.companyEmail },
         },
-        ...agency,
+        ...account,
         SidebarOption: {
           create: [
             {
               name: 'Dashboard',
               icon: 'category',
-              link: `/agency/${agency.id}`,
+              link: `/account/${account.id}`,
             },
             {
               name: 'Launchpad',
               icon: 'clipboardIcon',
-              link: `/agency/${agency.id}/launchpad`,
+              link: `/account/${account.id}/launchpad`,
             },
             {
               name: 'Billing',
               icon: 'payment',
-              link: `/agency/${agency.id}/billing`,
+              link: `/account/${account.id}/billing`,
             },
             {
               name: 'Settings',
               icon: 'settings',
-              link: `/agency/${agency.id}/settings`,
+              link: `/account/${account.id}/settings`,
             },
             {
               name: 'Sub Accounts',
               icon: 'person',
-              link: `/agency/${agency.id}/all-subaccounts`,
+              link: `/account/${account.id}/all-chatbots`,
             },
             {
               name: 'Team',
               icon: 'shield',
-              link: `/agency/${agency.id}/team`,
+              link: `/account/${account.id}/team`,
             },
           ],
         },
       },
     })
-    return agencyDetails
+    return accountDetails
   } catch (error) {
     console.log(error)
   }
 }
 
-export const getNotificationAndUser = async (agencyId: string) => {
+export const getNotificationAndUser = async (accountId: string) => {
   try {
     const response = await db.notification.findMany({
-      where: { agencyId },
+      where: { accountId },
       include: { User: true },
       orderBy: {
         createdAt: 'desc',
@@ -305,31 +305,31 @@ export const getNotificationAndUser = async (agencyId: string) => {
   }
 }
 
-export const upsertSubAccount = async (subAccount: SubAccount) => {
-  if (!subAccount.companyEmail) return null
-  const agencyOwner = await db.user.findFirst({
+export const upsertChatbot = async (chatbot: Chatbot) => {
+  if (!chatbot.companyEmail) return null
+  const accountOwner = await db.user.findFirst({
     where: {
-      Agency: {
-        id: subAccount.agencyId,
+      Account: {
+        id: chatbot.accountId,
       },
-      role: 'AGENCY_OWNER',
+      role: 'ACCOUNT_OWNER',
     },
   })
-  if (!agencyOwner) return console.log('🔴Erorr could not create subaccount')
+  if (!accountOwner) return console.log('🔴Erorr could not create Chatbot')
   const permissionId = v4()
-  const response = await db.subAccount.upsert({
-    where: { id: subAccount.id },
-    update: subAccount,
+  const response = await db.chatbot.upsert({
+    where: { id: chatbot.id },
+    update: chatbot,
     create: {
-      ...subAccount,
+      ...chatbot,
       Permissions: {
         create: {
           access: true,
-          email: agencyOwner.email,
+          email: accountOwner.email,
           id: permissionId,
         },
         connect: {
-          subAccountId: subAccount.id,
+          chatbotId: chatbot.id,
           id: permissionId,
         },
       },
@@ -341,42 +341,42 @@ export const upsertSubAccount = async (subAccount: SubAccount) => {
           {
             name: 'Launchpad',
             icon: 'clipboardIcon',
-            link: `/subaccount/${subAccount.id}/launchpad`,
+            link: `/chatbot/${chatbot.id}/launchpad`,
           },
           {
             name: 'Settings',
             icon: 'settings',
-            link: `/subaccount/${subAccount.id}/settings`,
+            link: `/chatbot/${chatbot.id}/settings`,
           },
           {
             name: 'Funnels',
             icon: 'pipelines',
-            link: `/subaccount/${subAccount.id}/funnels`,
+            link: `/chatbot/${chatbot.id}/funnels`,
           },
           {
             name: 'Media',
             icon: 'database',
-            link: `/subaccount/${subAccount.id}/media`,
+            link: `/chatbot/${chatbot.id}/media`,
           },
           {
             name: 'Automations',
             icon: 'chip',
-            link: `/subaccount/${subAccount.id}/automations`,
+            link: `/chatbot/${chatbot.id}/automations`,
           },
           {
             name: 'Pipelines',
             icon: 'flag',
-            link: `/subaccount/${subAccount.id}/pipelines`,
+            link: `/chatbot/${chatbot.id}/pipelines`,
           },
           {
             name: 'Contacts',
             icon: 'person',
-            link: `/subaccount/${subAccount.id}/contacts`,
+            link: `/chatbot/${chatbot.id}/contacts`,
           },
           {
             name: 'Dashboard',
             icon: 'category',
-            link: `/subaccount/${subAccount.id}`,
+            link: `/chatbot/${chatbot.id}`,
           },
         ],
       },
@@ -388,7 +388,7 @@ export const upsertSubAccount = async (subAccount: SubAccount) => {
 export const getUserPermissions = async (userId: string) => {
   const response = await db.user.findUnique({
     where: { id: userId },
-    select: { Permissions: { include: { SubAccount: true } } },
+    select: { Permissions: { include: { Chatbot: true } } },
   })
 
   return response
@@ -402,7 +402,7 @@ export const updateUser = async (user: Partial<User>) => {
 
   await clerkClient.users.updateUserMetadata(response.id, {
     privateMetadata: {
-      role: user.role || 'SUBACCOUNT_USER',
+      role: user.role || 'CHATBOT_USER',
     },
   })
 
@@ -412,7 +412,7 @@ export const updateUser = async (user: Partial<User>) => {
 export const changeUserPermissions = async (
   permissionId: string | undefined,
   userEmail: string,
-  subAccountId: string,
+  chatbotId: string,
   permission: boolean
 ) => {
   try {
@@ -422,7 +422,7 @@ export const changeUserPermissions = async (
       create: {
         access: permission,
         email: userEmail,
-        subAccountId: subAccountId,
+        chatbotId: chatbotId,
       },
     })
     return response
@@ -431,19 +431,19 @@ export const changeUserPermissions = async (
   }
 }
 
-export const getSubaccountDetails = async (subaccountId: string) => {
-  const response = await db.subAccount.findUnique({
+export const getchatbotDetails = async (chatbotId: string) => {
+  const response = await db.chatbot.findUnique({
     where: {
-      id: subaccountId,
+      id: chatbotId,
     },
   })
   return response
 }
 
-export const deleteSubAccount = async (subaccountId: string) => {
-  const response = await db.subAccount.delete({
+export const deleteChatbot = async (chatbotId: string) => {
+  const response = await db.chatbot.delete({
     where: {
-      id: subaccountId,
+      id: chatbotId,
     },
   })
   return response
@@ -473,10 +473,10 @@ export const getUser = async (id: string) => {
 export const sendInvitation = async (
   role: Role,
   email: string,
-  agencyId: string
+  accountId: string
 ) => {
   const resposne = await db.invitation.create({
-    data: { email, agencyId, role },
+    data: { email, accountId, role },
   })
 
   try {
@@ -496,10 +496,10 @@ export const sendInvitation = async (
   return resposne
 }
 
-export const getMedia = async (subaccountId: string) => {
-  const mediafiles = await db.subAccount.findUnique({
+export const getMedia = async (chatbotId: string) => {
+  const mediafiles = await db.chatbot.findUnique({
     where: {
-      id: subaccountId,
+      id: chatbotId,
     },
     include: { Media: true },
   })
@@ -507,14 +507,14 @@ export const getMedia = async (subaccountId: string) => {
 }
 
 export const createMedia = async (
-  subaccountId: string,
+  chatbotId: string,
   mediaFile: CreateMediaType
 ) => {
   const response = await db.media.create({
     data: {
       link: mediaFile.link,
       name: mediaFile.name,
-      subAccountId: subaccountId,
+      chatbotId: chatbotId,
     },
   })
 
@@ -562,7 +562,7 @@ export const getLanesWithTicketAndTags = async (pipelineId: string) => {
 }
 
 export const upsertFunnel = async (
-  subaccountId: string,
+  chatbotId: string,
   funnel: z.infer<typeof CreateFunnelFormSchema> & { liveProducts: string },
   funnelId: string
 ) => {
@@ -572,7 +572,7 @@ export const upsertFunnel = async (
     create: {
       ...funnel,
       id: funnelId || v4(),
-      subAccountId: subaccountId,
+      chatbotId: chatbotId,
     },
   })
 
@@ -693,26 +693,26 @@ export const _getTicketsWithAllRelations = async (laneId: string) => {
   return response
 }
 
-export const getSubAccountTeamMembers = async (subaccountId: string) => {
-  const subaccountUsersWithAccess = await db.user.findMany({
+export const getChatbotTeamMembers = async (chatbotId: string) => {
+  const chatbotUsersWithAccess = await db.user.findMany({
     where: {
-      Agency: {
-        SubAccount: {
+      Account: {
+        Chatbot: {
           some: {
-            id: subaccountId,
+            id: chatbotId,
           },
         },
       },
-      role: 'SUBACCOUNT_USER',
+      role: 'CHATBOT_USER',
       Permissions: {
         some: {
-          subAccountId: subaccountId,
+          chatbotId: chatbotId,
           access: true,
         },
       },
     },
   })
-  return subaccountUsersWithAccess
+  return chatbotUsersWithAccess
 }
 
 export const searchContacts = async (searchTerms: string) => {
@@ -768,21 +768,21 @@ export const deleteTicket = async (ticketId: string) => {
 }
 
 export const upsertTag = async (
-  subaccountId: string,
+  chatbotId: string,
   tag: Prisma.TagUncheckedCreateInput
 ) => {
   const response = await db.tag.upsert({
-    where: { id: tag.id || v4(), subAccountId: subaccountId },
+    where: { id: tag.id || v4(), chatbotId: chatbotId },
     update: tag,
-    create: { ...tag, subAccountId: subaccountId },
+    create: { ...tag, chatbotId: chatbotId },
   })
 
   return response
 }
 
-export const getTagsForSubaccount = async (subaccountId: string) => {
-  const response = await db.subAccount.findUnique({
-    where: { id: subaccountId },
+export const getTagsForChatbot = async (chatbotId: string) => {
+  const response = await db.chatbot.findUnique({
+    where: { id: chatbotId },
     select: { Tags: true },
   })
   return response
@@ -804,9 +804,9 @@ export const upsertContact = async (
   return response
 }
 
-export const getFunnels = async (subacountId: string) => {
+export const getFunnels = async (chatbotId: string) => {
   const funnels = await db.funnel.findMany({
-    where: { subAccountId: subacountId },
+    where: { chatbotId: chatbotId },
     include: { FunnelPages: true },
   })
 
@@ -840,11 +840,11 @@ export const updateFunnelProducts = async (
 }
 
 export const upsertFunnelPage = async (
-  subaccountId: string,
+  chatbotId: string,
   funnelPage: UpsertFunnelPage,
   funnelId: string
 ) => {
-  if (!subaccountId || !funnelId) return
+  if (!chatbotId || !funnelId) return
   const response = await db.funnelPage.upsert({
     where: { id: funnelPage.id || '' },
     update: { ...funnelPage },
@@ -865,7 +865,7 @@ export const upsertFunnelPage = async (
     },
   })
 
-  revalidatePath(`/subaccount/${subaccountId}/funnels/${funnelId}`, 'page')
+  revalidatePath(`/Chatbot/${chatbotId}/funnels/${funnelId}`, 'page')
   return response
 }
 
@@ -895,9 +895,9 @@ export const getDomainContent = async (subDomainName: string) => {
   return response
 }
 
-export const getPipelines = async (subaccountId: string) => {
+export const getPipelines = async (chatbotId: string) => {
   const response = await db.pipeline.findMany({
-    where: { subAccountId: subaccountId },
+    where: { chatbotId: chatbotId },
     include: {
       Lane: {
         include: { Tickets: true },

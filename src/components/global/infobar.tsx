@@ -22,10 +22,10 @@ type Props = {
   notifications: NotificationWithUser | []
   role?: Role
   className?: string
-  subAccountId?: string
+  chatbotId?: string
 }
 
-const InfoBar = ({ notifications, subAccountId, className, role }: Props) => {
+const InfoBar = ({ notifications, chatbotId, className, role }: Props) => {
   const [allNotifications, setAllNotifications] = useState(notifications)
   const [showAll, setShowAll] = useState(true)
 
@@ -35,7 +35,7 @@ const InfoBar = ({ notifications, subAccountId, className, role }: Props) => {
     } else {
       if (notifications?.length !== 0) {
         setAllNotifications(
-          notifications?.filter((item) => item.subAccountId === subAccountId) ??
+          notifications?.filter((item) => item.chatbotId === chatbotId) ??
             []
         )
       }
@@ -63,9 +63,9 @@ const InfoBar = ({ notifications, subAccountId, className, role }: Props) => {
               <SheetHeader className="text-left">
                 <SheetTitle>Notifications</SheetTitle>
                 <SheetDescription>
-                  {(role === 'AGENCY_ADMIN' || role === 'AGENCY_OWNER') && (
+                  {(role === 'ACCOUNT_ADMIN' || role === 'ACCOUNT_OWNER') && (
                     <Card className="flex items-center justify-between p-4">
-                      Current Subaccount
+                      Current Chatbot
                       <Switch onCheckedChange={handleClick} />
                     </Card>
                   )}

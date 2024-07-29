@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { UploadDropzone } from '@/lib/uploadthing'
 
 type Props = {
-  apiEndpoint: 'agencyLogo' | 'avatar' | 'subaccountLogo'
+  apiEndpoint: 'accountLogo' | 'avatar' | 'chatbotLogo'
   onChange: (url?: string) => void
   value?: string
 }

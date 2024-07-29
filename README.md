@@ -22,7 +22,7 @@ Share all bugs and solutions in the discord. Would love to collaborate and get t
 
 ### Features in this application.
 - 🤯 Multivendor B2B2B Saas
-- 🏢 Agency and Sub accounts
+- 🏢 Account and Sub accounts
 - 🌐 Unlimited funnel hosting
 - 🚀 Full Website & Funnel builder
 - 💻 Role-based Access
@@ -39,7 +39,7 @@ Share all bugs and solutions in the discord. Would love to collaborate and get t
 - 📂 Project management system
 - 🔗 Notifications
 - 📆 Funnel performance metrics
-- 🧾 Agency and subacc metrics
+- 🧾 Account and subacc metrics
 - 🌙 Graphs and charts
 - ☀️ Light & Dark mode
 - 📄 Functioning landing page

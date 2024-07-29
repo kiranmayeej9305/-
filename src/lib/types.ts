@@ -32,12 +32,12 @@ export type NotificationWithUser =
         createdAt: Date
         updatedAt: Date
         role: Role
-        agencyId: string | null
+        accountId: string | null
       }
     } & Notification)[]
   | undefined
 
-export type UserWithPermissionsAndSubAccounts = Prisma.PromiseReturnType<
+export type UserWithPermissionsAndChatbots = Prisma.PromiseReturnType<
   typeof getUserPermissions
 >
 
@@ -46,29 +46,29 @@ export const FunnelPageSchema = z.object({
   pathName: z.string().optional(),
 })
 
-const __getUsersWithAgencySubAccountPermissionsSidebarOptions = async (
-  agencyId: string
+const __getUsersWithAccountChatbotPermissionsSidebarOptions = async (
+  accountId: string
 ) => {
   return await db.user.findFirst({
-    where: { Agency: { id: agencyId } },
+    where: { Account: { id: accountId } },
     include: {
-      Agency: { include: { SubAccount: true } },
-      Permissions: { include: { SubAccount: true } },
+      Account: { include: { Chatbot: true } },
+      Permissions: { include: { Chatbot: true } },
     },
   })
 }
 
-export type AuthUserWithAgencySigebarOptionsSubAccounts =
+export type AuthUserWithAccountSigebarOptionsChatbots =
   Prisma.PromiseReturnType<typeof getAuthUserDetails>
 
-export type UsersWithAgencySubAccountPermissionsSidebarOptions =
+export type UsersWithAccountChatbotPermissionsSidebarOptions =
   Prisma.PromiseReturnType<
-    typeof __getUsersWithAgencySubAccountPermissionsSidebarOptions
+    typeof __getUsersWithAccountChatbotPermissionsSidebarOptions
   >
 
 export type GetMediaFiles = Prisma.PromiseReturnType<typeof getMedia>
 
-export type CreateMediaType = Prisma.MediaCreateWithoutSubaccountInput
+export type CreateMediaType = Prisma.MediaCreateWithoutChatbotInput
 
 export type TicketAndTags = Ticket & {
   Tags: Tag[]
@@ -142,7 +142,7 @@ export type StripeCustomerType = {
 
 export type PricesList = Stripe.ApiList<Stripe.Price>
 
-export type FunnelsForSubAccount = Prisma.PromiseReturnType<
+export type FunnelsForChatbot = Prisma.PromiseReturnType<
   typeof getFunnels
 >[0]
 
