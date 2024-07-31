@@ -319,10 +319,10 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
                         </SelectItem>
                       )}
                       <SelectItem value="CHATBOT_USER">
-                        Sub Account User
+                        Chatbot User
                       </SelectItem>
-                      <SelectItem value="CHATBOT_GUEST">
-                        Sub Account Guest
+                      <SelectItem value="CHATBOT_ADMIN">
+                        Chatbot Admin
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -342,8 +342,8 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
                 <Separator className="my-4" />
                 <FormLabel> User Permissions</FormLabel>
                 <FormDescription className="mb-4">
-                  You can give Sub Account access to team member by turning on
-                  access control for each Sub Account. This is only visible to
+                  You can give Chatbots access to team member by turning on
+                  access control for each Chatbots. This is only visible to
                   account owners
                 </FormDescription>
                 <div className="flex flex-col gap-4">

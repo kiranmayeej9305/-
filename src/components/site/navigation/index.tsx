@@ -50,16 +50,19 @@ const Navigation = ({ user }: Props) => {
         </ul>
       </nav>
       <aside className="flex gap-2 items-center">
-      <Link href="/account" className="btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out">
-                    Try for Free
-                  </Link>
+      <Link href="/account/signin" className="text-black font-bold">
+              Login
+            </Link>
+      <Link href="/account/signup" className="btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out">
+              Try for Free
+      </Link>
         {/* <Link
           href={'/account'}
           className="bg-primary text-white p-2 px-4 rounded-md hover:bg-primary/80"
         >
           Try for Free
         </Link> */}
-        <UserButton />
+        {/* <UserButton /> */}
         <ModeToggle />
       </aside>
     </div>

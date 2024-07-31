@@ -173,7 +173,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, chatbotId }: Props) => {
                 <CardDescription className="flex flex-col gap-4">
                   <div className="border-2 rounded-lg sm:w-80 w-full  overflow-clip">
                     <Link
-                      href={`/Chatbot/${chatbotId}/funnels/${funnelId}/editor/${clickedPage?.id}`}
+                      href={`/chatbot/${chatbotId}/funnels/${funnelId}/editor/${clickedPage?.id}`}
                       className="relative group"
                     >
                       <div className="cursor-pointer group-hover:opacity-30 w-full">

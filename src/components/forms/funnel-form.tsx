@@ -156,13 +156,13 @@ const FunnelForm: React.FC<CreateFunnelProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Favicon</FormLabel>
-                  <FormControl>
+                  {/* <FormControl>
                     <FileUpload
                       apiEndpoint="chatbotLogo"
                       value={field.value}
                       onChange={field.onChange}
                     />
-                  </FormControl>
+                  </FormControl> */}
                   <FormMessage />
                 </FormItem>
               )}

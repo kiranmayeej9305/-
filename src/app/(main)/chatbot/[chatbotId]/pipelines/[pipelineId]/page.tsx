@@ -20,7 +20,7 @@ type Props = {
 const PipelinePage = async ({ params }: Props) => {
   const pipelineDetails = await getPipelineDetails(params.pipelineId)
   if (!pipelineDetails)
-    return redirect(`/Chatbot/${params.chatbotId}/pipelines`)
+    return redirect(`/chatbot/${params.chatbotId}/pipelines`)
 
   const pipelines = await db.pipeline.findMany({
     where: { chatbotId: params.chatbotId },

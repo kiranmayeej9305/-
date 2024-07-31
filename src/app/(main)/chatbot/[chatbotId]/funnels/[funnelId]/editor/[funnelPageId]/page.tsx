@@ -22,7 +22,7 @@ const Page = async ({ params }: Props) => {
   })
   if (!funnelPageDetails) {
     return redirect(
-      `/Chatbot/${params.chatbotId}/funnels/${params.funnelId}`
+      `/chatbot/${params.chatbotId}/funnels/${params.funnelId}`
     )
   }
 

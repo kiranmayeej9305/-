@@ -47,30 +47,30 @@ const AllChatbotsPage = async ({ params }: Props) => {
           <CommandInput placeholder="Search Account..." />
           <CommandList>
             <CommandEmpty>No Results Found.</CommandEmpty>
-            <CommandGroup heading="Sub Accounts">
+            <CommandGroup heading="Chatbots">
               {!!user.Account?.Chatbot.length ? (
-                user.Account.Chatbot.map((Chatbot: Chatbot) => (
+                user.Account.Chatbot.map((chatbot: Chatbot) => (
                   <CommandItem
-                    key={Chatbot.id}
+                    key={chatbot.id}
                     className="h-32 !bg-background my-2 text-primary border-[1px] border-border p-4 rounded-lg hover:!bg-background cursor-pointer transition-all"
                   >
                     <Link
-                      href={`/Chatbot/${Chatbot.id}`}
+                      href={`/chatbot/${chatbot.id}`}
                       className="flex gap-4 w-full h-full"
                     >
-                      <div className="relative w-32">
+                      {/* <div className="relative w-32">
                         <Image
                           src={Chatbot.chatbotLogo}
                           alt="Chatbot logo"
                           fill
                           className="rounded-md object-contain bg-muted/50 p-4"
                         />
-                      </div>
+                      </div> */}
                       <div className="flex flex-col justify-between">
                         <div className="flex flex-col">
-                          {Chatbot.name}
+                          {chatbot.name}
                           <span className="text-muted-foreground text-xs">
-                            {Chatbot.address}
+                            {chatbot.address}
                           </span>
                         </div>
                       </div>
@@ -99,7 +99,7 @@ const AllChatbotsPage = async ({ params }: Props) => {
                           Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive hover:bg-destructive">
-                          <DeleteButton chatbotId={Chatbot.id} />
+                          <DeleteButton chatbotId={chatbot.id} />
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -107,7 +107,7 @@ const AllChatbotsPage = async ({ params }: Props) => {
                 ))
               ) : (
                 <div className="text-muted-foreground text-center p-4">
-                  No Sub accounts
+                  No Chatbots
                 </div>
               )}
             </CommandGroup>

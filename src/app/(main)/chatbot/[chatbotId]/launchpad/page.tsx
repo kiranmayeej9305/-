@@ -35,17 +35,18 @@ const LaunchPad = async ({ params, searchParams }: Props) => {
   }
 
   const allDetailsExist =
-    chatbotDetails.address &&
-    chatbotDetails.chatbotLogo &&
-    chatbotDetails.city &&
-    chatbotDetails.companyEmail &&
-    chatbotDetails.companyPhone &&
-    chatbotDetails.country &&
-    chatbotDetails.name &&
-    chatbotDetails.state
+    // chatbotDetails.address &&
+    // chatbotDetails.chatbotLogo &&
+    // chatbotDetails.city &&
+    // chatbotDetails.companyEmail &&
+    // chatbotDetails.companyPhone &&
+    // chatbotDetails.country &&
+    chatbotDetails.name 
+    // &&
+    // chatbotDetails.state
 
   const stripeOAuthLink = getStripeOAuthLink(
-    'Chatbot',
+    'chatbot',
     `launchpad___${chatbotDetails.id}`
   )
 
@@ -142,7 +143,7 @@ const LaunchPad = async ({ params, searchParams }: Props) => {
                 ) : (
                   <Link
                     className="bg-primary py-2 px-4 rounded-md text-white"
-                    href={`/Chatbot/${chatbotDetails.id}/settings`}
+                    href={`/chatbot/${chatbotDetails.id}/settings`}
                   >
                     Start
                   </Link>

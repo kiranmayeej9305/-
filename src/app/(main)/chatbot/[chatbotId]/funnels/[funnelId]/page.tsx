@@ -14,12 +14,12 @@ type Props = {
 const FunnelPage = async ({ params }: Props) => {
   const funnelPages = await getFunnel(params.funnelId)
   if (!funnelPages)
-    return redirect(`/Chatbot/${params.chatbotId}/funnels`)
+    return redirect(`/chatbot/${params.chatbotId}/funnels`)
 
   return (
     <BlurPage>
       <Link
-        href={`/Chatbot/${params.chatbotId}/funnels`}
+        href={`/chatbot/${params.chatbotId}/funnels`}
         className="flex justify-between gap-4 mb-4 text-muted-foreground"
       >
         Back

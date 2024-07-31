@@ -13,7 +13,7 @@ export const columns: ColumnDef<FunnelsForChatbot>[] = [
       return (
         <Link
           className="flex gap-2 items-center"
-          href={`/Chatbot/${row.original.chatbotId}/funnels/${row.original.id}`}
+          href={`/chatbot/${row.original.chatbotId}/funnels/${row.original.id}`}
         >
           {row.getValue('name')}
           <ExternalLink size={15} />

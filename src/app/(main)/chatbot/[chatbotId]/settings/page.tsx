@@ -19,13 +19,13 @@ const ChatbotSettingPage = async ({ params }: Props) => {
   })
   if (!userDetails) return
 
-  const Chatbot = await db.Chatbot.findUnique({
+  const chatbot = await db.chatbot.findUnique({
     where: { id: params.chatbotId },
   })
-  if (!Chatbot) return
+  if (!chatbot) return
 
   const accountDetails = await db.account.findUnique({
-    where: { id: Chatbot.accountId },
+    where: { id: chatbot.accountId },
     include: { Chatbot: true },
   })
 
@@ -37,12 +37,12 @@ const ChatbotSettingPage = async ({ params }: Props) => {
       <div className="flex lg:!flex-row flex-col gap-4">
         <ChatbotDetails
           accountDetails={accountDetails}
-          details={Chatbot}
+          details={chatbot}
           userId={userDetails.id}
           userName={userDetails.name}
         />
         <UserDetails
-          type="Chatbot"
+          type="chatbot"
           id={params.chatbotId}
           chatbots={chatbots}
           userData={userDetails}

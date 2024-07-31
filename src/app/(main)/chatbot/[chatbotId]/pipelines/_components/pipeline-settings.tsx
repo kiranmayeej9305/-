@@ -55,7 +55,7 @@ const PipelineSettings = ({
                       title: 'Deleted',
                       description: 'Pipeline is deleted',
                     })
-                    router.replace(`/Chatbot/${chatbotId}/pipelines`)
+                    router.replace(`/chatbot/${chatbotId}/pipelines`)
                   } catch (error) {
                     toast({
                       variant: 'destructive',

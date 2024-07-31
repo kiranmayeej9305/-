@@ -125,10 +125,10 @@ const SendInvitation: React.FC<SendInvitationProps> = ({ accountId }) => {
                     <SelectContent>
                       <SelectItem value="ACCOUNT_ADMIN">Account Admin</SelectItem>
                       <SelectItem value="CHATBOT_USER">
-                        Sub Account User
+                        Chatbot User
                       </SelectItem>
-                      <SelectItem value="CHATBOT_GUEST">
-                        Sub Account Guest
+                      <SelectItem value="CHATBOT_ADMIN">
+                        Chatbot Admin
                       </SelectItem>
                     </SelectContent>
                   </Select>

@@ -10,6 +10,7 @@ import {
   Prisma,
   Role,
   Chatbot,
+  Interface,
   Tag,
   Ticket,
   User,
@@ -271,7 +272,7 @@ export const upsertAccount = async (account: Account, price?: Plan) => {
               link: `/account/${account.id}/settings`,
             },
             {
-              name: 'Sub Accounts',
+              name: 'Chatbots',
               icon: 'person',
               link: `/account/${account.id}/all-chatbots`,
             },
@@ -292,6 +293,7 @@ export const upsertAccount = async (account: Account, price?: Plan) => {
 
 export const getNotificationAndUser = async (accountId: string) => {
   try {
+    console.log(accountId);
     const response = await db.notification.findMany({
       where: { accountId },
       include: { User: true },
@@ -306,36 +308,38 @@ export const getNotificationAndUser = async (accountId: string) => {
 }
 
 export const upsertChatbot = async (chatbot: Chatbot) => {
-  if (!chatbot.companyEmail) return null
-  const accountOwner = await db.user.findFirst({
-    where: {
-      Account: {
-        id: chatbot.accountId,
-      },
-      role: 'ACCOUNT_OWNER',
-    },
-  })
-  if (!accountOwner) return console.log('🔴Erorr could not create Chatbot')
-  const permissionId = v4()
-  const response = await db.chatbot.upsert({
-    where: { id: chatbot.id },
-    update: chatbot,
-    create: {
-      ...chatbot,
-      Permissions: {
-        create: {
-          access: true,
-          email: accountOwner.email,
-          id: permissionId,
+  if (!chatbot.name) return null
+  try
+  {
+    const accountOwner = await db.user.findFirst({
+      where: {
+        Account: {
+          id: chatbot.accountId,
         },
-        connect: {
-          chatbotId: chatbot.id,
-          id: permissionId,
+        role: 'ACCOUNT_OWNER',
+      },
+    })
+    if (!accountOwner) return console.log('🔴Erorr could not create Chatbot')
+    const permissionId = v4()
+    const response = await db.chatbot.upsert({
+      where: { id: chatbot.id },
+      update: chatbot,
+      create: {
+        ...chatbot,
+        Permissions: {
+          create: {
+            access: true,
+            email: accountOwner.email,
+            id: permissionId,
+          },
+          connect: {
+            chatbotId: chatbot.id,
+            id: permissionId,
+          },
         },
-      },
-      Pipeline: {
-        create: { name: 'Lead Cycle' },
-      },
+        Pipeline: {
+          create: { name: 'Lead Cycle' },
+        },
       SidebarOption: {
         create: [
           {
@@ -344,7 +348,7 @@ export const upsertChatbot = async (chatbot: Chatbot) => {
             link: `/chatbot/${chatbot.id}/launchpad`,
           },
           {
-            name: 'Settings',
+            name: 'Chatbot Settings',
             icon: 'settings',
             link: `/chatbot/${chatbot.id}/settings`,
           },
@@ -364,6 +368,36 @@ export const upsertChatbot = async (chatbot: Chatbot) => {
             link: `/chatbot/${chatbot.id}/automations`,
           },
           {
+            name: 'Interface',
+            icon: 'compass',
+            link: `/chatbot/${chatbot.id}/interface`,
+          },
+          {
+            name: 'Training',
+            icon: 'info',
+            link: `/chatbot/${chatbot.id}/training`,
+          },
+          {
+            name: 'Integration',
+            icon: 'link',
+            link: `/chatbot/${chatbot.id}/integration`,
+          },
+          {
+            name: 'Conversations',
+            icon: 'messages',
+            link: `/chatbot/${chatbot.id}/conversations`,
+          },
+          {
+            name: 'Calendar',
+            icon: 'calendar',
+            link: `/chatbot/${chatbot.id}/calendar`,
+          },
+          {
+            name: 'Campaign',
+            icon: 'send',
+            link: `/chatbot/${chatbot.id}/campaign`,
+          },
+          {
             name: 'Pipelines',
             icon: 'flag',
             link: `/chatbot/${chatbot.id}/pipelines`,
@@ -380,9 +414,36 @@ export const upsertChatbot = async (chatbot: Chatbot) => {
           },
         ],
       },
-    },
+    }
   })
-  return response
+    return response
+  } 
+    catch (error) {
+  }
+}
+
+export const upsertInterfaceSettings = async (interfaceSettings: any) => {
+  try {
+    const existingSettings = await prisma.interface.findUnique({
+      where: { chatbotId: interfaceSettings.chatbotId },
+    })
+
+    if (existingSettings) {
+      const response = await prisma.interface.update({
+        where: { id: existingSettings.id },
+        data: interfaceSettings,
+      })
+      return response
+    } else {
+      const response = await prisma.interface.create({
+        data: interfaceSettings,
+      })
+      return response
+    }
+  } catch (error) {
+    console.error('Error upserting interface settings:', error)
+    throw error
+  }
 }
 
 export const getUserPermissions = async (userId: string) => {
@@ -505,7 +566,15 @@ export const getMedia = async (chatbotId: string) => {
   })
   return mediafiles
 }
-
+export const getInterfaceSettings = async (chatbotId: string) => {
+  const interfaceSettings = await db.chatbot.findUnique({
+    where: {
+      id: chatbotId,
+    },
+    include: { Interface: true },
+  })
+  return interfaceSettings
+}
 export const createMedia = async (
   chatbotId: string,
   mediaFile: CreateMediaType
@@ -865,7 +934,7 @@ export const upsertFunnelPage = async (
     },
   })
 
-  revalidatePath(`/Chatbot/${chatbotId}/funnels/${funnelId}`, 'page')
+  revalidatePath(`/chatbot/${chatbotId}/funnels/${funnelId}`, 'page')
   return response
 }
 
@@ -894,7 +963,49 @@ export const getDomainContent = async (subDomainName: string) => {
   })
   return response
 }
+export const createTraining = async (chatbotId: string, data: any) => {
+  const { type, content, fileName, websiteUrl, question, answer } = data
+  const user = await currentUser()
 
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const trainingHistory = await db.trainingHistory.create({
+    data: {
+      sourceType: type,
+      content,
+      fileName,
+      websiteUrl,
+      question,
+      answer,
+      chatbotId,
+      userId: user.id,
+    },
+  })
+
+  return trainingHistory
+}
+export const getChatbotTrainingsByType = async (chatbotId: string, type: string) => {
+  return await db.trainingHistory.findMany({
+    where: {
+      chatbotId,
+      sourceType: type,
+    },
+    include: {
+      User: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
+}
+export const uploadFile = async (file) => {
+  // Implement your file upload logic here
+  // For now, we're just returning a mock file URL
+  const fileUrl = URL.createObjectURL(file)
+  return fileUrl
+}
 export const getPipelines = async (chatbotId: string) => {
   const response = await db.pipeline.findMany({
     where: { chatbotId: chatbotId },

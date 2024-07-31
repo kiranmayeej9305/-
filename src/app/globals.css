@@ -110,6 +110,36 @@ B (255 */
     @apply bg-background text-foreground;
   }
 }
+:root {
+  --tab-bg: #f0f0f0;
+  --tab-text: #000;
+  --tab-active-bg: #e0e0e0;
+  --tab-active-text: #000;
+  --tab-border: #d0d0d0;
+}
+
+.dark {
+  --tab-bg: #1a1a1a;
+  --tab-text: #f0f0f0;
+  --tab-active-bg: #2a2a2a;
+  --tab-active-text: #f0f0f0;
+  --tab-border: #333;
+}
+
+.tabs-list {
+  background-color: var(--tab-bg);
+  border-bottom: 1px solid var(--tab-border);
+}
+
+.tabs-trigger {
+  color: var(--tab-text);
+  padding: 1rem;
+}
+
+.tabs-trigger[data-state='active'] {
+  background-color: var(--tab-active-bg);
+  color: var(--tab-active-text);
+}
 
 .dotPattern {
   background-image: radial-gradient(rgb(35, 40, 68) 1px, transparent 1px);

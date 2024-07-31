@@ -22,7 +22,7 @@ Share all bugs and solutions in the discord. Would love to collaborate and get t
 
 ### Features in this application.
 - 🤯 Multivendor B2B2B Saas
-- 🏢 Account and Sub accounts
+- 🏢 Account and Chatbots
 - 🌐 Unlimited funnel hosting
 - 🚀 Full Website & Funnel builder
 - 💻 Role-based Access

@@ -95,7 +95,7 @@ const UploadMediaForm = ({ chatbotId }: Props) => {
               )}
             />
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="link"
               render={({ field }) => (
@@ -111,7 +111,7 @@ const UploadMediaForm = ({ chatbotId }: Props) => {
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
             <Button
               type="submit"
               className="mt-4"

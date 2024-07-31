@@ -69,7 +69,7 @@ const PipelineInfoBar = ({ pipelineId, pipelines, chatbotId }: Props) => {
                 {pipelines.map((pipeline) => (
                   <Link
                     key={pipeline.id}
-                    href={`/Chatbot/${chatbotId}/pipelines/${pipeline.id}`}
+                    href={`/chatbot/${chatbotId}/pipelines/${pipeline.id}`}
                   >
                     <CommandItem
                       key={pipeline.id}

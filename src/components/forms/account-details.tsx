@@ -294,8 +294,8 @@ const AccountDetails = ({ data }: Props) => {
                         <FormLabel>Whitelabel Account</FormLabel>
                         <FormDescription>
                           Turning on whilelabel mode will show your account logo
-                          to all sub accounts by default. You can overwrite this
-                          functionality through sub account settings.
+                          to all chatbots by default. You can overwrite this
+                          functionality through chatbots settings.
                         </FormDescription>
                       </div>
 
@@ -410,14 +410,14 @@ const AccountDetails = ({ data }: Props) => {
                       await updateAccountDetails(data.id, { goal: val })
                       await saveActivityLogsNotification({
                         accountId: data.id,
-                        description: `Updated the account goal to | ${val} Sub Account`,
+                        description: `Updated the account goal to | ${val} Chatbot`,
                         chatbotId: undefined,
                       })
                       router.refresh()
                     }}
                     min={1}
                     className="bg-background !border !border-input"
-                    placeholder="Sub Account Goal"
+                    placeholder="Chatbot Goal"
                   />
                 </div>
               )}
@@ -437,7 +437,7 @@ const AccountDetails = ({ data }: Props) => {
               </div>
               <div className="text-muted-foreground">
                 Deleting your account cannpt be undone. This will also delete all
-                sub accounts and all data related to your sub accounts. Sub
+                chatbots and all data related to your chatbots. Sub
                 accounts will no longer have access to funnels, contacts etc.
               </div>
               <AlertDialogTrigger
@@ -455,7 +455,7 @@ const AccountDetails = ({ data }: Props) => {
               </AlertDialogTitle>
               <AlertDialogDescription className="text-left">
                 This action cannot be undone. This will permanently delete the
-                Account account and all related sub accounts.
+                Account account and all related chatbots.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex items-center">

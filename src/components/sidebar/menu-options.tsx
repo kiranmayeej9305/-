@@ -181,47 +181,47 @@ const MenuOptions = ({
                     )}
                   <CommandGroup heading="Accounts">
                     {!!chatbots
-                      ? chatbots.map((Chatbot) => (
-                          <CommandItem key={Chatbot.id}>
+                      ? chatbots.map((chatbot) => (
+                          <CommandItem key={chatbot.id}>
                             {defaultOpen ? (
                               <Link
-                                href={`/Chatbot/${Chatbot.id}`}
+                                href={`/chatbot/${chatbot.id}`}
                                 className="flex gap-4 w-full h-full"
                               >
-                                <div className="relative w-16">
+                                {/* <div className="relative w-16">
                                   <Image
                                     src={Chatbot.chatbotLogo}
                                     alt="Chatbot Logo"
                                     fill
                                     className="rounded-md object-contain"
                                   />
-                                </div>
+                                </div> */}
                                 <div className="flex flex-col flex-1">
-                                  {Chatbot.name}
-                                  <span className="text-muted-foreground">
+                                  {chatbot.name}
+                                  {/* <span className="text-muted-foreground">
                                     {Chatbot.address}
-                                  </span>
+                                  </span> */}
                                 </div>
                               </Link>
                             ) : (
                               <SheetClose asChild>
                                 <Link
-                                  href={`/Chatbot/${Chatbot.id}`}
+                                  href={`/chatbot/${chatbot.id}`}
                                   className="flex gap-4 w-full h-full"
                                 >
-                                  <div className="relative w-16">
+                                  {/* <div className="relative w-16">
                                     <Image
                                       src={Chatbot.chatbotLogo}
                                       alt="Chatbot Logo"
                                       fill
                                       className="rounded-md object-contain"
                                     />
-                                  </div>
+                                  </div> */}
                                   <div className="flex flex-col flex-1">
-                                    {Chatbot.name}
-                                    <span className="text-muted-foreground">
+                                    {chatbot.name}
+                                    {/* <span className="text-muted-foreground">
                                       {Chatbot.address}
-                                    </span>
+                                    </span> */}
                                   </div>
                                 </Link>
                               </SheetClose>
@@ -252,7 +252,7 @@ const MenuOptions = ({
                       }}
                     >
                       <PlusCircleIcon size={15} />
-                      Create Sub Account
+                      Create Chatbot
                     </Button>
                   </SheetClose>
                 )}

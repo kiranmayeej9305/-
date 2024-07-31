@@ -159,7 +159,7 @@ const Page = async ({
               <CardTitle className="text-4xl">{chatbots.length}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Reflects the number of sub accounts you own and manage.
+              Reflects the number of chatbots you own and manage.
             </CardContent>
             <Contact2 className="absolute right-4 top-4 text-muted-foreground" />
           </Card>
@@ -168,7 +168,7 @@ const Page = async ({
               <CardTitle>Account Goal</CardTitle>
               <CardDescription>
                 <p className="mt-2">
-                  Reflects the number of sub accounts you want to own and
+                  Reflects the number of chatbots you want to own and
                   manage.
                 </p>
               </CardDescription>

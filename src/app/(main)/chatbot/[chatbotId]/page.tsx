@@ -133,7 +133,7 @@ const ChatbotPageId = async ({ params, searchParams }: Props) => {
                   You need to connect your stripe account to see metrics
                 </CardDescription>
                 <Link
-                  href={`/Chatbot/${chatbotDetails.id}/launchpad`}
+                  href={`/chatbot/${chatbotDetails.id}/launchpad`}
                   className="p-2 w-fit bg-secondary text-white rounded-md flex items-center gap-2"
                 >
                   <ClipboardIcon />

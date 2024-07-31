@@ -49,7 +49,7 @@ const CreateChatbotButton = ({ className, id, user }: Props) => {
       }}
     >
       <PlusCircleIcon size={15} />
-      Create Sub Account
+      Create Chatbot
     </Button>
   )
 }

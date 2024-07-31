@@ -111,7 +111,7 @@ export const columns: ColumnDef<UsersWithAccountChatbotPermissionsSidebarOptions
                     key={account.id}
                     className="bg-slate-600 w-fit whitespace-nowrap"
                   >
-                    Sub Account - {account.Chatbot.name}
+                    Chatbot - {account.Chatbot.name}
                   </Badge>
                 ))
               ) : (

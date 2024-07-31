@@ -28,7 +28,7 @@ const DeleteButton = ({ chatbotId }: Props) => {
         router.refresh()
       }}
     >
-      Delete Sub Account
+      Delete Chatbot
     </div>
   )
 }

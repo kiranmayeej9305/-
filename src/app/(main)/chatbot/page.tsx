@@ -26,12 +26,12 @@ const ChatbotMainPage = async ({ searchParams }: Props) => {
     const stateChatbotId = searchParams.state.split('___')[1]
     if (!stateChatbotId) return <Unauthorized />
     return redirect(
-      `/Chatbot/${stateChatbotId}/${statePath}?code=${searchParams.code}`
+      `/chatbot/${stateChatbotId}/${statePath}?code=${searchParams.code}`
     )
   }
 
   if (getFirstChatbotWithAccess) {
-    return redirect(`/Chatbot/${getFirstChatbotWithAccess.chatbotId}`)
+    return redirect(`/chatbot/${getFirstChatbotWithAccess.chatbotId}`)
   }
 
   return <Unauthorized />

@@ -13,7 +13,7 @@ const Pipelines = async ({ params }: Props) => {
 
   if (pipelineExists)
     return redirect(
-      `/Chatbot/${params.chatbotId}/pipelines/${pipelineExists.id}`
+      `/chatbot/${params.chatbotId}/pipelines/${pipelineExists.id}`
     )
 
   try {
@@ -22,7 +22,7 @@ const Pipelines = async ({ params }: Props) => {
     })
 
     return redirect(
-      `/Chatbot/${params.chatbotId}/pipelines/${response.id}`
+      `/chatbot/${params.chatbotId}/pipelines/${response.id}`
     )
   } catch (error) {
     console.log()
