@@ -1,28 +1,28 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Plus, Trash2 } from 'lucide-react'
 
-
-const TextForm = ({ chatbotId, onSubmit }) => {
+const TextForm = ({ chatbotId, onFormChange }) => {
   const [texts, setTexts] = useState([''])
 
   const handleChange = (e, index) => {
     const newTexts = [...texts]
     newTexts[index] = e.target.value
     setTexts(newTexts)
+    onFormChange(newTexts.map(content => ({ content })))
   }
 
   const handleAddText = () => {
-    setTexts([...texts, ''])
+    const newTexts = [...texts, '']
+    setTexts(newTexts)
+    onFormChange(newTexts.map(content => ({ content })))
   }
 
   const handleRemoveText = (index) => {
     const newTexts = texts.filter((_, i) => i !== index)
     setTexts(newTexts)
-  }
-
-  const handleSubmit = () => {
-    onSubmit({ content: texts.join(' ') }, 'text')
+    onFormChange(newTexts.map(content => ({ content })))
   }
 
   return (
@@ -33,12 +33,10 @@ const TextForm = ({ chatbotId, onSubmit }) => {
             value={text}
             onChange={(e) => handleChange(e, index)}
             placeholder={`Text ${index + 1}`}
-            className="resize-none"
+            className="resize-none h-60"
           />
-          <Button onClick={() => handleRemoveText(index)}>-</Button>
         </div>
       ))}
-      <Button onClick={handleAddText}>Add Text</Button>
     </div>
   )
 }

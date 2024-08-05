@@ -1,11 +1,13 @@
-'use client'
+'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
-import { v4 } from 'uuid'
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { v4 } from 'uuid';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,40 +15,44 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { useRouter } from 'next/navigation'
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
-import { Input } from '@/components/ui/input'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card'
-
-import FileUpload from '../global/file-upload'
-import { Account, Chatbot } from '@prisma/client'
-import { useToast } from '../ui/use-toast'
-import { saveActivityLogsNotification, upsertChatbot, upsertInterfaceSettings } from '@/lib/queries'
-import { useEffect } from 'react'
-import Loading from '../global/loading'
-import { useModal } from '@/providers/modal-provider'
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  saveActivityLogsNotification,
+  upsertAndFetchChatbotData,
+  getAIModels,
+  getChatbotTypes,
+  getDefaultPromptByChatbotTypeId,
+} from '@/lib/queries';
+import Loading from '@/components/global/loading';
+import { useModal } from '@/providers/modal-provider';
 
 const formSchema = z.object({
-  name: z.string(),
-})
-
-//CHALLENGE Give access for Chatbot Guest they should see a different view maybe a form that allows them to create tickets
-
-//CHALLENGE layout.tsx oonly runs once as a result if you remove permissions for someone and they keep navigating the layout.tsx wont fire again. solution- save the data inside metadata for current user.
+  name: z.string().nonempty(),
+  welcomeMessage: z.string().nonempty(),
+  aiModelId: z.string().nonempty(),
+  chatbotTypeId: z.string().nonempty(),
+  knowledgeSources: z.enum(['training', 'generic', 'both']),
+  creativityLevel: z.number().min(0).max(1),
+  customPrompts: z.string().optional(),
+});
 
 interface ChatbotDetailsProps {
-  //To add the chatbots to the account
-  accountDetails: Account
-  details?: Partial<Chatbot>
-  userId: string
-  userName: string
+  accountDetails: Account;
+  details?: Partial<Chatbot>;
+  userId: string;
+  userName: string;
 }
 
 const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
@@ -55,264 +61,241 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
   userId,
   userName,
 }) => {
-  const { toast } = useToast()
-  const { setClose } = useModal()
-  const router = useRouter()
+  const { toast } = useToast();
+  const { setClose } = useModal();
+  const [aiModels, setAiModels] = useState([]);
+  const [chatbotTypes, setChatbotTypes] = useState([]);
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: details?.name
+      name: details?.name || '',
+      welcomeMessage: details?.welcomeMessage || '',
+      aiModelId: details?.aiModelId || '',
+      chatbotTypeId: details?.chatbotTypeId || '',
+      knowledgeSources: 'both',
+      creativityLevel: 0.5,
+      customPrompts: details?.customPrompts || '',
     },
-  })
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const aiModelData = await getAIModels();
+      const chatbotTypeData = await getChatbotTypes();
+      setAiModels(aiModelData);
+      setChatbotTypes(chatbotTypeData);
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchDefaultPrompt = async () => {
+      const selectedChatbotTypeId = form.watch('chatbotTypeId');
+      if (selectedChatbotTypeId) {
+        const defaultPrompt = await getDefaultPromptByChatbotTypeId(selectedChatbotTypeId);
+        if (defaultPrompt) {
+          form.setValue('customPrompts', defaultPrompt);
+        }
+      }
+    };
+    fetchDefaultPrompt();
+  }, [form.watch('chatbotTypeId')]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const response = await upsertChatbot({
-        id: details?.id ? details.id : v4(),
-        name: values.name,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        accountId: accountDetails.id,
-        connectAccountId: '',
-        goal: 5000,
-      })
-      console.log(response);
-      console.log(`${userName} | updated chatbot | ${response.name}`);
+      const chatbotId = details?.id || v4();
+      console.log('Submitting with chatbot ID:', chatbotId);
 
-      if (!response) throw new Error('No response from server')
-      const settingsResponse = await upsertInterfaceSettings({
-        id:  v4(),
-        icon: "",
-        background : "",
-        textColor: "",
-        helpdesk: true,
-        chatbotId:response.id
-      })
-      if (!settingsResponse) throw new Error('No response from server')
+      const fullChatbotData = await upsertAndFetchChatbotData(
+        {
+          id: chatbotId,
+          name: values.name,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          accountId: accountDetails.id,
+          connectAccountId: '',
+          goal: 5000,
+        },
+        {
+          welcomeMessage: values.welcomeMessage,
+          aiModelId: values.aiModelId,
+          chatbotTypeId: values.chatbotTypeId,
+          knowledgeSources: values.knowledgeSources,
+          creativityLevel: values.creativityLevel,
+          customPrompts: values.customPrompts,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      );
+
+      console.log('Full Chatbot Data:', fullChatbotData);
 
       await saveActivityLogsNotification({
-        accountId: response.accountId,
-        description: `${userName} | updated chatbot | ${response.name}`,
-        chatbotId: response.id,
-      })
+        accountId: fullChatbotData.accountId,
+        description: `${userName} | updated chatbot | ${fullChatbotData.name}`,
+        chatbotId: fullChatbotData.id,
+      });
 
-    
       toast({
         title: 'Chatbot details saved',
         description: 'Successfully saved your Chatbot details.',
-      })
+      });
 
-      setClose()
-      router.refresh()
+      setClose();
+      router.refresh();
     } catch (error) {
-      console.log(error);
+      console.log('🔴 Error in onSubmit:', error);
       toast({
         variant: 'destructive',
-        title: 'Oppse!',
+        title: 'Oops!',
         description: 'Could not save chatbot details.',
-      })
+      });
     }
   }
 
-  useEffect(() => {
-    if (details) {
-      form.reset(details)
-    }
-  }, [details])
+  const isLoading = form.formState.isSubmitting;
 
-  const isLoading = form.formState.isSubmitting
-  //CHALLENGE Create this form.
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Let's start by creating custom chatbot!</CardTitle>
+        <CardTitle>Let's start by creating a custom chatbot!</CardTitle>
         <CardDescription>Please enter business details</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
-            {/* <FormField
-              disabled={isLoading}
-              control={form.control}
-              name="chatbotLogo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account Logo</FormLabel>
-                  <FormControl>
-                    <FileUpload
-                      apiEndpoint="chatbotLogo"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-            <div className="flex md:flex-row gap-4">
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Account Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        required
-                        placeholder="Your account name"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="companyEmail"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Acount Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-            </div>
-            {/* <div className="flex md:flex-row gap-4">
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="companyPhone"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Acount Phone Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Phone"
-                        required
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div> */}
-
-            {/* <FormField
-              disabled={isLoading}
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      required
-                      placeholder="123 st..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-            {/* <div className="flex md:flex-row gap-4">
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input
-                        required
-                        placeholder="City"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input
-                        required
-                        placeholder="State"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="zipCode"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Zipcpde</FormLabel>
-                    <FormControl>
-                      <Input
-                        required
-                        placeholder="Zipcode"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
-              disabled={isLoading}
               control={form.control}
-              name="country"
+              name="name"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Country</FormLabel>
+                  <FormLabel>Chatbot Name</FormLabel>
                   <FormControl>
-                    <Input
-                      required
-                      placeholder="Country"
-                      {...field}
-                    />
+                    <Input required placeholder="Your chatbot name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
-            /> */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-            >
+            />
+            <FormField
+              control={form.control}
+              name="welcomeMessage"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Welcome Message</FormLabel>
+                  <FormControl>
+                    <Input required placeholder="Welcome message" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="aiModelId"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>AI Model</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select AI Model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aiModels.map((model) => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.name} - {model.provider}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="chatbotTypeId"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Chatbot Type</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Chatbot Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {chatbotTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="knowledgeSources"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Knowledge Sources</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Knowledge Source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="training">Training Only</SelectItem>
+                        <SelectItem value="generic">Generic AI Knowledge</SelectItem>
+                        <SelectItem value="both">Both</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="creativityLevel"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Creativity Level</FormLabel>
+                  <FormControl>
+                    <Input type="range" min="0" max="1" step="0.01" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="customPrompts"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>Custom Prompts</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Custom Prompts" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loading /> : 'Save Chatbot Information'}
             </Button>
           </form>
         </Form>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default ChatbotDetails
+export default ChatbotDetails;

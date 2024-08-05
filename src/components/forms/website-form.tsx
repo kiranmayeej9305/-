@@ -1,42 +1,73 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Plus, Trash2 } from 'lucide-react'
 
-const WebsiteForm = ({ chatbotId, onSubmit }) => {
-  const [websites, setWebsites] = useState([''])
+const WebsiteForm = ({ chatbotId, onFormChange, setValid }) => {
+  const [websites, setWebsites] = useState([{ url: '', valid: true }])
 
   const handleChange = (e, index) => {
     const newWebsites = [...websites]
-    newWebsites[index] = e.target.value
+    const url = e.target.value
+    const valid = isValidURL(url)
+    newWebsites[index] = { url, valid }
     setWebsites(newWebsites)
+    onFormChange(newWebsites.map((w) => w.url))
   }
 
   const handleAddWebsite = () => {
-    setWebsites([...websites, ''])
+    const newWebsites = [...websites, { url: '', valid: true }]
+    setWebsites(newWebsites)
+    onFormChange(newWebsites.map((w) => w.url))
   }
 
   const handleRemoveWebsite = (index) => {
     const newWebsites = websites.filter((_, i) => i !== index)
     setWebsites(newWebsites)
+    onFormChange(newWebsites.map((w) => w.url))
   }
 
-  const handleSubmit = () => {
-    onSubmit({ websites }, 'website')
+  const isValidURL = (string) => {
+    try {
+      new URL(string)
+      return true
+    } catch (_) {
+      return false
+    }
   }
+
+  useEffect(() => {
+    const allValid = websites.every((website) => website.valid)
+    setValid(allValid)
+  }, [websites, setValid])
 
   return (
     <div className="space-y-4">
       {websites.map((website, index) => (
-        <div key={index} className="flex items-center gap-2">
+        <div key={index} className="flex flex-col gap-2">
           <Input
-            value={website}
+            value={website.url}
             onChange={(e) => handleChange(e, index)}
             placeholder={`Website ${index + 1}`}
+            className={website.valid ? '' : 'border-red-500'}
           />
-          <Button onClick={() => handleRemoveWebsite(index)}>-</Button>
+          {!website.valid && (
+            <p className="text-red-500 text-sm">Please enter a valid URL.</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => handleRemoveWebsite(index)} variant="ghost" type="button">
+              <Trash2 className="h-4 w-4" />
+              Remove Website
+            </Button>
+          </div>
         </div>
       ))}
-      <Button onClick={handleAddWebsite}>Add Website</Button>
+      <div className="flex justify-end gap-2">
+        <Button onClick={handleAddWebsite}>
+          <Plus className="h-4 w-4" />
+          Add Website
+        </Button>
+      </div>
     </div>
   )
 }

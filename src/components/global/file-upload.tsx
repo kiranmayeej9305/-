@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { UploadDropzone } from '@/lib/uploadthing'
 
 type Props = {
-  apiEndpoint: 'accountLogo' | 'avatar' 
+  apiEndpoint: 'file' | 'avatar'
   onChange: (url?: string) => void
   value?: string
 }
@@ -16,41 +16,42 @@ const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
   if (value) {
     return (
       <div className="flex flex-col justify-center items-center">
-        {type !== 'pdf' ? (
+        {type !== 'pdf' && type !== 'doc' && type !== 'docx' && type !== 'txt' ? (
           <div className="relative w-40 h-40">
             <Image
               src={value}
-              alt="uploaded image"
+              alt="uploaded file"
               className="object-contain"
               fill
             />
           </div>
         ) : (
-          <div className="relative flex items-center p-2 mt-2 rounded-md bg-background/10">
-            <FileIcon />
+          <div className="relative flex flex-col items-center p-2 mt-2 rounded-md bg-background/10">
+            <FileIcon className="h-6 w-6" />
             <a
               href={value}
               target="_blank"
-              rel="noopener_noreferrer"
+              rel="noopener noreferrer"
               className="ml-2 text-sm text-indigo-500 dark:text-indigo-400 hover:underline"
             >
-              View PDF
+              View File
             </a>
+            <Button
+              onClick={() => onChange('')}
+              variant="ghost"
+              type="button"
+              className="mt-2"
+            >
+              <X className="h-4 w-4" />
+              Remove File
+            </Button>
           </div>
         )}
-        <Button
-          onClick={() => onChange('')}
-          variant="ghost"
-          type="button"
-        >
-          <X className="h-4 w-4" />
-          Remove Logo
-        </Button>
       </div>
     )
   }
   return (
-    <div className="w-full bg-muted/30">
+    <div className="w-full bg-muted/30 p-4 rounded-md text-center">
       <UploadDropzone
         endpoint={apiEndpoint}
         onClientUploadComplete={(res) => {
@@ -60,6 +61,12 @@ const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
           console.log(error)
         }}
       />
+      {apiEndpoint === 'file' && (
+        <div className="mt-4">
+          <p>Drag & drop files here, or click to select files</p>
+          <p>Supported File Types: .pdf, .doc, .docx, .txt</p>
+        </div>
+      )}
     </div>
   )
 }

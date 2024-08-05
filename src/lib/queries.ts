@@ -237,59 +237,72 @@ export const initUser = async (newUser: Partial<User>) => {
 }
 
 export const upsertAccount = async (account: Account, price?: Plan) => {
-  if (!account.companyEmail) return null
+  if (!account.companyEmail) return null;
   try {
+    const isCreating = !account.id;
+
+    // Upsert account
     const accountDetails = await db.account.upsert({
-      where: {
-        id: account.id,
-      },
+      where: { id: account.id || '' },
       update: account,
       create: {
+        ...account,
         users: {
           connect: { email: account.companyEmail },
         },
-        ...account,
-        SidebarOption: {
-          create: [
-            {
-              name: 'Dashboard',
-              icon: 'category',
-              link: `/account/${account.id}`,
-            },
-            {
-              name: 'Launchpad',
-              icon: 'clipboardIcon',
-              link: `/account/${account.id}/launchpad`,
-            },
-            {
-              name: 'Billing',
-              icon: 'payment',
-              link: `/account/${account.id}/billing`,
-            },
-            {
-              name: 'Settings',
-              icon: 'settings',
-              link: `/account/${account.id}/settings`,
-            },
-            {
-              name: 'Chatbots',
-              icon: 'person',
-              link: `/account/${account.id}/all-chatbots`,
-            },
-            {
-              name: 'Team',
-              icon: 'shield',
-              link: `/account/${account.id}/team`,
-            },
-          ],
-        },
       },
-    })
-    return accountDetails
+    });
+
+    // Ensure the account ID is present for newly created accounts
+    const accountId = isCreating ? accountDetails.id : account.id;
+    if (isCreating && !accountId) {
+      throw new Error('Account creation failed');
+    }
+
+    // Create sidebar options only if creating a new account
+    if (isCreating) {
+      const parentOptions = [
+        { name: 'Dashboard', icon: 'category', link: `/account/${accountId}` },
+        { name: 'Launchpad', icon: 'clipboardIcon', link: `/account/${accountId}/launchpad` },
+        { name: 'Billing', icon: 'payment', link: `/account/${accountId}/billing` },
+        { name: 'Settings', icon: 'settings', link: `/account/${accountId}/settings` },
+        { name: 'Chatbots', icon: 'person', link: `/account/${accountId}/all-chatbots` },
+        { name: 'Team', icon: 'shield', link: `/account/${accountId}/team` },
+      ];
+
+      const parentIds = [];
+      for (const option of parentOptions) {
+        const parentOption = await db.accountSidebarOption.create({
+          data: {
+            ...option,
+            accountId,
+          },
+        });
+        parentIds.push(parentOption.id);
+      }
+
+      // Create submenu options
+      await db.accountSidebarOption.createMany({
+        data: [
+          {
+            name: 'Submenu Example',
+            icon: 'settings',
+            link: `/account/${accountId}/submenu`,
+            isSubmenu: true,
+            parentId: parentIds[0], // Assuming the first parent ID is the parent for this submenu
+            accountId,
+          },
+        ],
+      });
+    }
+
+    return accountDetails;
   } catch (error) {
-    console.log(error)
+    console.log(error);
+    throw new Error('Account upsert failed');
   }
-}
+};
+
 
 export const getNotificationAndUser = async (accountId: string) => {
   try {
@@ -307,144 +320,33 @@ export const getNotificationAndUser = async (accountId: string) => {
   }
 }
 
-export const upsertChatbot = async (chatbot: Chatbot) => {
-  if (!chatbot.name) return null
-  try
-  {
-    const accountOwner = await db.user.findFirst({
-      where: {
-        Account: {
-          id: chatbot.accountId,
-        },
-        role: 'ACCOUNT_OWNER',
-      },
-    })
-    if (!accountOwner) return console.log('🔴Erorr could not create Chatbot')
-    const permissionId = v4()
-    const response = await db.chatbot.upsert({
-      where: { id: chatbot.id },
-      update: chatbot,
-      create: {
-        ...chatbot,
-        Permissions: {
-          create: {
-            access: true,
-            email: accountOwner.email,
-            id: permissionId,
-          },
-          connect: {
-            chatbotId: chatbot.id,
-            id: permissionId,
-          },
-        },
-        Pipeline: {
-          create: { name: 'Lead Cycle' },
-        },
-      SidebarOption: {
-        create: [
-          {
-            name: 'Launchpad',
-            icon: 'clipboardIcon',
-            link: `/chatbot/${chatbot.id}/launchpad`,
-          },
-          {
-            name: 'Chatbot Settings',
-            icon: 'settings',
-            link: `/chatbot/${chatbot.id}/settings`,
-          },
-          {
-            name: 'Funnels',
-            icon: 'pipelines',
-            link: `/chatbot/${chatbot.id}/funnels`,
-          },
-          {
-            name: 'Media',
-            icon: 'database',
-            link: `/chatbot/${chatbot.id}/media`,
-          },
-          {
-            name: 'Automations',
-            icon: 'chip',
-            link: `/chatbot/${chatbot.id}/automations`,
-          },
-          {
-            name: 'Interface',
-            icon: 'compass',
-            link: `/chatbot/${chatbot.id}/interface`,
-          },
-          {
-            name: 'Training',
-            icon: 'info',
-            link: `/chatbot/${chatbot.id}/training`,
-          },
-          {
-            name: 'Integration',
-            icon: 'link',
-            link: `/chatbot/${chatbot.id}/integration`,
-          },
-          {
-            name: 'Conversations',
-            icon: 'messages',
-            link: `/chatbot/${chatbot.id}/conversations`,
-          },
-          {
-            name: 'Calendar',
-            icon: 'calendar',
-            link: `/chatbot/${chatbot.id}/calendar`,
-          },
-          {
-            name: 'Campaign',
-            icon: 'send',
-            link: `/chatbot/${chatbot.id}/campaign`,
-          },
-          {
-            name: 'Pipelines',
-            icon: 'flag',
-            link: `/chatbot/${chatbot.id}/pipelines`,
-          },
-          {
-            name: 'Contacts',
-            icon: 'person',
-            link: `/chatbot/${chatbot.id}/contacts`,
-          },
-          {
-            name: 'Dashboard',
-            icon: 'category',
-            link: `/chatbot/${chatbot.id}`,
-          },
-        ],
-      },
-    }
-  })
-    return response
-  } 
-    catch (error) {
-  }
-}
-
 export const upsertInterfaceSettings = async (interfaceSettings: any) => {
+  if (!interfaceSettings.chatbotId) {
+    throw new Error("chatbotId is required");
+  }
+
   try {
     const existingSettings = await prisma.interface.findUnique({
       where: { chatbotId: interfaceSettings.chatbotId },
-    })
+    });
 
     if (existingSettings) {
       const response = await prisma.interface.update({
         where: { id: existingSettings.id },
         data: interfaceSettings,
-      })
-      return response
+      });
+      return response;
     } else {
       const response = await prisma.interface.create({
         data: interfaceSettings,
-      })
-      return response
+      });
+      return response;
     }
   } catch (error) {
-    console.error('Error upserting interface settings:', error)
-    throw error
+    console.error('Error upserting interface settings:', error);
+    throw error;
   }
-}
+};
 
 export const getUserPermissions = async (userId: string) => {
   const response = await db.user.findUnique({
@@ -1017,3 +919,241 @@ export const getPipelines = async (chatbotId: string) => {
   })
   return response
 }
+// Get Account Sidebar Options
+export const getAccountSidebarOptions = async (accountId: string) => {
+  try {
+    const sidebarOptions = await db.accountSidebarOption.findMany({
+      where: { accountId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return sidebarOptions;
+  } catch (error) {
+    console.error('Error fetching account sidebar options:', error);
+    throw error;
+  }
+};
+
+// Get Chatbot Sidebar Options
+export const getChatbotSidebarOptions = async (chatbotId: string) => {
+  try {
+    const sidebarOptions = await db.chatbotSidebarOption.findMany({
+      where: { chatbotId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return sidebarOptions;
+  } catch (error) {
+    console.error('Error fetching chatbot sidebar options:', error);
+    throw error;
+  }
+};
+export const upsertChatbot = async (chatbot: Chatbot) => {
+  if (!chatbot.name) return null;
+  try {
+    const accountOwner = await db.user.findFirst({
+      where: {
+        Account: {
+          id: chatbot.accountId,
+        },
+        role: 'ACCOUNT_OWNER',
+      },
+    });
+
+    if (!accountOwner) {
+      console.log('🔴 Error: Could not create Chatbot');
+      return null;
+    }
+
+    const permissionId = v4();
+    const isCreating = !chatbot.id;
+
+    const response = await db.chatbot.upsert({
+      where: { id: chatbot.id || '' },
+      update: chatbot,
+      create: {
+        ...chatbot,
+        Permissions: {
+          create: {
+            access: true,
+            email: accountOwner.email,
+            id: permissionId,
+          },
+        },
+        Pipeline: { create: { name: 'Lead Cycle' } },
+      },
+    });
+
+    // Ensure the chatbot ID is present for newly created chatbots
+    const chatbotId = isCreating ? response.id : chatbot.id;
+    if (isCreating && !chatbotId) {
+      throw new Error('Chatbot creation failed');
+    }
+
+    // Create sidebar options only if creating a new chatbot
+    if (isCreating) {
+      const parentOptions = [
+        { name: 'Launchpad', icon: 'clipboardIcon', link: `/chatbot/${chatbotId}/launchpad` },
+        { name: 'Settings', icon: 'settings', link: `/chatbot/${chatbotId}/settings` },
+        { name: 'Funnels', icon: 'pipelines', link: `/chatbot/${chatbotId}/funnels` },
+        { name: 'Media', icon: 'database', link: `/chatbot/${chatbotId}/media` },
+        { name: 'Automations', icon: 'chip', link: `/chatbot/${chatbotId}/automations` },
+        { name: 'Training', icon: 'info', link: `/chatbot/${chatbotId}/training` },
+        { name: 'Integration', icon: 'link', link: `/chatbot/${chatbotId}/integration` },
+        { name: 'Conversations', icon: 'messages', link: `/chatbot/${chatbotId}/conversations` },
+        { name: 'Calendar', icon: 'calendar', link: `/chatbot/${chatbotId}/calendar` },
+        { name: 'Campaign', icon: 'send', link: `/chatbot/${chatbotId}/campaign` },
+      ];
+
+      const parentIds = [];
+      for (const option of parentOptions) {
+        const parentOption = await db.chatbotSidebarOption.create({
+          data: {
+            ...option,
+            chatbotId,
+          },
+        });
+        parentIds.push(parentOption.id);
+      }
+
+      // Create submenu options
+      await db.chatbotSidebarOption.createMany({
+        data: [
+          {
+            name: 'Connect',
+            icon: 'settings',
+            link: `/chatbot/${chatbotId}/connect`,
+            isSubmenu: true,
+            parentId: parentIds[6],
+            chatbotId,
+          },
+          {
+            name: 'Embed',
+            icon: 'settings',
+            link: `/chatbot/${chatbotId}/embed`,
+            isSubmenu: true,
+            parentId: parentIds[6],
+            chatbotId,
+          },
+          {
+            name: 'Interface',
+            icon: 'compass',
+            link: `/chatbot/${chatbotId}/interface`,
+            isSubmenu: true,
+            parentId: parentIds[1],
+            chatbotId,
+          },
+          {
+            name: 'AI Settings',
+            icon: 'compass',
+            link: `/chatbot/${chatbotId}/settings`,
+            isSubmenu: true,
+            parentId: parentIds[1],
+            chatbotId,
+          },
+          {
+            name: 'User Settings',
+            icon: 'compass',
+            link: `/chatbot/${chatbotId}/user-settings`,
+            isSubmenu: true,
+            parentId: parentIds[1],
+            chatbotId,
+          },
+        ],
+      });
+    }
+
+    return response;
+  } catch (error) {
+    console.log(error);
+    throw new Error('Chatbot upsert failed');
+  }
+};
+
+
+
+export const upsertChatbotSettings = async (chatbotId: string, settingsData: any) => {
+  const settingsResponse = await prisma.chatbotSettings.upsert({
+    where: { chatbotId },
+    update: { ...settingsData, chatbotId },
+    create: { ...settingsData, chatbotId },
+  });
+
+  return settingsResponse;
+};
+
+
+export const getAIModels = async () => {
+  try {
+    const response = await prisma.aIModel.findMany();
+    return response;
+  } catch (error) {
+    console.error('Error fetching AI models:', error);
+    throw error;
+  }
+};
+
+export const getChatbotTypes = async () => {
+  try {
+    const response = await prisma.chatbotType.findMany();
+    return response;
+  } catch (error) {
+    console.error('Error fetching chatbot types:', error);
+    throw error;
+  }
+};
+
+export const getDefaultPromptByChatbotTypeId = async (chatbotTypeId: string) => {
+  try {
+    const response = await db.chatbotType.findUnique({
+      where: { id: chatbotTypeId },
+      select: { defaultPrompts: true },
+    });
+    return response?.defaultPrompts;
+  } catch (error) {
+    console.error('Error fetching default prompt:', error);
+    throw error;
+  }
+};
+export const fetchChatbotData = async (chatbotId: string) => {
+  try {
+    const chatbotData = await prisma.chatbot.findUnique({
+      where: { id: chatbotId },
+      include: {
+        Permissions: true,
+        Pipeline: true,
+        ChatbotSettings: {
+          include: {
+            AIModel: true,
+            ChatbotType: true,
+          },
+        },
+        // Include other relations as needed
+      },
+    });
+
+    if (!chatbotData) {
+      throw new Error('Chatbot not found');
+    }
+
+    return chatbotData;
+  } catch (error) {
+    console.error('Error fetching chatbot data:', error);
+    throw error;
+  }
+};
+export const upsertAndFetchChatbotData = async (chatbotData: any, settingsData: any) => {
+  try {
+    const chatbotResponse = await upsertChatbot(chatbotData);
+    
+    const chatbotId = chatbotResponse.id || chatbotData.id;
+    if (!chatbotId) {
+      throw new Error('Chatbot ID is missing after upsert');
+    }
+    
+    await upsertChatbotSettings(chatbotId, settingsData);
+    const fullChatbotData = await fetchChatbotData(chatbotId);
+    return fullChatbotData;
+  } catch (error) {
+    console.error('Error in upsertAndFetchChatbotData:', error);
+    throw error;
+  }
+};

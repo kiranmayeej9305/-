@@ -109,34 +109,74 @@ model Account {
   AddOns           AddOns[]
 }
 
-model Chatbot {
-  id               String                    @id @default(uuid())
-  connectAccountId String?                   @default("")
-  welcomeMessage String?
-  name             String
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
-  goal             Int                       @default(5)
-  accountId        String
-  Account          Account                    @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  SidebarOption    ChatbotSidebarOption[]
-  Permissions      Permissions[]
-  Funnels          Funnel[]
-  Media            Media[]
-  Contact          Contact[]
-  Trigger          Trigger[]
-  Automation       Automation[]
-  Pipeline         Pipeline[]
-  Tags             Tag[]
-  Notification     Notification[]
-  Interface         Interface?
-  HelpDesk        HelpDesk[]
-  FilterQuestions FilterQuestions[]
-  Product        Product[]
+model AIModel  {
+  id          String   @id @default(uuid())
+  name        String
+  provider    String
+  apiUrl      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  ChatbotSettings   ChatbotSettings[]
+}
 
-  Customer   Customer[]
-  Campaign Campaign[]
-  TrainingHistories TrainingHistory[]
+
+model ChatbotType {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  defaultPrompts String @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ChatbotSettings   ChatbotSettings[]
+}
+model ChatbotSettings {
+  id                  String   @id @default(uuid())
+  chatbotId           String   @unique
+  welcomeMessage      String?
+  aiModelId           String
+  chatbotTypeId       String
+  knowledgeSources    String   // 'training', 'generic', 'both'
+  creativityLevel     Float    // Value between 0 and 1
+  customPrompts       String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  Chatbot             Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  ChatbotType         ChatbotType @relation(fields: [chatbotTypeId], references: [id], onDelete: Cascade)
+  AIModel             AIModel  @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+
+  @@index([chatbotTypeId])
+  @@index([aiModelId])
+}
+model Chatbot {
+  id                  String                    @id @default(uuid())
+  connectAccountId    String?                   @default("")
+  name                String
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  goal                Int                       @default(5)
+  accountId           String
+  Account             Account                    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  SidebarOption       ChatbotSidebarOption[]
+  Permissions         Permissions[]
+  Funnels             Funnel[]
+  Media               Media[]
+  Contact             Contact[]
+  Trigger             Trigger[]
+  Automation          Automation[]
+  Pipeline            Pipeline[]
+  Tags                Tag[]
+  Notification        Notification[]
+  Interface           Interface?
+  HelpDesk            HelpDesk[]
+  FilterQuestions     FilterQuestions[]
+  Product             Product[]
+  Customer            Customer[]
+  Campaign            Campaign[]
+  TrainingHistories   TrainingHistory[]
+  ChatbotSettings     ChatbotSettings?
+
   @@index([accountId])
 }
 
@@ -363,8 +403,10 @@ model AccountSidebarOption {
   name      String   @default("Menu")
   link      String   @default("#")
   icon      Icon     @default(info)
-  accountId  String
-  Account    Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId String
+  parentId  String?  // This field is for submenu parent linkage
+  isSubmenu Boolean  @default(false)
+  Account   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -372,14 +414,16 @@ model AccountSidebarOption {
 }
 
 model ChatbotSidebarOption {
-  id           String      @id @default(uuid())
-  name         String      @default("Menu")
-  link         String      @default("#")
-  icon         Icon        @default(info)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  name      String   @default("Menu")
+  link      String   @default("#")
+  icon      Icon     @default(info)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   chatbotId String?
+  parentId  String?  // This field is for submenu parent linkage
+  isSubmenu Boolean  @default(false)
+  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
 }

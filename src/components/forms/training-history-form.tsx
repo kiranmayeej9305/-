@@ -1,4 +1,6 @@
 import React from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Trash } from 'lucide-react'
 
 type TrainingHistoryProps = {
   history: any[]
@@ -7,40 +9,40 @@ type TrainingHistoryProps = {
 
 const TrainingHistory: React.FC<TrainingHistoryProps> = ({ history, sourceType }) => {
   return (
-    <table className="w-full border-collapse">
-      <thead>
-        <tr>
-          <th className="border px-4 py-2">Date</th>
-          <th className="border px-4 py-2">User</th>
-          {sourceType === 'TEXT' && <th className="border px-4 py-2">Content</th>}
-          {sourceType === 'PDF' && <th className="border px-4 py-2">File Name</th>}
-          {sourceType === 'WEBSITE' && <th className="border px-4 py-2">URL</th>}
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Date</TableHead>
+          <TableHead>User</TableHead>
+          {sourceType === 'TEXT' && <TableHead>Content</TableHead>}
+          {sourceType === 'FILE' && <TableHead>File Name</TableHead>}
+          {sourceType === 'WEBSITE' && <TableHead>URL</TableHead>}
           {sourceType === 'QA' && (
             <>
-              <th className="border px-4 py-2">Question</th>
-              <th className="border px-4 py-2">Answer</th>
+              <TableHead>Question</TableHead>
+              <TableHead>Answer</TableHead>
             </>
           )}
-        </tr>
-      </thead>
-      <tbody>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {history.map((item) => (
-          <tr key={item.id}>
-            <td className="border px-4 py-2">{new Date(item.createdAt).toLocaleString()}</td>
-            <td className="border px-4 py-2">{item.User.name}</td>
-            {sourceType === 'TEXT' && <td className="border px-4 py-2">{item.content}</td>}
-            {sourceType === 'PDF' && <td className="border px-4 py-2">{item.fileName}</td>}
-            {sourceType === 'WEBSITE' && <td className="border px-4 py-2">{item.websiteUrl}</td>}
+          <TableRow key={item.id}>
+            <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
+            <TableCell>{item.User.name}</TableCell>
+            {sourceType === 'TEXT' && <TableCell>{item.content}</TableCell>}
+            {sourceType === 'FILE' && <TableCell>{item.fileName}</TableCell>}
+            {sourceType === 'WEBSITE' && <TableCell>{item.websiteUrl}</TableCell>}
             {sourceType === 'QA' && (
               <>
-                <td className="border px-4 py-2">{item.question}</td>
-                <td className="border px-4 py-2">{item.answer}</td>
+                <TableCell>{item.question}</TableCell>
+                <TableCell>{item.answer}</TableCell>
               </>
             )}
-          </tr>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }
 

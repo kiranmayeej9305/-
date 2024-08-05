@@ -1,11 +1,10 @@
 import { getAuthUserDetails } from '@/lib/queries'
-import { off } from 'process'
 import React from 'react'
 import MenuOptions from './menu-options'
 
 type Props = {
   id: string
-  type: 'account' | 'Chatbot'
+  type: 'account' | 'chatbot'
 }
 
 const Sidebar = async ({ id, type }: Props) => {
@@ -25,7 +24,7 @@ const Sidebar = async ({ id, type }: Props) => {
   let sideBarLogo = user.Account.accountLogo || '/assets/plura-logo.svg'
 
   if (!isWhiteLabeledAccount) {
-    if (type === 'Chatbot') {
+    if (type === 'chatbot') {
       sideBarLogo =
         user?.Account.Chatbot.find((Chatbot) => Chatbot.id === id)
           ?.chatbotLogo || user.Account.accountLogo
@@ -55,6 +54,7 @@ const Sidebar = async ({ id, type }: Props) => {
         sidebarOpt={sidebarOpt}
         chatbots={chatbots}
         user={user}
+        type={type}
       />
       <MenuOptions
         details={details}
@@ -63,6 +63,7 @@ const Sidebar = async ({ id, type }: Props) => {
         sidebarOpt={sidebarOpt}
         chatbots={chatbots}
         user={user}
+        type={type}
       />
     </>
   )
