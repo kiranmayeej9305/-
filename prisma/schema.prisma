@@ -62,14 +62,17 @@ model User {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   role         Role           @default(CHATBOT_USER)
-  accountId     String?
-  Account       Account?        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId    String?
+  Account      Account?       @relation(fields: [accountId], references: [id], onDelete: Cascade)
   Permissions  Permissions[]
-  Ticket       Ticket[]
-  Notification Notification[]
+  Tickets      Ticket[]
+  Notifications Notification[]
   TrainingHistories TrainingHistory[]
+  ChatRooms    ChatRoom[]     @relation("AgentChatRooms") // Relation to chat rooms as an agent
+
   @@index([accountId])
 }
+
 
 model Permissions {
   id           String     @id @default(uuid())
@@ -176,7 +179,7 @@ model Chatbot {
   Campaign            Campaign[]
   TrainingHistories   TrainingHistory[]
   ChatbotSettings     ChatbotSettings?
-
+  ChatRooms ChatRoom[]
   @@index([accountId])
 }
 
@@ -501,27 +504,38 @@ model AddOns {
   @@index([accountId])
 }
 model ChatRoom {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  live       Boolean   @default(false)
-  mailed     Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  Customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  customerId String?   @db.Uuid
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  live        Boolean       @default(false)
+  mailed      Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  customerId  String        @db.Uuid
+  chatbotId   String        @db.Uuid
+  agentId     String?       @db.Uuid // Added to link with an agent
 
-  message ChatMessage[]
+  Customer    Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  Chatbot     Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  Agent       User?         @relation("AgentChatRooms", fields: [agentId], references: [id], onDelete: Cascade)
+  ChatMessages ChatMessage[]
+
+  @@index([chatbotId])
+  @@index([customerId])
+  @@index([agentId])
 }
+
 
 model ChatMessage {
   id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   message    String
-  chatbotRole       ChatbotRole?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  ChatRoom   ChatRoom? @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  chatRoomId String?   @db.Uuid
   seen       Boolean   @default(false)
+  chatRoomId String    @db.Uuid
+
+  ChatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender     String?   // e.g., "customer", "chatbot", "agent"
 }
+
 
 model Bookings {
   id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -568,35 +582,35 @@ model HelpDesk {
 }
 
 model FilterQuestions {
-  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question String
-  answered String?
-
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question  String
+  answered  Boolean @default(false)
+  
   Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   chatbotId String? @db.Uuid
 }
 
 model CustomerResponses {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question   String
-  answered   String?
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  customerId String   @db.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question     String
+  responseText String?
+  customerId   String    @db.Uuid
+
+  Customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
+
 
 model Customer {
-  id    String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email String? 
-
-  questions CustomerResponses[]
-
-  chatRoom ChatRoom[]
-
-  booking Bookings[]
-
-  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId String? @db.Uuid
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String?
+  name      String?
+  responses CustomerResponses[]
+  chatRooms ChatRoom[]
+  bookings  Bookings[]
+  chatbotId String?   @db.Uuid 
+  Chatbot   Chatbot?  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
+
 
 
 model Interface {

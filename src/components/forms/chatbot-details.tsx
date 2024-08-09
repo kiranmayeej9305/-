@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { v4 } from 'uuid';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -34,13 +33,16 @@ import {
   getAIModels,
   getChatbotTypes,
   getDefaultPromptByChatbotTypeId,
+  getFilteredQuestions,
+  saveFilteredQuestions,
 } from '@/lib/queries';
 import Loading from '@/components/global/loading';
 import { useModal } from '@/providers/modal-provider';
+import { Plus, Trash2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().nonempty(),
-  welcomeMessage: z.string().nonempty(),
+  welcomeMessage: z.string().optional(),
   aiModelId: z.string().nonempty(),
   chatbotTypeId: z.string().nonempty(),
   knowledgeSources: z.enum(['training', 'generic', 'both']),
@@ -65,18 +67,20 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
   const { setClose } = useModal();
   const [aiModels, setAiModels] = useState([]);
   const [chatbotTypes, setChatbotTypes] = useState([]);
+  const [defaultPrompt, setDefaultPrompt] = useState('');
+  const [filteredQuestions, setFilteredQuestions] = useState([{ question: '' }]);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: details?.name || '',
-      welcomeMessage: details?.welcomeMessage || '',
-      aiModelId: details?.aiModelId || '',
-      chatbotTypeId: details?.chatbotTypeId || '',
-      knowledgeSources: 'both',
-      creativityLevel: 0.5,
-      customPrompts: details?.customPrompts || '',
+      welcomeMessage: details?.ChatbotSettings?.welcomeMessage || '',
+      aiModelId: details?.ChatbotSettings?.aiModelId || '',
+      chatbotTypeId: details?.ChatbotSettings?.chatbotTypeId || '',
+      knowledgeSources: details?.ChatbotSettings?.knowledgeSources || 'both',
+      creativityLevel: details?.ChatbotSettings?.creativityLevel || 0.5,
+      customPrompts: details?.ChatbotSettings?.customPrompts || '',
     },
   });
 
@@ -86,33 +90,57 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
       const chatbotTypeData = await getChatbotTypes();
       setAiModels(aiModelData);
       setChatbotTypes(chatbotTypeData);
-    };
-    fetchData();
-  }, []);
 
-  useEffect(() => {
-    const fetchDefaultPrompt = async () => {
-      const selectedChatbotTypeId = form.watch('chatbotTypeId');
-      if (selectedChatbotTypeId) {
-        const defaultPrompt = await getDefaultPromptByChatbotTypeId(selectedChatbotTypeId);
-        if (defaultPrompt) {
-          form.setValue('customPrompts', defaultPrompt);
-        }
+      if (details?.id) {
+        const questions = await getFilteredQuestions(details.id);
+        setFilteredQuestions(questions.length ? questions : [{ question: '' }]);
       }
     };
-    fetchDefaultPrompt();
-  }, [form.watch('chatbotTypeId')]);
+    fetchData();
+  }, [details?.id]);
+
+  const handleChatbotTypeChange = async (value: string) => {
+    form.setValue('chatbotTypeId', value);
+    const selectedChatbotType = chatbotTypes.find((type) => type.id === value);
+
+    if (value === details?.ChatbotSettings?.chatbotTypeId) {
+      form.setValue('customPrompts', details?.ChatbotSettings?.customPrompts || '');
+    } else {
+      if (selectedChatbotType?.name !== 'Custom') {
+        const defaultPrompt = await getDefaultPromptByChatbotTypeId(value);
+        setDefaultPrompt(defaultPrompt || 'Default Prompt');
+        form.setValue('customPrompts', defaultPrompt || 'Default Prompt');
+      } else {
+        setDefaultPrompt('Default Prompt for Custom');
+        form.setValue('customPrompts', '');
+      }
+    }
+  };
+
+  const handleQuestionChange = (e, index) => {
+    const newQuestions = [...filteredQuestions];
+    newQuestions[index].question = e.target.value;
+    setFilteredQuestions(newQuestions);
+  };
+
+  const handleAddQuestion = () => {
+    setFilteredQuestions([...filteredQuestions, { question: '' }]);
+  };
+
+  const handleRemoveQuestion = (index) => {
+    const newQuestions = filteredQuestions.filter((_, i) => i !== index);
+    setFilteredQuestions(newQuestions);
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const chatbotId = details?.id || v4();
-      console.log('Submitting with chatbot ID:', chatbotId);
+      const chatbotId = details.id;
 
       const fullChatbotData = await upsertAndFetchChatbotData(
         {
           id: chatbotId,
           name: values.name,
-          createdAt: new Date(),
+          createdAt: details.createdAt,
           updatedAt: new Date(),
           accountId: accountDetails.id,
           connectAccountId: '',
@@ -124,13 +152,14 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
           chatbotTypeId: values.chatbotTypeId,
           knowledgeSources: values.knowledgeSources,
           creativityLevel: values.creativityLevel,
-          customPrompts: values.customPrompts,
-          createdAt: new Date(),
+          customPrompts: values.customPrompts || defaultPrompt,
+          createdAt: details.createdAt,
           updatedAt: new Date(),
-        }
+        },
+        false
       );
 
-      console.log('Full Chatbot Data:', fullChatbotData);
+      await saveFilteredQuestions(chatbotId, filteredQuestions);
 
       await saveActivityLogsNotification({
         accountId: fullChatbotData.accountId,
@@ -160,8 +189,8 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Let's start by creating a custom chatbot!</CardTitle>
-        <CardDescription>Please enter business details</CardDescription>
+        <CardTitle>Update Chatbot Details</CardTitle>
+        <CardDescription>Please update the chatbot details</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -186,7 +215,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
                 <FormItem className="flex-1">
                   <FormLabel>Welcome Message</FormLabel>
                   <FormControl>
-                    <Input required placeholder="Welcome message" {...field} />
+                    <Input placeholder="Welcome message" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -204,11 +233,12 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
                         <SelectValue placeholder="Select AI Model" />
                       </SelectTrigger>
                       <SelectContent>
-                        {aiModels.map((model) => (
-                          <SelectItem key={model.id} value={model.id}>
-                            {model.name} - {model.provider}
-                          </SelectItem>
-                        ))}
+                        {Array.isArray(aiModels) &&
+                          aiModels.map((model) => (
+                            <SelectItem key={model.id} value={model.id}>
+                              {model.name} - {model.provider}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -223,16 +253,17 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
                 <FormItem className="flex-1">
                   <FormLabel>Chatbot Type</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={handleChatbotTypeChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Chatbot Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {chatbotTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            {type.name}
-                          </SelectItem>
-                        ))}
+                        {Array.isArray(chatbotTypes) &&
+                          chatbotTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -282,12 +313,39 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
                 <FormItem className="flex-1">
                   <FormLabel>Custom Prompts</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Custom Prompts" {...field} />
+                    <Textarea
+                      placeholder="Provide specific instructions for the chatbot to follow. E.g., 'Greet users with their first name and offer assistance with their queries.'"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div className="space-y-4">
+              <FormLabel>Filtered Questions</FormLabel>
+              {filteredQuestions.map((question, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={question.question}
+                    onChange={(e) => handleQuestionChange(e, index)}
+                    placeholder={`Question ${index + 1}`}
+                  />
+                  <Button
+                    onClick={() => handleRemoveQuestion(index)}
+                    variant="ghost"
+                    type="button"
+                    size="icon"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button onClick={handleAddQuestion} variant="outline" type="button">
+                <Plus className="h-4 w-4" />
+                Add Question
+              </Button>
+            </div>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loading /> : 'Save Chatbot Information'}
             </Button>

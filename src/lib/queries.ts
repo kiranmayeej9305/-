@@ -1,6 +1,7 @@
 'use server'
 
 import { clerkClient, currentUser } from '@clerk/nextjs'
+import { pusherClient } from './utils';
 import { db } from './db'
 import { redirect } from 'next/navigation'
 import {
@@ -171,7 +172,7 @@ export const verifyAndAcceptInvitation = async () => {
     })
 
     if (userDetails) {
-      await clerkClient.users.updateUserMetadata(user.id, {
+      await clerkprisma.users.updateUserMetadata(user.id, {
         privateMetadata: {
           role: userDetails.role || 'CHATBOT_USER',
         },
@@ -227,7 +228,7 @@ export const initUser = async (newUser: Partial<User>) => {
     },
   })
 
-  await clerkClient.users.updateUserMetadata(user.id, {
+  await clerkprisma.users.updateUserMetadata(user.id, {
     privateMetadata: {
       role: newUser.role || 'CHATBOT_USER',
     },
@@ -363,7 +364,7 @@ export const updateUser = async (user: Partial<User>) => {
     data: { ...user },
   })
 
-  await clerkClient.users.updateUserMetadata(response.id, {
+  await clerkprisma.users.updateUserMetadata(response.id, {
     privateMetadata: {
       role: user.role || 'CHATBOT_USER',
     },
@@ -413,7 +414,7 @@ export const deleteChatbot = async (chatbotId: string) => {
 }
 
 export const deleteUser = async (userId: string) => {
-  await clerkClient.users.updateUserMetadata(userId, {
+  await clerkprisma.users.updateUserMetadata(userId, {
     privateMetadata: {
       role: undefined,
     },
@@ -443,7 +444,7 @@ export const sendInvitation = async (
   })
 
   try {
-    const invitation = await clerkClient.invitations.createInvitation({
+    const invitation = await clerkprisma.invitations.createInvitation({
       emailAddress: email,
       redirectUrl: process.env.NEXT_PUBLIC_URL,
       publicMetadata: {
@@ -946,7 +947,7 @@ export const getChatbotSidebarOptions = async (chatbotId: string) => {
     throw error;
   }
 };
-export const upsertChatbot = async (chatbot: Chatbot) => {
+export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating: boolean) => {
   if (!chatbot.name) return null;
   try {
     const accountOwner = await db.user.findFirst({
@@ -959,17 +960,16 @@ export const upsertChatbot = async (chatbot: Chatbot) => {
     });
 
     if (!accountOwner) {
-      console.log('🔴 Error: Could not create Chatbot');
+      console.log('🔴 Error: Could not find Account Owner');
       return null;
     }
 
     const permissionId = v4();
-    const isCreating = !chatbot.id;
 
     const response = await db.chatbot.upsert({
       where: { id: chatbot.id || '' },
-      update: chatbot,
-      create: {
+      update:  chatbot,
+      create:  {
         ...chatbot,
         Permissions: {
           create: {
@@ -979,12 +979,12 @@ export const upsertChatbot = async (chatbot: Chatbot) => {
           },
         },
         Pipeline: { create: { name: 'Lead Cycle' } },
-      },
+      } ,
     });
 
     // Ensure the chatbot ID is present for newly created chatbots
-    const chatbotId = isCreating ? response.id : chatbot.id;
-    if (isCreating && !chatbotId) {
+    const chatbotId = response.id || chatbot.id;
+    if (!chatbotId) {
       throw new Error('Chatbot creation failed');
     }
 
@@ -1061,13 +1061,18 @@ export const upsertChatbot = async (chatbot: Chatbot) => {
       });
     }
 
+    await db.chatbotSettings.upsert({
+      where: { chatbotId },
+      update: settings,
+      create: { ...settings, chatbotId },
+    });
+
     return response;
   } catch (error) {
     console.log(error);
     throw new Error('Chatbot upsert failed');
   }
 };
-
 
 
 export const upsertChatbotSettings = async (chatbotId: string, settingsData: any) => {
@@ -1140,20 +1145,485 @@ export const fetchChatbotData = async (chatbotId: string) => {
     throw error;
   }
 };
-export const upsertAndFetchChatbotData = async (chatbotData: any, settingsData: any) => {
+export const upsertAndFetchChatbotData = async (chatbotData, settingsData, isCreating) => {
   try {
-    const chatbotResponse = await upsertChatbot(chatbotData);
-    
+    const chatbotResponse = await upsertChatbot(chatbotData, settingsData, isCreating);
     const chatbotId = chatbotResponse.id || chatbotData.id;
+
     if (!chatbotId) {
       throw new Error('Chatbot ID is missing after upsert');
     }
-    
+
     await upsertChatbotSettings(chatbotId, settingsData);
+    
+    // Optionally create a Pusher channel for this chatbot's chat rooms
+    pusher.trigger('chatbots', 'chatbot-created', { chatbotId, name: chatbotData.name });
+
     const fullChatbotData = await fetchChatbotData(chatbotId);
     return fullChatbotData;
   } catch (error) {
     console.error('Error in upsertAndFetchChatbotData:', error);
     throw error;
   }
+};
+
+export const getFilteredQuestions = async (chatbotId: string) => {
+  try {
+    const questions = await prisma.filterQuestions.findMany({
+      where: { chatbotId },
+    });
+    return questions;
+  } catch (error) {
+    console.error('Error fetching filtered questions:', error);
+    throw error;
+  }
+};
+
+export const saveFilteredQuestions = async (chatbotId: string, questions: { question: string }[]) => {
+  try {
+    await prisma.filterQuestions.deleteMany({
+      where: { chatbotId },
+    });
+
+    await prisma.filterQuestions.createMany({
+      data: questions.map((q) => ({ ...q, chatbotId })),
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error saving filtered questions:', error);
+    throw error;
+  }
+};
+
+export const updateFilteredQuestionAnswered = async (questionId: string, answered: boolean) => {
+  try {
+    await prisma.filterQuestions.update({
+      where: { id: questionId },
+      data: { answered },
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error updating filtered question:', error);
+    throw error;
+  }
+};
+export const getConversationMode = async (id: string) => {
+  return await prisma.chatRoom.findUnique({
+    where: { id },
+    select: { live: true },
+  });
+};
+
+export const getDomainChatRooms = async (id: string) => {
+  return await prisma.domain.findUnique({
+    where: { id },
+    select: {
+      customer: {
+        select: {
+          email: true,
+          chatRoom: {
+            select: {
+              createdAt: true,
+              id: true,
+              message: {
+                select: {
+                  message: true,
+                  createdAt: true,
+                  seen: true,
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+
+
+export const updateChatRoom = async (id: string, data: any, select: any) => {
+  return await prisma.chatRoom.update({
+    where: { id },
+    data,
+    select,
+  });
+};
+
+
+
+export const integrateDomain = async (clerkId: string, domain: string, icon: string) => {
+  return await prisma.user.update({
+    where: { clerkId },
+    data: {
+      domains: {
+        create: {
+          name: domain,
+          icon,
+          chatBot: {
+            create: {
+              welcomeMessage: 'Hey there, have a question? Text us here',
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const findUserSubscription = async (clerkId: string) => {
+  return await prisma.user.findUnique({
+    where: { clerkId },
+    select: {
+      _count: { select: { domains: true } },
+      subscription: { select: { plan: true } },
+    },
+  });
+};
+
+export const findUserDomainByName = async (clerkId: string, domain: string) => {
+  return await prisma.user.findFirst({
+    where: {
+      clerkId,
+      domains: { some: { name: domain } },
+    },
+  });
+};
+
+export const getUserPlan = async (clerkId: string) => {
+  return await prisma.user.findUnique({
+    where: { clerkId },
+    select: {
+      subscription: { select: { plan: true } },
+    },
+  });
+};
+
+export const getAllAccountDomains = async (clerkId: string) => {
+  return await prisma.user.findUnique({
+    where: { clerkId },
+    select: {
+      id: true,
+      domains: {
+        select: {
+          name: true,
+          icon: true,
+          id: true,
+          customer: {
+            select: {
+              chatRoom: {
+                select: {
+                  id: true,
+                  live: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+
+export const getCurrentDomainInfo = async (clerkId: string, domain: string) => {
+  return await prisma.user.findUnique({
+    where: { clerkId },
+    select: {
+      subscription: { select: { plan: true } },
+      domains: {
+        where: { name: { contains: domain } },
+        select: {
+          id: true,
+          name: true,
+          icon: true,
+          userId: true,
+          products: true,
+          chatBot: {
+            select: {
+              id: true,
+              welcomeMessage: true,
+              icon: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const updateDomainName = async (id: string, name: string) => {
+  return await prisma.domain.update({
+    where: { id },
+    data: { name },
+  });
+};
+
+export const updateChatBotIcon = async (id: string, icon: string) => {
+  return await prisma.domain.update({
+    where: { id },
+    data: {
+      chatBot: { update: { data: { icon } } },
+    },
+  });
+};
+
+export const updateWelcomeMessage = async (domainId: string, message: string) => {
+  return await prisma.domain.update({
+    where: { id: domainId },
+    data: {
+      chatBot: { update: { data: { welcomeMessage: message } } },
+    },
+  });
+};
+
+export const deleteUserDomain = async (userId: string, id: string) => {
+  return await prisma.domain.delete({
+    where: { userId, id },
+    select: { name: true },
+  });
+};
+
+export const createHelpDeskQuestion = async (id: string, question: string, answer: string) => {
+  return await prisma.domain.update({
+    where: { id },
+    data: {
+      helpdesk: {
+        create: { question, answer },
+      },
+    },
+    include: {
+      helpdesk: {
+        select: { id: true, question: true, answer: true },
+      },
+    },
+  });
+};
+
+export const getAllHelpDeskQuestions = async (domainId: string) => {
+  return await prisma.helpDesk.findMany({
+    where: { domainId },
+    select: { question: true, answer: true, id: true },
+  });
+};
+
+export const createFilterQuestion = async (id: string, question: string) => {
+  return await prisma.domain.update({
+    where: { id },
+    data: {
+      filterQuestions: { create: { question } },
+    },
+    include: {
+      filterQuestions: {
+        select: { id: true, question: true },
+      },
+    },
+  });
+};
+
+export const getAllFilterQuestions = async (domainId: string) => {
+  return await prisma.filterQuestions.findMany({
+    where: { domainId },
+    select: { question: true, id: true },
+    orderBy: { question: 'asc' },
+  });
+};
+
+export const getPaymentConnected = async (clerkId: string) => {
+  return await prisma.user.findUnique({
+    where: { clerkId },
+    select: { stripeId: true },
+  });
+};
+
+export const createNewDomainProduct = async (id: string, name: string, image: string, price: string) => {
+  return await prisma.domain.update({
+    where: { id },
+    data: {
+      products: {
+        create: { name, image, price: parseInt(price) },
+      },
+    },
+  });
+};
+
+export const getChatbotChatRooms = async (chatbotId: string) => {
+  return await prisma.chatRoom.findMany({
+    where: {
+      chatbotId: chatbotId,
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      ChatMessages: {  // Use the correct relation name
+        select: {
+          message: true,
+          createdAt: true,
+          seen: true,
+          sender: true,  // Assuming this is also a field you want
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+      live: true,
+      mailed: true,
+      updatedAt: true,
+      customerId: true,
+      chatbotId: true,
+      Customer: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+};
+
+
+
+
+export const getChatMessages = async (roomId: string) => {
+  return await prisma.chatRoom.findUnique({
+    where: {
+      id: roomId,
+    },
+    select: {
+      id: true,
+      ChatMessages: {
+        select: {
+          id: true,
+          sender: true,
+          message: true,
+          createdAt: true,
+          seen: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      },
+    },
+  });
+};
+
+export const createMessageInChatRoom = async (
+  chatRoomId: string,
+  message: string,
+  sender: 'customer' | 'user' | 'chatbot'
+) => {
+  const chatMessage = await prisma.chatMessage.create({
+    data: {
+      chatRoomId,
+      message,
+      sender: sender,
+    },
+  });
+// Broadcast the message to Pusher
+pusherClient.trigger(`chatroom-${chatRoomId}`, 'new-message', {
+  message: chatMessage.message,
+  role: chatMessage.sender,
+  createdAt: chatMessage.createdAt,
+});
+
+// If the message is from the user, generate an AI response
+if (sender === 'customer') {
+  const aiResponse = await openai.createCompletion({
+    model: 'text-davinci-003',
+    prompt: message,
+    max_tokens: 150,
+  });
+
+  const aiMessage = aiResponse.data.choices[0].text.trim();
+
+  const aiChatMessage = await prisma.chatMessage.create({
+    data: {
+      chatRoomId,
+      message: aiMessage,
+      sender: 'assistant',
+    },
+  });
+
+  pusherClient.trigger(`chatroom-${chatRoomId}`, 'new-message', {
+    message: aiChatMessage.message,
+    role: aiChatMessage.sender,
+    createdAt: aiChatMessage.createdAt,
+  });
+}
+
+return chatMessage;
+};
+
+export const updateMessagesToSeen = async (chatRoomId: string) => {
+  return await prisma.chatMessage.updateMany({
+    where: { chatRoomId },
+    data: { seen: true },
+  });
+};
+
+export const enableLiveAgentMode = async (chatRoomId: string, agentId: string) => {
+  // Assign agent and update the chat room to live mode
+  const chatRoom = await assignAgentToChatRoom(chatRoomId, agentId);
+  
+  // Optionally, you can notify the customer that a live agent is available
+  await createMessageInChatRoom(chatRoomId, 'You are now connected with a live agent.', 'user');
+
+  return chatRoom;
+};
+
+export const assignAgentToChatRoom = async (chatRoomId: string, agentId: string) => {
+  return await prisma.chatRoom.update({
+    where: { id: chatRoomId },
+    data: { agentId, live: true },
+  });
+};
+
+export const createOrFetchChatRoom = async (chatbotId: string, customerId: string, sessionActive: boolean) => {
+  console.log('Fetching or creating chat room:', { chatbotId, customerId, sessionActive });
+
+  let chatRoom;
+
+  if (sessionActive) {
+    chatRoom = await prisma.chatRoom.findFirst({
+      where: {
+        chatbotId,
+        customerId,
+        live: true, // Only fetch if session is still active
+      },
+      include: {
+        ChatMessages: true,
+      },
+    });
+  }
+
+  if (!chatRoom) {
+    console.log('No active chat room found. Creating a new one...');
+    chatRoom = await prisma.chatRoom.create({
+      data: {
+        chatbotId,
+        customerId,
+        live: true,
+      },
+      include: {
+        ChatMessages: true,
+      },
+    });
+    console.log('New chat room created:', chatRoom);
+  } else {
+    console.log('Active chat room found:', chatRoom);
+  }
+
+  return chatRoom;
+};
+
+// End a chatroom session
+export const endChatRoomSession = async (chatRoomId: string) => {
+  return await prisma.chatRoom.update({
+    where: { id: chatRoomId },
+    data: { live: false },
+  });
 };

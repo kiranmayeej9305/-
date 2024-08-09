@@ -1,32 +1,34 @@
-import ChatbotDetails from '@/components/forms/chatbot-details'
-import BlurPage from '@/components/global/blur-page'
-import { db } from '@/lib/db'
-import { currentUser } from '@clerk/nextjs'
-import React from 'react'
+import ChatbotDetails from '@/components/forms/chatbot-details';
+import BlurPage from '@/components/global/blur-page';
+import { db } from '@/lib/db';
+import { currentUser } from '@clerk/nextjs';
+import React from 'react';
 
 type Props = {
-  params: { chatbotId: string }
-}
+  params: { chatbotId: string };
+};
 
 const ChatbotSettingPage = async ({ params }: Props) => {
-  const authUser = await currentUser()
-  if (!authUser) return
+  const authUser = await currentUser();
+  if (!authUser) return null;
+
   const userDetails = await db.user.findUnique({
     where: {
       email: authUser.emailAddresses[0].emailAddress,
     },
-  })
-  if (!userDetails) return
+  });
+  if (!userDetails) return null;
 
   const chatbot = await db.chatbot.findUnique({
     where: { id: params.chatbotId },
-  })
-  if (!chatbot) return
+    include: { ChatbotSettings: true },
+  });
+  if (!chatbot) return null;
 
   const accountDetails = await db.account.findUnique({
     where: { id: chatbot.accountId },
     include: { Chatbot: true },
-  })
+  });
 
   return (
     <BlurPage>
@@ -39,7 +41,7 @@ const ChatbotSettingPage = async ({ params }: Props) => {
         />
       </div>
     </BlurPage>
-  )
-}
+  );
+};
 
-export default ChatbotSettingPage
+export default ChatbotSettingPage;

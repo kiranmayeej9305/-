@@ -26,7 +26,7 @@ import Link from 'next/link';
 import { twMerge } from 'tailwind-merge';
 import { useModal } from '@/providers/modal-provider';
 import CustomModal from '../global/custom-modal';
-import ChatbotDetails from '../forms/chatbot-details';
+import ChatbotCreate from '@/components/forms/chatbot-create';
 import { Separator } from '../ui/separator';
 import { icons } from '@/lib/constants';
 import { getAccountSidebarOptions, getChatbotSidebarOptions } from '@/lib/queries';
@@ -214,8 +214,8 @@ const MenuOptions = ({
                             title="Create A Chatbot"
                             subheading="You can switch between your account account and the Chatbot from the sidebar"
                           >
-                            <ChatbotDetails
-                              accountDetails={user?.Account as Account}
+                            <ChatbotCreate
+                              accountId={user?.Account.id as Account}
                               userId={user?.id as string}
                               userName={user?.name}
                             />
