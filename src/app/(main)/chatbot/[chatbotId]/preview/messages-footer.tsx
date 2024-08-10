@@ -1,21 +1,22 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { useChatContext } from '@/context/use-chat-context';
-import { createMessageInChatRoom } from '@/lib/queries';
 
-export default function MessagesFooter() {
-  const { chatRoom } = useChatContext();
+interface MessagesFooterProps {
+  onSendMessage: (message: string) => void;
+}
+
+export default function MessagesFooter({ onSendMessage }: MessagesFooterProps) {
   const [newMessage, setNewMessage] = useState('');
-  const isSendingRef = useRef(false); // To prevent double sending
+  const isSendingRef = useRef(false);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !chatRoom || isSendingRef.current) return;
+    if (!newMessage.trim() || isSendingRef.current) return;
 
     try {
       isSendingRef.current = true;
-      await createMessageInChatRoom(chatRoom, newMessage, 'customer');
-      setNewMessage(''); // Reset input after sending
+      onSendMessage(newMessage);
+      setNewMessage(''); // Clear input field after sending
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {

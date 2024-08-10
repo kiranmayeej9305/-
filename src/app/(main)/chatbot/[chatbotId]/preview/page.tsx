@@ -1,4 +1,3 @@
-// pages/chatbot/[chatbotId]/chatroom/page.tsx
 'use client';
 
 import { ChatProvider } from '@/context/use-chat-context';
@@ -10,8 +9,8 @@ interface ChatRoomPageProps {
 
 const ChatRoomPage: React.FC<ChatRoomPageProps> = ({ params }) => {
   return (
-    <ChatProvider>
-      <ChatRoom chatbotId={params.chatbotId} />
+    <ChatProvider isIframe={false}>
+      <ChatRoom chatbotId={params.chatbotId} isPlayground={true} isPublic={false}/>
     </ChatProvider>
   );
 };

@@ -6,17 +6,15 @@ import { notFound } from 'next/navigation';
 const ChatbotIframePage = async ({ params }) => {
   const { chatbotId } = params;
 
-  // Fetch the public status of the chatbot
   const isPublic = await fetchChatbotStatus(chatbotId);
 
   if (!isPublic) {
-    // If the chatbot is not public, show a 404 page
     notFound();
   }
 
   return (
-    <ChatProvider>
-      <ChatRoom chatbotId={chatbotId} />
+    <ChatProvider isIframe={true}>
+      <ChatRoom chatbotId={chatbotId} isPlayground={false} isPublic={true}/>
     </ChatProvider>
   );
 };

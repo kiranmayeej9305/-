@@ -1652,31 +1652,41 @@ export async function sendMessageToChatGPT(message: string) {
   });
 }
 
-export const createCustomerAndChatRoom = async (chatbotId: string) => {
-  const customerName = `Playground - ${chatbotId}`;
-  const mockCustomerId = chatbotId; // Using chatbotId as customerId for easy retrieval
-  const mockChatRoomId = chatbotId; // Using chatbotId as chatRoomId for easy retrieval
-
-  const customer = await prisma.customer.upsert({
-    where: { id: mockCustomerId },
-    update: {},
-    create: {
-      id: mockCustomerId,
-      name: customerName,
-      email: `$test@playground.com`,
-      chatbotId, // Assuming each customer is linked to a chatbot
-    },
+export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground: boolean) => {
+  let customer;
+  
+  // Generate a dynamic name (e.g., Customer1, Customer2, ...)
+  const customerCount = await prisma.customer.count({
+    where: { chatbotId },
   });
+  const dynamicName = `Customer${customerCount + 1}`;
 
-  const chatRoom = await prisma.chatRoom.upsert({
-    where: { id: mockChatRoomId },
-    update: {},
-    create: {
-      id: mockChatRoomId,
+  if (isPlayground) {
+    customer = await prisma.customer.upsert({
+      where: { id: `${chatbotId}-${dynamicName}` },
+      update: {},
+      create: {
+        id: `${chatbotId}-${dynamicName}`,
+        name: dynamicName,
+        email: null, // Start with no email
+        chatbotId, 
+      },
+    });
+  } else {
+    customer = await prisma.customer.create({
+      data: {
+        name: dynamicName,
+        email: null, // Start with no email
+        chatbotId,
+      },
+    });
+  }
+
+  const chatRoom = await prisma.chatRoom.create({
+    data: {
       chatbotId,
       customerId: customer.id,
       live: true,
-      mailed: false,
     },
   });
 
@@ -1705,4 +1715,21 @@ export const fetchChatbotStatus = async (chatbotId) => {
     console.error('Error fetching chatbot status:', error);
     return null;
   }
+};
+export const fetchChatRoomByChatbotId = async (chatbotId: string) => {
+  const chatRoom = await prisma.chatRoom.findFirst({
+    where: {
+      chatbotId,
+      live: true,
+    },
+    include: {
+      ChatMessages: {
+        orderBy: {
+          createdAt: 'asc',
+        },
+      },
+    },
+  });
+
+  return chatRoom;
 };
