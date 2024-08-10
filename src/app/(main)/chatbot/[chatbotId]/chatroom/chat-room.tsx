@@ -1,38 +1,46 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { createCustomerAndChatRoom, getChatMessages, createMessageInChatRoom } from '@/lib/queries';
 import { useChatContext } from '@/context/use-chat-context';
-import Bubble from './bubble';
-import { createMessageInChatRoom, createOrFetchChatRoom, endChatRoomSession } from '@/lib/queries';
+import MessagesBody from './messages-body';
 import { pusherClient } from '@/lib/utils';
 
 interface ChatRoomProps {
   chatbotId: string;
-  customerId: string;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, customerId }) => {
-  const { setChatRoom, setChats, chats, setLoading, chatRoom } = useChatContext();
-  const [newMessage, setNewMessage] = useState('');
+const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId }) => {
+  const { setChatRoom, setChats, setLoading, chatRoom } = useChatContext();
   const messageWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initializeChatRoom = async () => {
       try {
         setLoading(true);
-        const chatRoomData = await createOrFetchChatRoom(chatbotId, customerId, true);
-        setChatRoom(chatRoomData.id);
-        setChats(chatRoomData.ChatMessages || []);
+        console.log("Creating or fetching chat room for chatbotId:", chatbotId);
+        const { chatRoomId } = await createCustomerAndChatRoom(chatbotId);
+        setChatRoom(chatRoomId);
+        console.log("Chat room created or fetched:", chatRoomId);
 
-        const channel = pusherClient.subscribe(`chat-room-${chatRoomData.id}`);
-        channel.bind('new-message', (data: any) => {
-          setChats((prevMessages) => [...prevMessages, data]);
-        });
-
+        const chatMessagesData = await getChatMessages(chatRoomId);
+        console.log("Fetched chat messages:", chatMessagesData);
+        
+        // Ensure that only the messages array is stored in chats
+        setChats(chatMessagesData.ChatMessages || []);
         setLoading(false);
 
+        const channel = pusherClient.subscribe(`chat-room-${chatRoomId}`);
+        console.log(`Subscribing to Pusher for chat room: ${chatRoomId}`);
+
+        channel.bind('new-message', (data: any) => {
+          console.log("New message received:", data);
+          setChats((prevChats) => [...prevChats, data]);
+        });
+
         return () => {
-          pusherClient.unsubscribe(`chat-room-${chatRoomData.id}`);
+          console.log(`Unsubscribing from Pusher channel: chat-room-${chatRoomId}`);
+          pusherClient.unsubscribe(`chat-room-${chatRoomId}`);
         };
       } catch (error) {
         console.error('Error initializing chat room:', error);
@@ -41,15 +49,16 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, customerId }) => {
     };
 
     initializeChatRoom();
-  }, [chatbotId, customerId, setChatRoom, setChats, setLoading]);
+  }, [chatbotId, setChatRoom, setChats, setLoading]);
 
-  const handleSendMessage = async () => {
-    if (newMessage.trim()) {
+  const handleSendMessage = async (newMessage: string) => {
+    if (newMessage.trim() && chatRoom) {
       try {
         setLoading(true);
         const chatMessage = await createMessageInChatRoom(chatRoom, newMessage, 'customer');
-        setChats((prevMessages) => [...prevMessages, chatMessage]);
-        setNewMessage('');
+        console.log("New message sent:", chatMessage);
+        setChats((prevChats) => [...prevChats, chatMessage]);
+        pusherClient.trigger(`chat-room-${chatRoom}`, 'new-message', chatMessage);
         setLoading(false);
       } catch (error) {
         console.error('Error sending message:', error);
@@ -58,58 +67,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, customerId }) => {
     }
   };
 
-  const handleEndSession = async () => {
-    if (chatRoom) {
-      await endChatRoomSession(chatRoom);
-      setChatRoom(null);
-      setChats([]);
-    }
-  };
-
-  useEffect(() => {
-    messageWindowRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chats]);
-
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-800">
-      <div className="flex-grow px-4 py-6 overflow-y-auto bg-white dark:bg-gray-900" ref={messageWindowRef}>
-        {chats.length > 0 ? (
-          chats.map((msg) => (
-            <Bubble
-              key={msg.id}
-              message={msg.message}
-              createdAt={new Date(msg.createdAt)}
-              sender={msg.sender}
-            />
-          ))
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400 text-center">No messages yet.</p>
-        )}
-      </div>
-      <div className="px-4 py-2 border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type your message..."
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-        />
-        <div className="mt-2 flex gap-2">
-          <button
-            onClick={handleSendMessage}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            Send
-          </button>
-          <button
-            onClick={handleEndSession}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-          >
-            End Chat
-          </button>
-        </div>
-      </div>
+    <div className="chat-room flex flex-col h-full">
+      <MessagesBody onSendMessage={handleSendMessage} />
+      <div ref={messageWindowRef} aria-hidden="true" />
     </div>
   );
 };

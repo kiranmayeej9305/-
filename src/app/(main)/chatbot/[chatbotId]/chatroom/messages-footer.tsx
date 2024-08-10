@@ -1,92 +1,52 @@
-'use client';
-
-import { useState, useEffect, useRef } from 'react';
-import { pusherClient } from '@/lib/utils';
+import React, { useState, useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
-import {
-  createMessageInChatRoom,
-  getChatMessages,
-  createOrFetchChatRoom,
-  endChatRoomSession,
-} from '@/lib/queries';
+import { createMessageInChatRoom } from '@/lib/queries';
 
-interface ChatRoomProps {
-  chatbotId: string;
-  customerId: string;
-}
-
-const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, customerId }) => {
-  const { setChatRoom, setChats, chatRoom, chats } = useChatContext();
+export default function MessagesFooter() {
+  const { chatRoom, setChats } = useChatContext();
   const [newMessage, setNewMessage] = useState('');
-  const messageWindowRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const initializeChatRoom = async () => {
-      try {
-        const chatRoomData = await createOrFetchChatRoom(chatbotId, customerId, true);
-        setChatRoom(chatRoomData.id);
-        setChats(chatRoomData.ChatMessages || []);
-
-        const channel = pusherClient.subscribe(`chat-room-${chatRoomData.id}`);
-        channel.bind('new-message', (data: any) => {
-          setChats((prevMessages) => [...prevMessages, data]);
-        });
-
-        return () => {
-          pusherClient.unsubscribe(`chat-room-${chatRoomData.id}`);
-        };
-      } catch (error) {
-        console.error('Error initializing chat room:', error);
-      }
-    };
-
-    initializeChatRoom();
-  }, [chatbotId, customerId, setChatRoom, setChats]);
+  const isSendingRef = useRef(false); // To prevent double sending
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() && chatRoom) {
-      try {
-        const chatMessage = await createMessageInChatRoom(chatRoom, newMessage, 'customer');
-        setChats((prevMessages) => [...prevMessages, chatMessage]);
-        setNewMessage('');
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
+    if (!newMessage.trim() || !chatRoom || isSendingRef.current) return;
+
+    try {
+      isSendingRef.current = true;
+      const chatMessage = await createMessageInChatRoom(chatRoom, newMessage, 'customer');
+      setChats((prevChats) => [...prevChats, chatMessage]);
+
+      // Optionally reset the input field
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      isSendingRef.current = false;
     }
   };
 
-  const handleEndSession = async () => {
-    if (chatRoom) {
-      await endChatRoomSession(chatRoom);
-      setChatRoom(null);
-      setChats([]);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
-
-  useEffect(() => {
-    messageWindowRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chats]);
 
   return (
-    <div className="chat-room">
-      <div className="messages" ref={messageWindowRef}>
-        {chats.map((msg, idx) => (
-          <div key={idx} className={`message ${msg.sender}`}>
-            {msg.message}
-          </div>
-        ))}
-      </div>
+    <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-4 sm:px-6 md:px-5 h-16 flex items-center">
       <input
         type="text"
         value={newMessage}
         onChange={(e) => setNewMessage(e.target.value)}
+        onKeyPress={handleKeyPress}
+        className="flex-grow p-2 border border-gray-300 dark:border-gray-700 rounded-md"
         placeholder="Type your message..."
-        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
       />
-      <button onClick={handleSendMessage}>Send</button>
-      <button onClick={handleEndSession}>End Chat</button>
+      <button
+        onClick={handleSendMessage}
+        className="ml-3 p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md"
+      >
+        Send
+      </button>
     </div>
   );
-};
-
-export default ChatRoom;
+}

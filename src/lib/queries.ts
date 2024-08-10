@@ -1,7 +1,7 @@
 'use server'
 
 import { clerkClient, currentUser } from '@clerk/nextjs'
-import { pusherClient } from './utils';
+import { pusherClient, pusherServer } from './utils';
 import { db } from './db'
 import { redirect } from 'next/navigation'
 import {
@@ -24,6 +24,10 @@ import {
 } from './types'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import OpenAi from 'openai'
+const openai = new OpenAi({
+  apiKey: process.env.OPEN_AI_KEY,
+});
 
 export const getAuthUserDetails = async () => {
   const user = await currentUser()
@@ -1157,7 +1161,7 @@ export const upsertAndFetchChatbotData = async (chatbotData, settingsData, isCre
     await upsertChatbotSettings(chatbotId, settingsData);
     
     // Optionally create a Pusher channel for this chatbot's chat rooms
-    pusher.trigger('chatbots', 'chatbot-created', { chatbotId, name: chatbotData.name });
+    pusherServer.trigger('chatbots', 'chatbot-created', { chatbotId, name: chatbotData.name });
 
     const fullChatbotData = await fetchChatbotData(chatbotId);
     return fullChatbotData;
@@ -1523,40 +1527,57 @@ export const createMessageInChatRoom = async (
       sender: sender,
     },
   });
-// Broadcast the message to Pusher
-pusherClient.trigger(`chatroom-${chatRoomId}`, 'new-message', {
-  message: chatMessage.message,
-  role: chatMessage.sender,
-  createdAt: chatMessage.createdAt,
-});
 
-// If the message is from the user, generate an AI response
-if (sender === 'customer') {
-  const aiResponse = await openai.createCompletion({
-    model: 'text-davinci-003',
-    prompt: message,
-    max_tokens: 150,
+  // Trigger the message event via Pusher
+  pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
+    id: chatMessage.id,
+    message: chatMessage.message,
+    sender: chatMessage.sender,
+    createdAt: chatMessage.createdAt,
   });
 
-  const aiMessage = aiResponse.data.choices[0].text.trim();
+  if (sender === 'customer') {
+    try {
+      const aiResponse = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant.',
+          },
+          {
+            role: 'user',
+            content: message,
+          },
+        ],
+      });
 
-  const aiChatMessage = await prisma.chatMessage.create({
-    data: {
-      chatRoomId,
-      message: aiMessage,
-      sender: 'assistant',
-    },
-  });
+      const aiMessage = aiResponse.choices[0].message?.content?.trim();
 
-  pusherClient.trigger(`chatroom-${chatRoomId}`, 'new-message', {
-    message: aiChatMessage.message,
-    role: aiChatMessage.sender,
-    createdAt: aiChatMessage.createdAt,
-  });
-}
+      if (aiMessage) {
+        const aiChatMessage = await prisma.chatMessage.create({
+          data: {
+            chatRoomId,
+            message: aiMessage,
+            sender: 'chatbot',
+          },
+        });
 
-return chatMessage;
+        pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
+          id: aiChatMessage.id,
+          message: aiChatMessage.message,
+          sender: aiChatMessage.sender,
+          createdAt: aiChatMessage.createdAt,
+        });
+      }
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+    }
+  }
+
+  return chatMessage;
 };
+
 
 export const updateMessagesToSeen = async (chatRoomId: string) => {
   return await prisma.chatMessage.updateMany({
@@ -1627,3 +1648,47 @@ export const endChatRoomSession = async (chatRoomId: string) => {
     data: { live: false },
   });
 };
+export async function sendMessageToChatGPT(message: string) {
+  // Simulate sending message to ChatGPT and receiving a response
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        id: Date.now().toString(),
+        message: `ChatGPT response to: "${message}"`,
+        createdAt: new Date().toISOString(),
+        sender: 'chatbot',
+      });
+    }, 1000);
+  });
+}
+
+export async function createCustomerAndChatRoom(chatbotId: string) {
+  const customerName = `Playground - ${chatbotId}`;
+  const mockCustomerId = chatbotId; // Using chatbotId as customerId for easy retrieval
+  const mockChatRoomId = chatbotId; // Using chatbotId as chatRoomId for easy retrieval
+
+  const customer = await prisma.customer.upsert({
+    where: { id: mockCustomerId },
+    update: {},
+    create: {
+      id: mockCustomerId,
+      name: customerName,
+      email: `$test@playground.com`,
+      chatbotId, // Assuming each customer is linked to a chatbot
+    },
+  });
+
+  const chatRoom = await prisma.chatRoom.upsert({
+    where: { id: mockChatRoomId },
+    update: {},
+    create: {
+      id: mockChatRoomId,
+      chatbotId,
+      customerId: customer.id,
+      live: true,
+      mailed: false,
+    },
+  });
+
+  return { customerId: customer.id, chatRoomId: chatRoom.id };
+}

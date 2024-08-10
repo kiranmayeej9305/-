@@ -1,30 +1,26 @@
-// components/messages-chat.tsx
 'use client';
 
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
 import { pusherClient } from '@/lib/utils';
+
 export default function MessagesChat() {
-  const { chats, setChats, chatRoom, setChatRoom } = useChatContext();
+  const { chats, setChats, chatRoom } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chatRoom) return;
 
-    const channel = pusherClient.subscribe(`chat-room-${chatRoom}`);
-
+    const channel = pusherClient.subscribe(`chatroom-${chatRoom}`);
+    
     channel.bind('new-message', (data: any) => {
       setChats((prevChats) => [...prevChats, data]);
-    });
-
-    channel.bind('live-agent-assigned', (data: any) => {
-      // Handle the UI change to show that a live agent has been assigned
-      console.log(`Live agent ${data.agentName} has joined the chat.`);
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     });
 
     return () => {
-      pusherClient.unsubscribe(`chat-room-${chatRoom}`);
+      pusherClient.unsubscribe(`chatroom-${chatRoom}`);
     };
   }, [chatRoom, setChats]);
 
@@ -33,7 +29,7 @@ export default function MessagesChat() {
   }, [chats]);
 
   return (
-    <div className="grow px-4 sm:px-6 md:px-5 py-6 overflow-y-auto">
+    <div className="grow px-4 sm:px-6 md:px-5 py-6 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
       {chats.length > 0 ? (
         chats.map((chat, index) => (
           <div key={index} className="flex items-start mb-4 last:mb-0">
@@ -41,7 +37,7 @@ export default function MessagesChat() {
           </div>
         ))
       ) : (
-        <p>No messages yet.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center">No messages yet.</p>
       )}
       <div ref={messagesEndRef} aria-hidden="true" />
     </div>

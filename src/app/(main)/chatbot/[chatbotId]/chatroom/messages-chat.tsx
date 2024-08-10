@@ -10,33 +10,38 @@ export default function MessagesChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log("Current chatRoom:", chatRoom);
+    console.log("Initial chats:", chats);
+
     if (!chatRoom) return;
 
-    const channel = pusherClient.subscribe(`chat-room-${chatRoom}`);
+    const channel = pusherClient.subscribe(`chatroom-${chatRoom}`);
+    console.log(`Subscribed to Pusher channel: chatroom-${chatRoom}`);
 
     channel.bind('new-message', (data: any) => {
+      console.log("New message received:", data);
       setChats((prevChats) => [...prevChats, data]);
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     });
 
     return () => {
-      pusherClient.unsubscribe(`chat-room-${chatRoom}`);
+      console.log(`Unsubscribing from Pusher channel: chatroom-${chatRoom}`);
+      pusherClient.unsubscribe(`chatroom-${chatRoom}`);
     };
   }, [chatRoom, setChats]);
 
   useEffect(() => {
+    console.log("Updated chats:", chats);
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chats]);
 
   return (
-    <div className="flex flex-col-reverse px-4 py-6 bg-white dark:bg-gray-900 overflow-y-auto">
+    <div className="grow px-4 sm:px-6 md:px-5 py-6 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
       {chats.length > 0 ? (
-        chats.map((chat) => (
-          <Bubble
-            key={chat.id}
-            message={chat.message}
-            createdAt={new Date(chat.createdAt)}
-            sender={chat.sender}
-          />
+        chats.map((chat, index) => (
+          <div key={index} className="flex items-start mb-4 last:mb-0">
+            <Bubble message={chat.message} createdAt={new Date(chat.createdAt)} sender={chat.sender} />
+          </div>
         ))
       ) : (
         <p className="text-gray-500 dark:text-gray-400 text-center">No messages yet.</p>
