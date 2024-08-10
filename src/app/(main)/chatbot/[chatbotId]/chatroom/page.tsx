@@ -1,4 +1,6 @@
 // pages/chatbot/[chatbotId]/chatroom/page.tsx
+'use client';
+
 import { ChatProvider } from '@/context/use-chat-context';
 import ChatRoom from './chat-room';
 

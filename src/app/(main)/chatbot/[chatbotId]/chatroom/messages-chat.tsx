@@ -28,15 +28,18 @@ export default function MessagesChat() {
   }, [chats]);
 
   return (
-    <div className="grow px-4 sm:px-6 md:px-5 py-6 overflow-y-auto">
+    <div className="flex flex-col-reverse px-4 py-6 bg-white dark:bg-gray-900 overflow-y-auto">
       {chats.length > 0 ? (
-        chats.map((chat, index) => (
-          <div key={index} className="flex items-start mb-4 last:mb-0">
-            <Bubble message={chat.message} createdAt={chat.createdAt} sender={chat.sender} />
-          </div>
+        chats.map((chat) => (
+          <Bubble
+            key={chat.id}
+            message={chat.message}
+            createdAt={new Date(chat.createdAt)}
+            sender={chat.sender}
+          />
         ))
       ) : (
-        <p>No messages yet.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center">No messages yet.</p>
       )}
       <div ref={messagesEndRef} aria-hidden="true" />
     </div>
