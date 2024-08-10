@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
+
+import React, { useState, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import { createMessageInChatRoom } from '@/lib/queries';
 
 export default function MessagesFooter() {
-  const { chatRoom, setChats } = useChatContext();
+  const { chatRoom } = useChatContext();
   const [newMessage, setNewMessage] = useState('');
   const isSendingRef = useRef(false); // To prevent double sending
 
@@ -12,11 +14,8 @@ export default function MessagesFooter() {
 
     try {
       isSendingRef.current = true;
-      const chatMessage = await createMessageInChatRoom(chatRoom, newMessage, 'customer');
-      setChats((prevChats) => [...prevChats, chatMessage]);
-
-      // Optionally reset the input field
-      setNewMessage('');
+      await createMessageInChatRoom(chatRoom, newMessage, 'customer');
+      setNewMessage(''); // Reset input after sending
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {

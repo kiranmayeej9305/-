@@ -149,7 +149,7 @@ const MenuOptions = ({
             </PopoverTrigger>
             <PopoverContent className="w-80 h-80 mt-4 z-[200]">
               <Command className="rounded-lg">
-                <CommandInput placeholder="Search Accounts..." />
+                <CommandInput placeholder="Search Chatbots..." />
                 <CommandList className="pb-16">
                   <CommandEmpty> No results found</CommandEmpty>
                   {(user?.role === 'ACCOUNT_OWNER' || user?.role === 'ACCOUNT_ADMIN') &&
@@ -182,7 +182,7 @@ const MenuOptions = ({
                         </CommandItem>
                       </CommandGroup>
                     )}
-                  <CommandGroup heading="Accounts">
+                  <CommandGroup heading="Chatbots">
                     {!!chatbots
                       ? chatbots.map((chatbot) => (
                           <CommandItem key={chatbot.id}>
@@ -203,7 +203,7 @@ const MenuOptions = ({
                             )}
                           </CommandItem>
                         ))
-                      : 'No Accounts'}
+                      : 'No Chatbots'}
                   </CommandGroup>
                 </CommandList>
                 {(user?.role === 'ACCOUNT_OWNER' || user?.role === 'ACCOUNT_ADMIN') && (

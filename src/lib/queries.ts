@@ -22,7 +22,6 @@ import {
   CreateMediaType,
   UpsertFunnelPage,
 } from './types'
-import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import OpenAi from 'openai'
 const openai = new OpenAi({
@@ -176,7 +175,7 @@ export const verifyAndAcceptInvitation = async () => {
     })
 
     if (userDetails) {
-      await clerkprisma.users.updateUserMetadata(user.id, {
+      await clerkClient.users.updateUserMetadata(user.id, {
         privateMetadata: {
           role: userDetails.role || 'CHATBOT_USER',
         },
@@ -232,7 +231,7 @@ export const initUser = async (newUser: Partial<User>) => {
     },
   })
 
-  await clerkprisma.users.updateUserMetadata(user.id, {
+  await clerkClient.users.updateUserMetadata(user.id, {
     privateMetadata: {
       role: newUser.role || 'CHATBOT_USER',
     },
@@ -288,16 +287,7 @@ export const upsertAccount = async (account: Account, price?: Plan) => {
 
       // Create submenu options
       await db.accountSidebarOption.createMany({
-        data: [
-          {
-            name: 'Submenu Example',
-            icon: 'settings',
-            link: `/account/${accountId}/submenu`,
-            isSubmenu: true,
-            parentId: parentIds[0], // Assuming the first parent ID is the parent for this submenu
-            accountId,
-          },
-        ],
+        data: [],
       });
     }
 
@@ -368,7 +358,7 @@ export const updateUser = async (user: Partial<User>) => {
     data: { ...user },
   })
 
-  await clerkprisma.users.updateUserMetadata(response.id, {
+  await clerkClient.users.updateUserMetadata(response.id, {
     privateMetadata: {
       role: user.role || 'CHATBOT_USER',
     },
@@ -418,7 +408,7 @@ export const deleteChatbot = async (chatbotId: string) => {
 }
 
 export const deleteUser = async (userId: string) => {
-  await clerkprisma.users.updateUserMetadata(userId, {
+  await clerkClient.users.updateUserMetadata(userId, {
     privateMetadata: {
       role: undefined,
     },
@@ -448,7 +438,7 @@ export const sendInvitation = async (
   })
 
   try {
-    const invitation = await clerkprisma.invitations.createInvitation({
+    const invitation = await clerkClient.invitations.createInvitation({
       emailAddress: email,
       redirectUrl: process.env.NEXT_PUBLIC_URL,
       publicMetadata: {
@@ -1662,7 +1652,7 @@ export async function sendMessageToChatGPT(message: string) {
   });
 }
 
-export async function createCustomerAndChatRoom(chatbotId: string) {
+export const createCustomerAndChatRoom = async (chatbotId: string) => {
   const customerName = `Playground - ${chatbotId}`;
   const mockCustomerId = chatbotId; // Using chatbotId as customerId for easy retrieval
   const mockChatRoomId = chatbotId; // Using chatbotId as chatRoomId for easy retrieval
@@ -1691,4 +1681,28 @@ export async function createCustomerAndChatRoom(chatbotId: string) {
   });
 
   return { customerId: customer.id, chatRoomId: chatRoom.id };
-}
+};
+export const updateChatbotStatus = async (chatbotId, isPublic) => {
+  try {
+    await prisma.chatbot.update({
+      where: { id: chatbotId },
+      data: { isPublic },
+    });
+    console.log(`Chatbot status updated to ${isPublic ? 'public' : 'private'}`);
+  } catch (error) {
+    console.error('Error updating chatbot status:', error);
+  }
+};
+
+export const fetchChatbotStatus = async (chatbotId) => {
+  try {
+    const chatbot = await prisma.chatbot.findUnique({
+      where: { id: chatbotId },
+      select: { isPublic: true },
+    });
+    return chatbot ? chatbot.isPublic : false;
+  } catch (error) {
+    console.error('Error fetching chatbot status:', error);
+    return null;
+  }
+};

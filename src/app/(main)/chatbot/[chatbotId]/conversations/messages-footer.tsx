@@ -5,20 +5,28 @@ import { useForm } from 'react-hook-form';
 import { useChatContext } from '@/context/use-chat-context';
 import { createMessageInChatRoom } from '@/lib/queries';
 import { Send } from 'lucide-react';
+import { useRef } from 'react';
 
 export default function MessagesFooter() {
-  const { chatRoom, setChats, setLoading } = useChatContext();
+  const { chatRoom, setLoading } = useChatContext(); // Remove setChats from here
   const { register, handleSubmit, reset } = useForm();
+  const isSendingRef = useRef(false); // To prevent double sending
 
   const onHandleSentMessage = handleSubmit(async (data) => {
-    if (!chatRoom) return;
-    setLoading(true);
-    const message = await createMessageInChatRoom(chatRoom, data.content, 'user');
-    if (message) {
-      setChats((prev) => [...prev, message]);
-      reset();
+    if (!chatRoom || isSendingRef.current) return;
+
+    try {
+      setLoading(true);
+      isSendingRef.current = true;
+
+      await createMessageInChatRoom(chatRoom, data.content, 'user'); // Do not directly set chats here
+      reset(); // Clear the input after sending
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setLoading(false);
+      isSendingRef.current = false;
     }
-    setLoading(false);
   });
 
   return (

@@ -180,6 +180,7 @@ model Chatbot {
   TrainingHistories   TrainingHistory[]
   ChatbotSettings     ChatbotSettings?
   ChatRooms ChatRoom[]
+  isPublic            Boolean                   @default(false)
   @@index([accountId])
 }
 
