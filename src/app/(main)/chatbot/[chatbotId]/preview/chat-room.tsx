@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createCustomerAndChatRoom, getChatMessages, createMessageInChatRoom, fetchChatRoomByChatbotId } from '@/lib/queries';
 import { useChatContext } from '@/context/use-chat-context';
 import MessagesBody from './messages-body';
-import { pusherClient } from '@/lib/utils';
+import { createCustomerAndChatRoom, getChatMessages, createMessageInChatRoom } from '@/lib/queries';
 
 interface ChatRoomProps {
   chatbotId: string;
@@ -12,7 +11,7 @@ interface ChatRoomProps {
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
-  const { setChatRoom, setChats, setLoading, chatRoom, isIframe } = useChatContext();
+  const { setChatRoom, setChats, setLoading, chatRoom, pusher } = useChatContext();
   const messageWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,6 +23,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
           const existingChatRoom = await fetchChatRoomByChatbotId(chatbotId);
 
           if (existingChatRoom) {
+            console.log('ChatRoom: Using existing chatroom');
             setChatRoom(existingChatRoom.id);
             setChats(existingChatRoom.ChatMessages || []);
           }
@@ -31,35 +31,50 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
 
         setLoading(false);
 
-        if (chatRoom) {
-          const channel = pusherClient.subscribe(`chat-room-${chatRoom}`);
+        if (chatRoom && pusher) {
+          const channel = pusher.subscribe(`chat-room-${chatRoom}`);
           channel.bind('new-message', (data: any) => {
-            setChats((prevChats) => [...prevChats, data]);
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            console.log('ChatRoom: Received new message from Pusher:', data);
+            setChats((prevChats) => {
+              const messageExists = prevChats.some(chat => chat.id === data.id);
+              if (!messageExists) {
+                console.log('ChatRoom: Adding new message to chat:', data);
+                return [...prevChats, data];
+              }
+              console.warn('ChatRoom: Duplicate message ignored:', data);
+              return prevChats;
+            });
+
+            // Scroll to the latest message
+            messageWindowRef.current?.scrollIntoView({ behavior: 'smooth' });
           });
 
           return () => {
-            pusherClient.unsubscribe(`chat-room-${chatRoom}`);
+            console.log('ChatRoom: Unsubscribing from Pusher channel');
+            channel.unbind('new-message');
+            pusher.unsubscribe(`chat-room-${chatRoom}`);
           };
         }
       } catch (error) {
-        console.error('Error initializing chat room:', error);
+        console.error('ChatRoom: Error initializing chat room:', error);
         setLoading(false);
       }
     };
 
     initializeChatRoom();
-  }, [chatbotId, setChatRoom, setChats, setLoading, isIframe, isPlayground, chatRoom]);
+  }, [chatbotId, setChatRoom, setChats, setLoading, chatRoom, pusher]);
 
   const handleSendMessage = async (newMessage: string) => {
     if (!newMessage.trim()) return;
 
+    console.log('ChatRoom: Sending message:', newMessage);
     try {
       setLoading(true);
 
       let currentChatRoom = chatRoom;
 
       if (!currentChatRoom) {
+        console.log('ChatRoom: Creating new chat room');
         const { chatRoomId } = await createCustomerAndChatRoom(chatbotId, isPlayground);
         setChatRoom(chatRoomId);
         currentChatRoom = chatRoomId;
@@ -69,14 +84,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
       }
 
       if (currentChatRoom) {
-        const chatMessage = await createMessageInChatRoom(currentChatRoom, newMessage, 'customer');
-        setChats((prevChats) => [...prevChats, chatMessage]);
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        await createMessageInChatRoom(currentChatRoom, newMessage, 'customer');
+        // Do not update the chat context here, as Pusher will handle it
       }
 
       setLoading(false);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('ChatRoom: Error sending message:', error);
       setLoading(false);
     }
   };

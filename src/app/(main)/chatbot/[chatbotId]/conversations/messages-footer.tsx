@@ -19,7 +19,7 @@ export default function MessagesFooter() {
       setLoading(true);
       isSendingRef.current = true;
 
-      await createMessageInChatRoom(chatRoom, data.content, 'user'); // Do not directly set chats here
+      await createMessageInChatRoom(chatRoom, data.content, 'customer'); // Do not directly set chats here
       reset(); // Clear the input after sending
     } catch (error) {
       console.error('Error sending message:', error);

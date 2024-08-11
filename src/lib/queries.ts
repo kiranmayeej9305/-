@@ -1510,6 +1510,8 @@ export const createMessageInChatRoom = async (
   message: string,
   sender: 'customer' | 'user' | 'chatbot'
 ) => {
+  console.log(`Creating message in chatRoom: ${chatRoomId} | Message: ${message} | Sender: ${sender}`);
+
   const chatMessage = await prisma.chatMessage.create({
     data: {
       chatRoomId,
@@ -1517,6 +1519,8 @@ export const createMessageInChatRoom = async (
       sender: sender,
     },
   });
+
+  console.log('Message created in database:', chatMessage);
 
   // Trigger the message event via Pusher
   pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
@@ -1526,8 +1530,11 @@ export const createMessageInChatRoom = async (
     createdAt: chatMessage.createdAt,
   });
 
+  console.log('Pusher event triggered for new message:', chatMessage);
+
   if (sender === 'customer') {
     try {
+      console.log('Generating AI response...');
       const aiResponse = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
@@ -1553,6 +1560,9 @@ export const createMessageInChatRoom = async (
           },
         });
 
+        console.log('AI response created and sent:', aiChatMessage);
+
+        // Send AI response via Pusher
         pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
           id: aiChatMessage.id,
           message: aiChatMessage.message,
@@ -1567,7 +1577,6 @@ export const createMessageInChatRoom = async (
 
   return chatMessage;
 };
-
 
 export const updateMessagesToSeen = async (chatRoomId: string) => {
   return await prisma.chatMessage.updateMany({

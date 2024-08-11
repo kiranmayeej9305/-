@@ -12,7 +12,6 @@ interface MessagesBodyProps {
 }
 
 export default function MessagesBody({ onSendMessage, isPublic = false }: MessagesBodyProps) {
-  const { chatRoom } = useChatContext();
 
   return (
     <div className="flex flex-col items-center h-full md:translate-x-0 transition-transform duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-md">
