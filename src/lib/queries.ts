@@ -1,7 +1,7 @@
 'use server'
 
 import { clerkClient, currentUser } from '@clerk/nextjs'
-import { pusherClient, pusherServer } from './utils';
+import { pusherServer , pusherClient} from '@/lib/pusher';
 import { db } from './db'
 import { redirect } from 'next/navigation'
 import {

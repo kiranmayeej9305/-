@@ -1,9 +1,11 @@
+// components/ChatRoom.tsx
 'use client';
 
+import { pusherClient } from '@/lib/pusher'; 
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import MessagesBody from './messages-body';
-import { createCustomerAndChatRoom, getChatMessages, createMessageInChatRoom } from '@/lib/queries';
+import { createCustomerAndChatRoom, createMessageInChatRoom, fetchChatRoomByChatbotId , getChatMessages} from '@/lib/queries';
 
 interface ChatRoomProps {
   chatbotId: string;
@@ -11,7 +13,7 @@ interface ChatRoomProps {
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
-  const { setChatRoom, setChats, setLoading, chatRoom, pusher } = useChatContext();
+  const { setChatRoom, setChats, setLoading, chatRoom } = useChatContext();
   const messageWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,8 +33,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
 
         setLoading(false);
 
-        if (chatRoom && pusher) {
-          const channel = pusher.subscribe(`chat-room-${chatRoom}`);
+        if (chatRoom ) {
+          const channel = pusherClient.subscribe(`chat-room-${chatRoom}`);
           channel.bind('new-message', (data: any) => {
             console.log('ChatRoom: Received new message from Pusher:', data);
             setChats((prevChats) => {
@@ -52,7 +54,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
           return () => {
             console.log('ChatRoom: Unsubscribing from Pusher channel');
             channel.unbind('new-message');
-            pusher.unsubscribe(`chat-room-${chatRoom}`);
+            pusherClient.unsubscribe(`chat-room-${chatRoom}`);
           };
         }
       } catch (error) {
@@ -62,7 +64,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
     };
 
     initializeChatRoom();
-  }, [chatbotId, setChatRoom, setChats, setLoading, chatRoom, pusher]);
+  }, [chatbotId, setChatRoom, setChats, setLoading, chatRoom]);
 
   const handleSendMessage = async (newMessage: string) => {
     if (!newMessage.trim()) return;

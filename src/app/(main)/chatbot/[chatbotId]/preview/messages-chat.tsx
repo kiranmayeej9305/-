@@ -1,9 +1,11 @@
+// components/MessagesChat.tsx
+
 'use client';
 
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
-import { pusherClient } from '@/lib/utils';
+import { pusherClient } from '@/lib/pusher';
 
 export default function MessagesChat() {
   const { chats, setChats, chatRoom } = useChatContext();
@@ -16,29 +18,17 @@ export default function MessagesChat() {
 
     const channel = pusherClient.subscribe(`chatroom-${chatRoom}`);
 
-    // Track the last message ID to avoid duplicates
-    let lastMessageId: string | null = null;
-
     channel.bind('new-message', (data: any) => {
       console.log('MessagesChat: Received new message from Pusher:', data);
 
-      // Check if the new message is a duplicate by comparing its ID with the last received message ID
-      if (data.id === lastMessageId) {
-        console.warn('MessagesChat: Duplicate message detected and ignored:', data);
-        return;
-      }
-
-      // Update the lastMessageId to the current message's ID
-      lastMessageId = data.id;
-
-      // Add the new message to the chat
+      // Add the new message to the chat only if it doesn't exist
       setChats((prevChats) => {
         const isDuplicate = prevChats.some((chat) => chat.id === data.id);
         if (!isDuplicate) {
           console.log('MessagesChat: Adding new message to chat:', data);
           return [...prevChats, data];
         } else {
-          console.warn('MessagesChat: Duplicate message detected in setChats and ignored:', data);
+          console.warn('MessagesChat: Duplicate message detected and ignored:', data);
           return prevChats;
         }
       });

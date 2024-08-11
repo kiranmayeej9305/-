@@ -2,8 +2,6 @@
 
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import PusherClient from 'pusher-js';
-import PusherServer from 'pusher';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,51 +19,6 @@ export const extractUUIDFromString = (url: string) => {
     /^[0-9a-f]{8}-?[0-9a-f]{4}-?[1-5][0-9a-f]{3}-?[89ab][0-9a-f]{3}-?[0-9a-f]{12}$/i
   );
 };
-
-// Singleton for PusherServer
-class PusherServerSingleton {
-  private static instance: PusherServer | null = null;
-
-  private constructor() {}
-
-  public static getInstance(): PusherServer {
-    if (!PusherServerSingleton.instance) {
-      console.log('Creating new PusherServer instance');
-      PusherServerSingleton.instance = new PusherServer({
-        appId: process.env.NEXT_PUBLIC_PUSHER_APP_ID as string,
-        key: process.env.NEXT_PUBLIC_PUSHER_APP_KEY as string,
-        secret: process.env.NEXT_PUBLIC_PUSHER_APP_SECRET as string,
-        cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTOR as string,
-        useTLS: true,
-      });
-    }
-    return PusherServerSingleton.instance;
-  }
-}
-
-export const pusherServer = PusherServerSingleton.getInstance();
-
-// Singleton for PusherClient
-class PusherClientSingleton {
-  private static instance: PusherClient | null = null;
-
-  private constructor() {}
-
-  public static getInstance(): PusherClient {
-    if (!PusherClientSingleton.instance) {
-      console.log('Creating new PusherClient instance');
-      PusherClientSingleton.instance = new PusherClient(
-        process.env.NEXT_PUBLIC_PUSHER_APP_KEY as string,
-        {
-          cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTOR as string,
-        }
-      );
-    }
-    return PusherClientSingleton.instance;
-  }
-}
-
-export const pusherClient = PusherClientSingleton.getInstance();
 
 export const postToParent = (message: string) => {
   window.parent.postMessage(message, '*');
