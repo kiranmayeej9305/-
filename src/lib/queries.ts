@@ -23,11 +23,11 @@ import {
   UpsertFunnelPage,
 } from './types'
 import { revalidatePath } from 'next/cache'
-import OpenAi from 'openai'
-const openai = new OpenAi({
-  apiKey: process.env.OPEN_AI_KEY,
-});
-
+import { prepareChatResponse } from './openai'
+import { downloadFromBackblaze, uploadToBackblaze } from './backblaze';
+import { loadAndSplitPDF } from './langchain';
+import { generateEmbeddings } from './embedding';
+import { upsertVectors } from './pinecone';
 export const getAuthUserDetails = async () => {
   const user = await currentUser()
   if (!user) {
@@ -860,29 +860,7 @@ export const getDomainContent = async (subDomainName: string) => {
   })
   return response
 }
-export const createTraining = async (chatbotId: string, data: any) => {
-  const { type, content, fileName, websiteUrl, question, answer } = data
-  const user = await currentUser()
 
-  if (!user) {
-    throw new Error('User not authenticated')
-  }
-
-  const trainingHistory = await db.trainingHistory.create({
-    data: {
-      sourceType: type,
-      content,
-      fileName,
-      websiteUrl,
-      question,
-      answer,
-      chatbotId,
-      userId: user.id,
-    },
-  })
-
-  return trainingHistory
-}
 export const getChatbotTrainingsByType = async (chatbotId: string, type: string) => {
   return await db.trainingHistory.findMany({
     where: {
@@ -1510,9 +1488,7 @@ export const createMessageInChatRoom = async (
   message: string,
   sender: 'customer' | 'user' | 'chatbot'
 ) => {
-  console.log(`Creating message in chatRoom: ${chatRoomId} | Message: ${message} | Sender: ${sender}`);
-
-  const chatMessage = await prisma.chatMessage.create({
+  const chatMessage = await db.chatMessage.create({
     data: {
       chatRoomId,
       message,
@@ -1520,9 +1496,17 @@ export const createMessageInChatRoom = async (
     },
   });
 
-  console.log('Message created in database:', chatMessage);
+  // Save to training history if the sender is a customer or user
+  if (sender === 'customer' || sender === 'user') {
+    await createTraining(chatRoomId, {
+      type: 'chat',
+      content: message,
+      chatbotId: chatRoomId,
+      userId: sender === 'customer' ? 'anonymous' : sender, // Use proper user ID for logged-in users
+    });
+  }
 
-  // Trigger the message event via Pusher
+  // Trigger the message event via Pusher or any other event system
   pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
     id: chatMessage.id,
     message: chatMessage.message,
@@ -1530,53 +1514,17 @@ export const createMessageInChatRoom = async (
     createdAt: chatMessage.createdAt,
   });
 
-  console.log('Pusher event triggered for new message:', chatMessage);
-
+  // Optionally generate an AI response if the sender is a customer
   if (sender === 'customer') {
-    try {
-      console.log('Generating AI response...');
-      const aiResponse = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant.',
-          },
-          {
-            role: 'user',
-            content: message,
-          },
-        ],
-      });
-
-      const aiMessage = aiResponse.choices[0].message?.content?.trim();
-
-      if (aiMessage) {
-        const aiChatMessage = await prisma.chatMessage.create({
-          data: {
-            chatRoomId,
-            message: aiMessage,
-            sender: 'chatbot',
-          },
-        });
-
-        console.log('AI response created and sent:', aiChatMessage);
-
-        // Send AI response via Pusher
-        pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
-          id: aiChatMessage.id,
-          message: aiChatMessage.message,
-          sender: aiChatMessage.sender,
-          createdAt: aiChatMessage.createdAt,
-        });
-      }
-    } catch (error) {
-      console.error('Error generating AI response:', error);
+    const aiResponse = await prepareChatResponse(message);
+    if (aiResponse) {
+      await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
     }
   }
 
   return chatMessage;
 };
+
 
 export const updateMessagesToSeen = async (chatRoomId: string) => {
   return await prisma.chatMessage.updateMany({
@@ -1742,3 +1690,65 @@ export const fetchChatRoomByChatbotId = async (chatbotId: string) => {
 
   return chatRoom;
 };
+
+export const createTraining = async (chatbotId: string, data: any) => {
+  const { type, content, fileName, websiteUrl, question, answer } = data;
+  const user = await currentUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  // Save the training data to the history table
+  const trainingHistory = await db.trainingHistory.create({
+    data: {
+      sourceType: type,
+      content,
+      fileName,
+      websiteUrl,
+      question,
+      answer,
+      chatbotId,
+      userId: user.id,
+    },
+  });
+
+  // Handle different types of training data (e.g., uploading files, scraping websites)
+  if (type === 'file' && fileName) {
+    await uploadFileToStorage(fileName); // Implement this function to handle file uploads
+  } else if (type === 'website' && websiteUrl) {
+    await scrapeWebsiteData(websiteUrl); // Implement this function to handle web scraping
+  }
+
+  return trainingHistory;
+};
+
+
+export async function trainChatbot(chatbotId: string, file: File) {
+  const fileKey = await uploadToBackblaze(file);
+  const fileName = await downloadFromBackblaze(fileKey);
+  const documents = await loadAndSplitPDF(fileName);
+
+  const vectors = await Promise.all(
+    documents.map(async (doc) => {
+      const embedding = await generateEmbeddings(doc.pageContent);
+      return {
+        id: doc.metadata.pageNumber,
+        values: embedding,
+        metadata: doc.metadata,
+      };
+    })
+  );
+
+  await upsertVectors(vectors, chatbotId);
+
+  await createTraining(chatbotId, { type: 'file', fileName: fileKey });
+}
+
+function uploadFileToStorage(fileName: any) {
+  throw new Error('Function not implemented.');
+}
+function scrapeWebsiteData(websiteUrl: any) {
+  throw new Error('Function not implemented.');
+}
+

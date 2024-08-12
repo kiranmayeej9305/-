@@ -57,3 +57,7 @@ export const getMonthName = (month: number) => {
     ? 'Nov'
     : month === 12 && 'Dec';
 };
+export function truncateStringByBytes(str: string, bytes: number): string {
+  const enc = new TextEncoder();
+  return new TextDecoder("utf-8").decode(enc.encode(str).slice(0, bytes));
+}
