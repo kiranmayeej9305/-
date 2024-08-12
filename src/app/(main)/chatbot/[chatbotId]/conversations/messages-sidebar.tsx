@@ -1,4 +1,3 @@
-// components/messages-sidebar.tsx
 'use client';
 
 import { useEffect, useState } from 'react';

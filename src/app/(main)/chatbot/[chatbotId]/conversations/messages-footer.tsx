@@ -1,4 +1,3 @@
-// components/messages-footer.tsx
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -8,9 +7,9 @@ import { Send } from 'lucide-react';
 import { useRef } from 'react';
 
 export default function MessagesFooter() {
-  const { chatRoom, setLoading } = useChatContext(); // Remove setChats from here
+  const { chatRoom, setLoading } = useChatContext();
   const { register, handleSubmit, reset } = useForm();
-  const isSendingRef = useRef(false); // To prevent double sending
+  const isSendingRef = useRef(false);
 
   const onHandleSentMessage = handleSubmit(async (data) => {
     if (!chatRoom || isSendingRef.current) return;
@@ -19,8 +18,8 @@ export default function MessagesFooter() {
       setLoading(true);
       isSendingRef.current = true;
 
-      await createMessageInChatRoom(chatRoom, data.content, 'customer'); // Do not directly set chats here
-      reset(); // Clear the input after sending
+      await createMessageInChatRoom(chatRoom, data.content, 'customer');
+      reset();
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
