@@ -1724,31 +1724,4 @@ export const createTraining = async (chatbotId: string, data: any) => {
 };
 
 
-export async function trainChatbot(chatbotId: string, file: File) {
-  const fileKey = await uploadToBackblaze(file);
-  const fileName = await downloadFromBackblaze(fileKey);
-  const documents = await loadAndSplitPDF(fileName);
-
-  const vectors = await Promise.all(
-    documents.map(async (doc) => {
-      const embedding = await generateEmbeddings(doc.pageContent);
-      return {
-        id: doc.metadata.pageNumber,
-        values: embedding,
-        metadata: doc.metadata,
-      };
-    })
-  );
-
-  await upsertVectors(vectors, chatbotId);
-
-  await createTraining(chatbotId, { type: 'file', fileName: fileKey });
-}
-
-function uploadFileToStorage(fileName: any) {
-  throw new Error('Function not implemented.');
-}
-function scrapeWebsiteData(websiteUrl: any) {
-  throw new Error('Function not implemented.');
-}
 

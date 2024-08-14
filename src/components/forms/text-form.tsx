@@ -1,44 +1,32 @@
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Plus, Trash2 } from 'lucide-react'
+// components/forms/TextForm.tsx
+import React, { useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 
-const TextForm = ({ chatbotId, onFormChange }) => {
-  const [texts, setTexts] = useState([''])
+type TextFormProps = {
+  onFormChange: (data: { content: string }, type: string) => void;
+};
 
-  const handleChange = (e, index) => {
-    const newTexts = [...texts]
-    newTexts[index] = e.target.value
-    setTexts(newTexts)
-    onFormChange(newTexts.map(content => ({ content })))
-  }
+const TextForm: React.FC<TextFormProps> = ({ onFormChange }) => {
+  const [text, setText] = useState('');
 
-  const handleAddText = () => {
-    const newTexts = [...texts, '']
-    setTexts(newTexts)
-    onFormChange(newTexts.map(content => ({ content })))
-  }
-
-  const handleRemoveText = (index) => {
-    const newTexts = texts.filter((_, i) => i !== index)
-    setTexts(newTexts)
-    onFormChange(newTexts.map(content => ({ content })))
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setText(newText);
+    onFormChange({ content: newText }, 'text');
+  };
 
   return (
     <div className="space-y-4">
-      {texts.map((text, index) => (
-        <div key={index} className="flex flex-col gap-2">
-          <Textarea
-            value={text}
-            onChange={(e) => handleChange(e, index)}
-            placeholder={`Text ${index + 1}`}
-            className="resize-none h-60"
-          />
-        </div>
-      ))}
+      <div className="flex flex-col gap-2">
+        <Textarea
+          value={text}
+          onChange={handleChange}
+          placeholder="Enter your text here"
+          className="resize-none h-60"
+        />
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default TextForm
+export default TextForm;

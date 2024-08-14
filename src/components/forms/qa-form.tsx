@@ -8,11 +8,11 @@ const QAForm = ({ chatbotId, onFormChange }) => {
   const [qas, setQAs] = useState([{ question: '', answer: '' }])
 
   const handleChange = (e, index, field) => {
-    const newQAs = [...qas]
-    newQAs[index][field] = e.target.value
-    setQAs(newQAs)
-    onFormChange(newQAs)
-  }
+    const newQAs = [...qas];
+    newQAs[index][field] = e.target.value;
+    setQAs(newQAs);
+    onFormChange(newQAs, 'qa');
+  };
 
   const handleAddQA = () => {
     const newQAs = [...qas, { question: '', answer: '' }]

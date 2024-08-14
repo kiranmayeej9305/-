@@ -1,6 +1,7 @@
 // components/forms/TrainingPage.tsx
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import BlurPage from '@/components/global/blur-page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TextForm from '@/components/forms/text-form';
@@ -9,12 +10,12 @@ import QAForm from '@/components/forms/qa-form';
 import WebsiteForm from '@/components/forms/website-form';
 import TrainingHistory from '@/components/forms/training-history-form';
 import { Button } from '@/components/ui/button';
-import React, { useState, useEffect } from 'react';
-import { createTraining, getChatbotTrainingsByType } from '@/lib/queries';
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardContent, CardFooter, CardDescription, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileTextIcon, FileIcon, MessageSquare, GlobeIcon } from 'lucide-react';
 import { useTrainingContext } from '@/context/use-training-context';
+import { trainChatbot } from '@/lib/train-chatbot';
+import { getChatbotTrainingsByType } from '@/lib/queries'; 
 
 const TrainingPage = ({ params }) => {
   const { chatbotId } = params;
@@ -32,27 +33,23 @@ const TrainingPage = ({ params }) => {
   }, [chatbotId, selectedTab]);
 
   const handleTrain = async () => {
-    for (const data of trainData) {
-      await createTraining(chatbotId, data);
-    }
+    const activeData = trainData[0]; // Assuming trainData is an array with one item.
+    await trainChatbot(chatbotId, activeData);
     router.refresh();
   };
 
   const handleFormChange = (data, type) => {
-    const isValid = data.length > 0 && data.every((item) => item.valid !== false);
+    const isValid = data.content && data.content.length > 0;
     setValid(isValid);
+
     setTrainData((prevData) => {
-      const newData = [...prevData.filter((d) => d.type !== type), ...data.map((d) => ({ ...d, type }))];
-      return newData;
+      const newData = prevData.filter((d) => d.type !== type);
+      return [...newData, { ...data, type }];
     });
 
-    // Update summary
     setSummary((prevSummary) => {
       const updatedSummary = { ...prevSummary };
-      updatedSummary[type].count = data.length;
-      if (type === 'text') {
-        updatedSummary[type].chars = data.reduce((acc, curr) => acc + curr.content.length, 0);
-      }
+      updatedSummary[type] = { count: data.content ? data.content.length : 0 }; 
       return updatedSummary;
     });
   };
@@ -90,7 +87,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">Text Input</CardHeader>
                   <CardContent>
-                    <TextForm chatbotId={chatbotId} onFormChange={(data) => handleFormChange(data, 'text')} />
+                    <TextForm onFormChange={handleFormChange} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -98,7 +95,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">File Upload</CardHeader>
                   <CardContent>
-                    <FileForm chatbotId={chatbotId} onFormChange={(data) => handleFormChange(data, 'file')} />
+                    <FileForm onFormChange={handleFormChange} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -106,7 +103,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">Q&A Input</CardHeader>
                   <CardContent>
-                    <QAForm chatbotId={chatbotId} onFormChange={(data) => handleFormChange(data, 'qa')} />
+                    <QAForm onFormChange={handleFormChange} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -114,7 +111,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">Website Input</CardHeader>
                   <CardContent>
-                    <WebsiteForm chatbotId={chatbotId} onFormChange={(data) => handleFormChange(data, 'website')} setValid={setValid} />
+                    <WebsiteForm onFormChange={handleFormChange} setValid={setValid} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -126,23 +123,25 @@ const TrainingPage = ({ params }) => {
               <CardContent className="flex flex-col items-center gap-4">
                 <div className="flex items-center gap-2">
                   <FileTextIcon className="h-6 w-6" />
-                  <span>Text Inputs: {summary.text.count}</span>
+                  <span>Text Inputs: {summary.text?.count || 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FileIcon className="h-6 w-6" />
-                  <span>Files: {summary.file.count}</span>
+                  <span>Files: {summary.file?.count || 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-6 w-6" />
-                  <span>Q&As: {summary.qa.count}</span>
+                  <span>Q&As: {summary.qa?.count || 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <GlobeIcon className="h-6 w-6" />
-                  <span>Websites: {summary.website.count}</span>
+                  <span>Websites: {summary.website?.count || 0}</span>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-center">
-                <Button onClick={handleTrain} className="bg-white text-blue-500 hover:bg-gray-200" disabled={!valid}>Train Chatbot</Button>
+                <Button onClick={handleTrain} className="bg-white text-blue-500 hover:bg-gray-200" disabled={!valid}>
+                  Train Chatbot
+                </Button>
               </CardFooter>
             </Card>
             <Card>

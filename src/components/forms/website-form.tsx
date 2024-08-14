@@ -7,14 +7,13 @@ const WebsiteForm = ({ chatbotId, onFormChange, setValid }) => {
   const [websites, setWebsites] = useState([{ url: '', valid: true }])
 
   const handleChange = (e, index) => {
-    const newWebsites = [...websites]
-    const url = e.target.value
-    const valid = isValidURL(url)
-    newWebsites[index] = { url, valid }
-    setWebsites(newWebsites)
-    onFormChange(newWebsites.map((w) => w.url))
-  }
-
+    const newWebsites = [...websites];
+    const url = e.target.value;
+    const valid = isValidURL(url);
+    newWebsites[index] = { url, valid };
+    setWebsites(newWebsites);
+    onFormChange(newWebsites.map((w) => w.url), 'website');
+  };
   const handleAddWebsite = () => {
     const newWebsites = [...websites, { url: '', valid: true }]
     setWebsites(newWebsites)
