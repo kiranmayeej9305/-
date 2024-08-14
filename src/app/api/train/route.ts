@@ -1,7 +1,7 @@
-// src/app/api/train/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { loadS3IntoPinecone, vectorizeText, vectorizeWebsite, vectorizeQA, embedDocument, upsertVectors } from '@/lib/pinecone';
 import { uploadToS3 } from '@/lib/b2-upload';
+import { createTrainingHistory } from '@/lib/queries'; // Import your createTraining function
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,19 +15,22 @@ export async function POST(req: NextRequest) {
 
     if (type === 'file' && file) {
       const uploadResult = await uploadToS3(file);
-      await loadS3IntoPinecone(uploadResult.file_key);
+      await loadS3IntoPinecone(uploadResult.file_key, chatbotId); // Updated to pass chatbotId
     } else if (type === 'text') {
-      const documents = await vectorizeText(content); // Ensure content is a string
+      const documents = await vectorizeText(content, chatbotId); // Updated to pass chatbotId
       await upsertVectorsToPinecone(documents, chatbotId);
     } else if (type === 'website') {
-      const documents = await vectorizeWebsite(content);
+      const documents = await vectorizeWebsite(content, chatbotId); // Updated to pass chatbotId
       await upsertVectorsToPinecone(documents, chatbotId);
     } else if (type === 'qa') {
-      const documents = await vectorizeQA(content);
+      const documents = await vectorizeQA(content, chatbotId); // Updated to pass chatbotId
       await upsertVectorsToPinecone(documents, chatbotId);
     } else {
       return NextResponse.json({ message: 'Invalid training data type' }, { status: 400 });
     }
+
+    // After training, save the data to the history
+    await createTrainingHistory(chatbotId, trainData);
 
     return NextResponse.json({ message: 'Training complete' }, { status: 200 });
   } catch (error) {

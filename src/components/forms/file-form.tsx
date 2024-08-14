@@ -1,17 +1,16 @@
+// components/forms/FileForm.tsx
 'use client';
 
 import React from 'react';
-import FileUpload from '../global/file-upload-backblaze'
+import FileUpload from '../global/file-upload-backblaze';
 
-type FileFormProps = {
-  chatbotId: string;
-  onFormChange: (data: any, type: string) => void;
-};
+const FileForm = ({ onFormChange, setValid }) => {
+  const handleFileSelect = (file) => {
+    const isValid = !!file;
+    setValid(isValid);
 
-const FileForm = ({ chatbotId, onFormChange }: FileFormProps) => {
-  const handleFileChange = (fileUrl?: string) => {
-    if (fileUrl) {
-      onFormChange([{ type: 'file', fileName: fileUrl.split('/').pop(), content: fileUrl }], 'file');
+    if (file) {
+      onFormChange([{ type: 'file', fileName: file.name, content: file }], 'file');
     } else {
       onFormChange([], 'file');
     }
@@ -19,7 +18,7 @@ const FileForm = ({ chatbotId, onFormChange }: FileFormProps) => {
 
   return (
     <div>
-      <FileUpload onChange={handleFileChange} />
+      <FileUpload onFileSelect={handleFileSelect} />
     </div>
   );
 };

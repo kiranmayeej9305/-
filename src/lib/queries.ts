@@ -24,10 +24,6 @@ import {
 } from './types'
 import { revalidatePath } from 'next/cache'
 import { prepareChatResponse } from './openai'
-import { downloadFromBackblaze, uploadToBackblaze } from './backblaze';
-import { loadAndSplitPDF } from './langchain';
-import { generateEmbeddings } from './embedding';
-import { upsertVectors } from './pinecone';
 export const getAuthUserDetails = async () => {
   const user = await currentUser()
   if (!user) {
@@ -1488,6 +1484,21 @@ export const createMessageInChatRoom = async (
   message: string,
   sender: 'customer' | 'user' | 'chatbot'
 ) => {
+  const chatRoom = await db.chatRoom.findUnique({
+    where: { id: chatRoomId },
+    include: { Chatbot: true },  // Assuming there's a relation between chatRoom and chatbot
+  });
+
+  if (!chatRoom) {
+    throw new Error("Chat room not found");
+  }
+
+  const chatbotId = chatRoom.chatbotId;
+
+  if (!chatbotId) {
+    throw new Error("Chatbot ID is missing in the chat room");
+  }
+
   const chatMessage = await db.chatMessage.create({
     data: {
       chatRoomId,
@@ -1496,15 +1507,15 @@ export const createMessageInChatRoom = async (
     },
   });
 
-  // Save to training history if the sender is a customer or user
-  if (sender === 'customer' || sender === 'user') {
-    await createTraining(chatRoomId, {
-      type: 'chat',
-      content: message,
-      chatbotId: chatRoomId,
-      userId: sender === 'customer' ? 'anonymous' : sender, // Use proper user ID for logged-in users
-    });
-  }
+  // // Save to training history if the sender is a customer or user
+  // if (sender === 'customer' || sender === 'user') {
+  //   await createTraining(chatRoomId, {
+  //     type: 'chat',
+  //     content: message,
+  //     chatbotId: chatbotId,  // Use the correct chatbotId
+  //     userId: sender === 'customer' ? 'anonymous' : sender, 
+  //   });
+  // }
 
   // Trigger the message event via Pusher or any other event system
   pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
@@ -1516,7 +1527,7 @@ export const createMessageInChatRoom = async (
 
   // Optionally generate an AI response if the sender is a customer
   if (sender === 'customer') {
-    const aiResponse = await prepareChatResponse(message);
+    const aiResponse = await prepareChatResponse(message, chatbotId);
     if (aiResponse) {
       await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
     }
@@ -1524,6 +1535,7 @@ export const createMessageInChatRoom = async (
 
   return chatMessage;
 };
+
 
 
 export const updateMessagesToSeen = async (chatRoomId: string) => {
@@ -1691,7 +1703,7 @@ export const fetchChatRoomByChatbotId = async (chatbotId: string) => {
   return chatRoom;
 };
 
-export const createTraining = async (chatbotId: string, data: any) => {
+export const createTrainingHistory = async (chatbotId: string, data: any) => {
   const { type, content, fileName, websiteUrl, question, answer } = data;
   const user = await currentUser();
 
@@ -1703,7 +1715,7 @@ export const createTraining = async (chatbotId: string, data: any) => {
   const trainingHistory = await db.trainingHistory.create({
     data: {
       sourceType: type,
-      content,
+      undefined,
       fileName,
       websiteUrl,
       question,
@@ -1724,4 +1736,12 @@ export const createTraining = async (chatbotId: string, data: any) => {
 };
 
 
+
+function uploadFileToStorage(fileName: any) {
+  throw new Error('Function not implemented.');
+}
+
+function scrapeWebsiteData(websiteUrl: any) {
+  throw new Error('Function not implemented.');
+}
 

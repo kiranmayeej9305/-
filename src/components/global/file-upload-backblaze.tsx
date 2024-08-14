@@ -1,39 +1,25 @@
 // components/global/FileUpload.tsx
 "use client";
-import { uploadToS3 } from "@/lib/b2-upload";
-import { Inbox, Loader2 } from "lucide-react";
+import { Inbox } from "lucide-react";
 import React, { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "react-hot-toast";
 
-const FileUpload = ({ onUploadComplete }) => {
-  const [uploading, setUploading] = useState(false);
+const FileUpload = ({ onFileSelect }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "application/pdf": [".pdf"] },
     maxFiles: 1,
-    onDrop: async (acceptedFiles) => {
+    onDrop: (acceptedFiles) => {
       const file = acceptedFiles[0];
       if (file.size > 10 * 1024 * 1024) {
         toast.error("File too large");
         return;
       }
 
-      try {
-        setUploading(true);
-        const data = await uploadToS3(file, file.name);
-
-        if (data?.file_key && data.file_name) {
-          toast.success("File uploaded successfully");
-          onUploadComplete(data);
-        } else {
-          toast.error("Failed to upload file");
-        }
-      } catch (error) {
-        toast.error("Error uploading file");
-      } finally {
-        setUploading(false);
-      }
+      setSelectedFile(file);
+      onFileSelect(file);  // Pass the file to the parent component
     },
   });
 
@@ -46,12 +32,9 @@ const FileUpload = ({ onUploadComplete }) => {
         })}
       >
         <input {...getInputProps()} />
-        {uploading ? (
+        {selectedFile ? (
           <>
-            <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
-            <p className="mt-2 text-sm text-slate-400">
-              Uploading...
-            </p>
+            <p className="mt-2 text-sm text-slate-400">{selectedFile.name}</p>
           </>
         ) : (
           <>

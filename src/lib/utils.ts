@@ -61,3 +61,13 @@ export function truncateStringByBytes(str: string, bytes: number): string {
   const enc = new TextEncoder();
   return new TextDecoder("utf-8").decode(enc.encode(str).slice(0, bytes));
 }
+// src/lib/utils.ts
+export function convertToAscii(inputString: string) {
+  if (!inputString || typeof inputString !== 'string') {
+    throw new Error("Invalid input string for convertToAscii");
+  }
+
+  // remove non-ascii characters
+  const asciiString = inputString.replace(/[^\x00-\x7F]+/g, "");
+  return asciiString;
+}

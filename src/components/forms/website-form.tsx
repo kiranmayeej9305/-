@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Plus, Trash2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2 } from 'lucide-react';
 
-const WebsiteForm = ({ chatbotId, onFormChange, setValid }) => {
-  const [websites, setWebsites] = useState([{ url: '', valid: true }])
+const WebsiteForm = ({ onFormChange, setValid }) => {
+  const [websites, setWebsites] = useState([{ url: '', valid: true }]);
 
   const handleChange = (e, index) => {
     const newWebsites = [...websites];
@@ -14,31 +14,32 @@ const WebsiteForm = ({ chatbotId, onFormChange, setValid }) => {
     setWebsites(newWebsites);
     onFormChange(newWebsites.map((w) => w.url), 'website');
   };
+
   const handleAddWebsite = () => {
-    const newWebsites = [...websites, { url: '', valid: true }]
-    setWebsites(newWebsites)
-    onFormChange(newWebsites.map((w) => w.url))
-  }
+    const newWebsites = [...websites, { url: '', valid: false }];
+    setWebsites(newWebsites);
+    onFormChange(newWebsites.map((w) => w.url));
+  };
 
   const handleRemoveWebsite = (index) => {
-    const newWebsites = websites.filter((_, i) => i !== index)
-    setWebsites(newWebsites)
-    onFormChange(newWebsites.map((w) => w.url))
-  }
+    const newWebsites = websites.filter((_, i) => i !== index);
+    setWebsites(newWebsites);
+    onFormChange(newWebsites.map((w) => w.url));
+  };
 
   const isValidURL = (string) => {
     try {
-      new URL(string)
-      return true
+      new URL(string);
+      return true;
     } catch (_) {
-      return false
+      return false;
     }
-  }
+  };
 
   useEffect(() => {
-    const allValid = websites.every((website) => website.valid)
-    setValid(allValid)
-  }, [websites, setValid])
+    const allValid = websites.every((website) => website.valid && website.url !== '');
+    setValid(allValid && websites.length > 0);
+  }, [websites, setValid]);
 
   return (
     <div className="space-y-4">
@@ -68,7 +69,7 @@ const WebsiteForm = ({ chatbotId, onFormChange, setValid }) => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WebsiteForm
+export default WebsiteForm;

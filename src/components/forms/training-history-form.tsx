@@ -1,7 +1,5 @@
 import React from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Trash } from 'lucide-react'
-
 type TrainingHistoryProps = {
   history: any[]
   sourceType: string
@@ -30,7 +28,7 @@ const TrainingHistory: React.FC<TrainingHistoryProps> = ({ history, sourceType }
           <TableRow key={item.id}>
             <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
             <TableCell>{item.User.name}</TableCell>
-            {sourceType === 'TEXT' && <TableCell>{item.content}</TableCell>}
+            {sourceType === 'TEXT' && <TableCell>TEXT</TableCell>}
             {sourceType === 'FILE' && <TableCell>{item.fileName}</TableCell>}
             {sourceType === 'WEBSITE' && <TableCell>{item.websiteUrl}</TableCell>}
             {sourceType === 'QA' && (

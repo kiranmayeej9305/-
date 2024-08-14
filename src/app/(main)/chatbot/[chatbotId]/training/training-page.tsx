@@ -1,4 +1,4 @@
-// components/forms/TrainingPage.tsx
+// components/pages/TrainingPage.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,9 @@ import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription }
 import { FileTextIcon, FileIcon, MessageSquare, GlobeIcon } from 'lucide-react';
 import { useTrainingContext } from '@/context/use-training-context';
 import { trainChatbot } from '@/lib/train-chatbot';
-import { getChatbotTrainingsByType } from '@/lib/queries'; 
+import { getChatbotTrainingsByType } from '@/lib/queries';
+import { uploadToS3 } from '@/lib/b2-upload';
+import { toast } from 'react-hot-toast';
 
 const TrainingPage = ({ params }) => {
   const { chatbotId } = params;
@@ -34,22 +36,37 @@ const TrainingPage = ({ params }) => {
 
   const handleTrain = async () => {
     const activeData = trainData[0]; // Assuming trainData is an array with one item.
+
+    // If the active data is of type 'file', handle the upload to S3 here
+    if (activeData && activeData.type === 'file' && activeData.content) {
+      const file = activeData.content;
+      const uploadResult = await uploadToS3(file, file.name);
+
+      if (uploadResult?.file_key && uploadResult.file_name) {
+        activeData.content = uploadResult.file_key; // Update content with the file key after upload
+        toast.success("File uploaded successfully");
+      } else {
+        toast.error("Failed to upload file");
+        return;
+      }
+    }
+
     await trainChatbot(chatbotId, activeData);
     router.refresh();
   };
 
   const handleFormChange = (data, type) => {
-    const isValid = data.content && data.content.length > 0;
+    const isValid = data.length > 0;
     setValid(isValid);
 
     setTrainData((prevData) => {
       const newData = prevData.filter((d) => d.type !== type);
-      return [...newData, { ...data, type }];
+      return [...newData, { ...data[0], type }];
     });
 
     setSummary((prevSummary) => {
       const updatedSummary = { ...prevSummary };
-      updatedSummary[type] = { count: data.content ? data.content.length : 0 }; 
+      updatedSummary[type] = { count: data.length || 0 };
       return updatedSummary;
     });
   };
@@ -87,7 +104,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">Text Input</CardHeader>
                   <CardContent>
-                    <TextForm onFormChange={handleFormChange} />
+                    <TextForm onFormChange={handleFormChange} setValid={setValid} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -95,7 +112,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">File Upload</CardHeader>
                   <CardContent>
-                    <FileForm onFormChange={handleFormChange} />
+                    <FileForm onFormChange={handleFormChange} setValid={setValid} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -103,7 +120,7 @@ const TrainingPage = ({ params }) => {
                 <Card>
                   <CardHeader className="text-xl font-semibold">Q&A Input</CardHeader>
                   <CardContent>
-                    <QAForm onFormChange={handleFormChange} />
+                    <QAForm onFormChange={handleFormChange} setValid={setValid} />
                   </CardContent>
                 </Card>
               </TabsContent>
