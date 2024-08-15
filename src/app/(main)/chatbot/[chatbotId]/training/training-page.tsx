@@ -16,7 +16,8 @@ import { FileTextIcon, FileIcon, MessageSquare, GlobeIcon } from 'lucide-react';
 import { useTrainingContext } from '@/context/use-training-context';
 import { trainChatbot } from '@/lib/train-chatbot';
 import { getChatbotTrainingsByType } from '@/lib/queries';
-import { uploadToS3 } from '@/lib/b2-upload';
+import { uploadToS3 } from '@/lib/s3-upload';
+
 import { toast } from 'react-hot-toast';
 
 const TrainingPage = ({ params }) => {
@@ -37,13 +38,12 @@ const TrainingPage = ({ params }) => {
   const handleTrain = async () => {
     const activeData = trainData[0]; // Assuming trainData is an array with one item.
 
-    // If the active data is of type 'file', handle the upload to S3 here
     if (activeData && activeData.type === 'file' && activeData.content) {
       const file = activeData.content;
       const uploadResult = await uploadToS3(file, file.name);
 
       if (uploadResult?.file_key && uploadResult.file_name) {
-        activeData.content = uploadResult.file_key; // Update content with the file key after upload
+        activeData.content = uploadResult.file_key;
         toast.success("File uploaded successfully");
       } else {
         toast.error("Failed to upload file");

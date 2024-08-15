@@ -1,15 +1,24 @@
 import { S3 } from "@aws-sdk/client-s3";
 import fs from "fs";
+
+/**
+ * Downloads a file from S3 and saves it locally.
+ * @param file_key - The key of the file in S3.
+ * @returns A promise resolving to the local file path.
+ */
 export async function downloadFromS3(file_key: string): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
+      console.log(`Starting to download file from S3 with key: ${file_key}`);
       const s3 = new S3({
-        region: "us-east-005",
+        region: "us-east-005", // Your Backblaze region
+        endpoint: "https://s3.us-east-005.backblazeb2.com", // Explicit Backblaze endpoint
         credentials: {
           accessKeyId: process.env.NEXT_PUBLIC_B2_KEY_ID!,
           secretAccessKey: process.env.NEXT_PUBLIC_B2_APPLICATION_KEY!,
         },
       });
+
       const params = {
         Bucket: process.env.NEXT_PUBLIC_B2_BUCKET_NAME!,
         Key: file_key,
@@ -19,24 +28,18 @@ export async function downloadFromS3(file_key: string): Promise<string> {
       const file_name = `/tmp/insert-bot${Date.now().toString()}.pdf`;
 
       if (obj.Body instanceof require("stream").Readable) {
-        // AWS-SDK v3 has some issues with their typescript definitions, but this works
-        // https://github.com/aws/aws-sdk-js-v3/issues/843
-        //open the writable stream and write the file
         const file = fs.createWriteStream(file_name);
-        file.on("open", function (fd) {
-          // @ts-ignore
-          obj.Body?.pipe(file).on("finish", () => {
-            return resolve(file_name);
-          });
+        obj.Body.pipe(file).on("finish", () => {
+          console.log(`File downloaded and saved as: ${file_name}`);
+          resolve(file_name);
+        }).on("error", (err) => {
+          console.error("Error writing file to disk:", err);
+          reject(err);
         });
-        // obj.Body?.pipe(fs.createWriteStream(file_name));
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error downloading file from S3:", error);
       reject(error);
-      return null;
     }
   });
 }
-
-// downloadFromS3("uploads/1693568801787chongzhisheng_resume.pdf");

@@ -1724,24 +1724,7 @@ export const createTrainingHistory = async (chatbotId: string, data: any) => {
       userId: user.id,
     },
   });
-
-  // Handle different types of training data (e.g., uploading files, scraping websites)
-  if (type === 'file' && fileName) {
-    await uploadFileToStorage(fileName); // Implement this function to handle file uploads
-  } else if (type === 'website' && websiteUrl) {
-    await scrapeWebsiteData(websiteUrl); // Implement this function to handle web scraping
-  }
-
   return trainingHistory;
 };
 
-
-
-function uploadFileToStorage(fileName: any) {
-  throw new Error('Function not implemented.');
-}
-
-function scrapeWebsiteData(websiteUrl: any) {
-  throw new Error('Function not implemented.');
-}
 
