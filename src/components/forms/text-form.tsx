@@ -1,4 +1,3 @@
-// components/forms/TextForm.tsx
 import React, { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -12,15 +11,14 @@ const TextForm: React.FC<TextFormProps> = ({ onFormChange, setValid }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const isValid = text.length >= 100;
+    const isValid = text.trim().length >= 100;
     setValid(isValid);
     setError(isValid ? '' : 'Minimum 100 characters required.');
-  }, [text, setValid]);
+    onFormChange({ content: text.trim() }, 'text'); // Ensure to pass the trimmed content
+  }, [text, setValid, onFormChange]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setText(newText);
-    onFormChange({ content: newText }, 'text');
+    setText(e.target.value);
   };
 
   return (

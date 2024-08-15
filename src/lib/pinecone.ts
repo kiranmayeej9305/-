@@ -19,7 +19,7 @@ export const getPineconeClient = () => {
 export async function loadS3IntoPinecone(fileKey: string, chatbotId: string, fileType: string) {
   try {
     console.log(`Downloading file from S3 with key: ${fileKey}`);
-    const file_name = await downloadFromS3(fileKey, fileType);
+    const file_name = await downloadFromS3(fileKey);
     console.log("File downloaded successfully:", file_name);
 
     let documents: Document[];
@@ -32,7 +32,9 @@ export async function loadS3IntoPinecone(fileKey: string, chatbotId: string, fil
       documents = await Promise.all(pages.map(prepareDocument));
       console.log("Documents prepared. Number of documents:", documents.length);
     } else if (fileType === 'json') {
+      console.log(file_name);
       const jsonString = await streamToString(fs.createReadStream(file_name));
+      console.log(jsonString);
       const jsonData = JSON.parse(jsonString);
 
       documents = await processJsonData(jsonData);

@@ -1,4 +1,3 @@
-// components/pages/TrainingPage.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -16,7 +15,7 @@ import { FileTextIcon, FileIcon, MessageSquare, GlobeIcon } from 'lucide-react';
 import { useTrainingContext } from '@/context/use-training-context';
 import { trainChatbot } from '@/lib/train-chatbot';
 import { getChatbotTrainingsByType } from '@/lib/queries';
-import { uploadToS3 } from '@/lib/s3-upload';
+import { uploadToS3, uploadRawDataToS3 } from '@/lib/s3-upload';
 
 import { toast } from 'react-hot-toast';
 
@@ -37,7 +36,6 @@ const TrainingPage = ({ params }) => {
 
   const handleTrain = async () => {
     const activeData = trainData[0]; // Assuming trainData is an array with one item.
-
     if (activeData && activeData.type === 'file' && activeData.content) {
       const file = activeData.content;
       const uploadResult = await uploadToS3(file, file.name);
@@ -50,23 +48,28 @@ const TrainingPage = ({ params }) => {
         return;
       }
     }
+    
+    if (activeData && activeData.type === 'text' && activeData.content) {
+      const s3Key = await uploadRawDataToS3(activeData.content, chatbotId, 'text');
+      activeData.content = s3Key;
+    }
 
     await trainChatbot(chatbotId, activeData);
     router.refresh();
   };
 
   const handleFormChange = (data, type) => {
-    const isValid = data.length > 0;
+    const isValid = !!data.content && data.content.trim().length >= 100;
     setValid(isValid);
 
     setTrainData((prevData) => {
       const newData = prevData.filter((d) => d.type !== type);
-      return [...newData, { ...data[0], type }];
+      return [...newData, { ...data, type }];
     });
 
     setSummary((prevSummary) => {
       const updatedSummary = { ...prevSummary };
-      updatedSummary[type] = { count: data.length || 0 };
+      updatedSummary[type] = { count: data.content ? 1 : 0 };
       return updatedSummary;
     });
   };

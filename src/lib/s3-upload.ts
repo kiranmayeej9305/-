@@ -61,6 +61,8 @@ export async function uploadRawDataToS3(
       Key: file_key,
       Body: content,
     };
+    console.log(content);
+    console.log(file_key);
 
     await s3.putObject(params);
     console.log("Raw data uploaded successfully.");
