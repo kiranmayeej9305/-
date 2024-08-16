@@ -181,9 +181,15 @@ export async function vectorizeWebsite(websiteData: string, chatbotId: string): 
     const docs: Document[] = [];
 
     for (const pageData of parsedData) {
-      const { url, content } = pageData;
+      const { link, content } = pageData;
 
-      const metadata = { source: url, chatbotId };
+      // Check if link is defined and a valid string
+      if (!link || typeof link !== 'string') {
+        console.warn(`Skipping entry with invalid link: ${link}`);
+        continue;
+      }
+
+      const metadata = { source: link, chatbotId };
 
       const doc = new Document({
         pageContent: content,
@@ -203,3 +209,5 @@ export async function vectorizeWebsite(websiteData: string, chatbotId: string): 
     throw error;
   }
 }
+
+

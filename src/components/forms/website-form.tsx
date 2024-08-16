@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Trash2 } from 'lucide-react';
 
 const WebsiteForm = ({ setValid, onFormChange }) => {
-  const [urlType, setUrlType] = useState<'sitemap' | 'website' | 'url'>('website');
+  const [urlType, setUrlType] = useState('website');
   const [url, setUrl] = useState('');
-  const [links, setLinks] = useState<{ link: string, charCount: number }[]>([]);
+  const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [totalCharCount, setTotalCharCount] = useState(0);
   const [isValid, setIsValid] = useState(false);
+
+  useEffect(() => {
+    setValid(totalCharCount <= 100000);
+  }, [totalCharCount, setValid]);
 
   const handleUrlTypeChange = (e) => {
     const type = e.target.value;
@@ -46,12 +51,13 @@ const WebsiteForm = ({ setValid, onFormChange }) => {
 
       if (response.ok && data.links) {
         const fetchedLinks = data.links.map(link => ({
-          link,
-          charCount: link.length, // Replace with actual content length if needed
+          link: link.url,
+          charCount: link.charCount,
         }));
         setLinks(fetchedLinks);
-        onFormChange({ content: fetchedLinks }, 'website');
+        setTotalCharCount(fetchedLinks.reduce((sum, link) => sum + link.charCount, 0));
         setProgress(100);
+        onFormChange({ content: fetchedLinks }, 'website');
       } else {
         setLinks([]);
         setProgress(0);
@@ -68,16 +74,19 @@ const WebsiteForm = ({ setValid, onFormChange }) => {
 
   const handleAddLink = () => {
     if (isValidURL(url)) {
-      const newLink = { link: url, charCount: url.length }; // Replace with actual content length if needed
-      setLinks([...links, newLink]);
-      onFormChange({ content: [...links, newLink] }, 'website');
+      const newLink = { link: url, charCount: url.length };
+      const newLinks = [...links, newLink];
+      setLinks(newLinks);
+      setTotalCharCount(newLinks.reduce((sum, link) => sum + link.charCount, 0));
+      onFormChange({ content: newLinks }, 'website');
       setUrl('');
     }
   };
 
-  const handleDeleteLink = (index: number) => {
+  const handleDeleteLink = (index) => {
     const newLinks = links.filter((_, i) => i !== index);
     setLinks(newLinks);
+    setTotalCharCount(newLinks.reduce((sum, link) => sum + link.charCount, 0));
     onFormChange({ content: newLinks }, 'website');
   };
 
@@ -135,7 +144,7 @@ const WebsiteForm = ({ setValid, onFormChange }) => {
             <tbody>
               {links.map((link, index) => (
                 <tr key={index}>
-                  <td className="py-2 px-4 border-b">{link.link}</td>
+                  <td className="py-2 px-4 border-b"><a href={link.link} target="_blank" rel="noopener noreferrer">{link.link}</a></td>
                   <td className="py-2 px-4 border-b text-center">{link.charCount}</td>
                   <td className="py-2 px-4 border-b text-center">
                     <Button variant="ghost" onClick={() => handleDeleteLink(index)}>
@@ -146,6 +155,12 @@ const WebsiteForm = ({ setValid, onFormChange }) => {
               ))}
             </tbody>
           </table>
+          <p className="mt-2">Total Character Count: {totalCharCount}</p>
+          {totalCharCount > 100000 && (
+            <p className="text-red-500 text-sm">
+              The total character count exceeds the limit of 100,000. Please remove some links.
+            </p>
+          )}
         </div>
       )}
     </div>

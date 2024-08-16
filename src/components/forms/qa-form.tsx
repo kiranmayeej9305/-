@@ -1,4 +1,3 @@
-// components/forms/QAForm.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,25 +6,32 @@ import { Plus, Trash2 } from 'lucide-react';
 
 const QAForm = ({ onFormChange, setValid }) => {
   const [qas, setQAs] = useState([{ question: '', answer: '' }]);
+  const [errors, setErrors] = useState([]);
 
   useEffect(() => {
-    const isValid = qas.every((qa) => qa.question && qa.answer);
-    setValid(isValid && qas.length > 0);
-    onFormChange({ content: qas }, 'qa');
-  }, [qas, setValid, onFormChange]);
+    const allValid = qas.every((qa) => qa.question && qa.answer);
+    const newErrors = qas.map((qa) => !qa.question || !qa.answer);
+    setErrors(newErrors);
+    setValid(allValid && qas.length > 0);
+  }, [qas, setValid]);
 
   const handleChange = (e, index, field) => {
     const newQAs = [...qas];
     newQAs[index][field] = e.target.value;
     setQAs(newQAs);
+    onFormChange(newQAs, 'qa');
   };
 
   const handleAddQA = () => {
-    setQAs([...qas, { question: '', answer: '' }]);
+    const newQAs = [...qas, { question: '', answer: '' }];
+    setQAs(newQAs);
+    onFormChange(newQAs, 'qa');
   };
 
   const handleRemoveQA = (index) => {
-    setQAs(qas.filter((_, i) => i !== index));
+    const newQAs = qas.filter((_, i) => i !== index);
+    setQAs(newQAs);
+    onFormChange(newQAs, 'qa');
   };
 
   return (
@@ -44,6 +50,9 @@ const QAForm = ({ onFormChange, setValid }) => {
             onChange={(e) => handleChange(e, index, 'answer')}
             placeholder={`Answer ${index + 1}`}
           />
+          {errors[index] && (
+            <p className="text-red-500 text-sm">Both question and answer are required.</p>
+          )}
           <div className="flex justify-end gap-2">
             <Button onClick={() => handleRemoveQA(index)} variant="ghost" type="button">
               <Trash2 className="h-4 w-4" />

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loadS3IntoPinecone, vectorizeText, vectorizeWebsite, vectorizeQA, embedDocument, upsertVectors } from '@/lib/pinecone';
 import { uploadToS3, uploadRawDataToS3 } from '@/lib/s3-upload';
 import { createTrainingHistory } from '@/lib/queries';
-import { chromium } from 'playwright';
+import { extractContentFromPages } from '@/lib/playwrightCrawler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,33 +31,18 @@ export async function POST(req: NextRequest) {
     } else if (type === 'website' && Array.isArray(content)) {
       console.log("Processing website data...");
 
-      // Process each link in the list of URLs
-      for (const urlObject of content) {
-        const url = typeof urlObject === 'string' ? urlObject : urlObject.link;
+      // Extract text content from each URL
+      const contentList = await extractContentFromPages(content.map(linkObj => linkObj.link));
 
-        if (!url || typeof url !== 'string') {
-          console.error('Invalid URL:', urlObject);
-          continue; // Skip invalid URLs
-        }
+      // Combine all page contents into a single JSON object
+      const jsonData = JSON.stringify(contentList);
 
-        console.log(`Fetching content from ${url}`);
-        
-        const browser = await chromium.launch({ headless: true });
-        const page = await browser.newPage();
-        await page.goto(url);
+      // Upload the combined JSON data to S3
+      s3Key = await uploadRawDataToS3(jsonData, chatbotId, type);
 
-        const pageContent = await page.content(); // Fetch the entire HTML content
-        await browser.close();
-
-        const jsonData = JSON.stringify({ url, content: pageContent });
-
-        // Upload JSON data to S3
-        s3Key = await uploadRawDataToS3(jsonData, chatbotId, type);
-
-        // Vectorize and upsert the data to Pinecone
-        const documents = await vectorizeWebsite(jsonData, chatbotId);
-        await upsertVectorsToPinecone(documents, chatbotId);
-      }
+      // Vectorize and upsert the data to Pinecone
+      const docs = await vectorizeWebsite(jsonData, chatbotId);
+      await upsertVectorsToPinecone(docs, chatbotId);
 
     } else if (type === 'qa') {
       console.log("Processing QA data...");
@@ -67,7 +52,7 @@ export async function POST(req: NextRequest) {
     } else {
       return NextResponse.json({ message: 'Invalid training data type' }, { status: 400 });
     }
-
+    console.log(trainData);
     await createTrainingHistory(chatbotId, { ...trainData, s3Key });
     return NextResponse.json({ message: 'Training complete' }, { status: 200 });
 

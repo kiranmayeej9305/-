@@ -1,8 +1,6 @@
-// components/pages/TrainingPage.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import BlurPage from '@/components/global/blur-page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TextForm from '@/components/forms/text-form';
 import FileForm from '@/components/forms/file-form';
@@ -16,7 +14,7 @@ import { FileTextIcon, FileIcon, MessageSquare, GlobeIcon } from 'lucide-react';
 import { useTrainingContext } from '@/context/use-training-context';
 import { trainChatbot } from '@/lib/train-chatbot';
 import { getChatbotTrainingsByType } from '@/lib/queries';
-import { uploadToS3 } from '@/lib/s3-upload'; // import the S3 upload function
+import { uploadToS3 } from '@/lib/s3-upload';
 import { toast } from 'react-hot-toast';
 
 const TrainingPage = ({ params }) => {
@@ -37,6 +35,8 @@ const TrainingPage = ({ params }) => {
   const handleTrain = async () => {
     const activeData = trainData[0]; // Assuming trainData is an array with one item.
 
+    console.log("Training data being sent:", activeData);
+
     if (activeData && activeData.type === 'file' && activeData.content) {
       const file = activeData.content;
       const uploadResult = await uploadToS3(file, file.name); // upload the file to S3
@@ -50,17 +50,22 @@ const TrainingPage = ({ params }) => {
       }
     }
 
-    await trainChatbot(chatbotId, activeData); // send the S3 key to the server
-    router.refresh();
+    try {
+      await trainChatbot(chatbotId, activeData); // send the S3 key to the server
+      router.refresh();
+    } catch (error) {
+      console.error("Error in trainChatbot:", error.response?.data || error.message);
+      toast.error("Failed to train chatbot");
+    }
   };
 
   const handleFormChange = (data, type) => {
-    const isValid = !!data.content;
+    const isValid = data.length > 0;
     setValid(isValid);
 
     setTrainData((prevData) => {
       const newData = prevData.filter((d) => d.type !== type);
-      return [...newData, { ...data, type }];
+      return [...newData, { content: data, type }];
     });
 
     setSummary((prevSummary) => {
@@ -76,11 +81,9 @@ const TrainingPage = ({ params }) => {
   }, [selectedTab]);
 
   return (
-    <BlurPage>
-      <CardHeader>
-        <CardTitle>Train your chatbot</CardTitle>
-        <CardDescription>Train your chatbot from different sources</CardDescription>
-      </CardHeader>
+    <CardHeader>
+      <CardTitle>Train your chatbot</CardTitle>
+      <CardDescription>Train your chatbot from different sources</CardDescription>
       <CardContent>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-2/3">
@@ -169,7 +172,7 @@ const TrainingPage = ({ params }) => {
           </div>
         </div>
       </CardContent>
-    </BlurPage>
+    </CardHeader>
   );
 };
 
