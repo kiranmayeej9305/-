@@ -158,3 +158,48 @@ export async function vectorizeText(textData: string, chatbotId: string): Promis
   const docs = [new Document({ pageContent: textData, metadata: { chatbotId } })];
   return await splitter.splitDocuments(docs);
 }
+
+export async function vectorizeQA(qaData: any[], chatbotId: string): Promise<Document[]> {
+  const splitter = new RecursiveCharacterTextSplitter();
+  const docs = qaData.map(qa => new Document({
+    pageContent: `Q: ${qa.question}\nA: ${qa.answer}`,
+    metadata: { chatbotId }
+  }));
+  return await splitter.splitDocuments(docs);
+}
+
+export async function vectorizeWebsite(websiteData: string, chatbotId: string): Promise<Document[]> {
+  try {
+    console.log("Vectorizing website data...");
+
+    const parsedData = JSON.parse(websiteData);
+
+    if (!Array.isArray(parsedData)) {
+      throw new Error("Parsed website data is not an array.");
+    }
+
+    const docs: Document[] = [];
+
+    for (const pageData of parsedData) {
+      const { url, content } = pageData;
+
+      const metadata = { source: url, chatbotId };
+
+      const doc = new Document({
+        pageContent: content,
+        metadata,
+      });
+
+      const splitter = new RecursiveCharacterTextSplitter();
+      const splitDocs = await splitter.splitDocuments([doc]);
+
+      docs.push(...splitDocs);
+    }
+
+    console.log(`Website vectorization complete. ${docs.length} documents created.`);
+    return docs;
+  } catch (error) {
+    console.error("Error in vectorizing website data:", error);
+    throw error;
+  }
+}

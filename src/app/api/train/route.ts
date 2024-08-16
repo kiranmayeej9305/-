@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadS3IntoPinecone, vectorizeText, vectorizeWebsite, vectorizeQA, embedDocument, upsertVectors } from '@/lib/pinecone';
-import { uploadRawDataToS3, getS3Url } from '@/lib/s3-upload';
+import { uploadToS3, uploadRawDataToS3 } from '@/lib/s3-upload';
 import { createTrainingHistory } from '@/lib/queries';
+import { chromium } from 'playwright';
 
 export async function POST(req: NextRequest) {
   try {
     console.log("Received training request.");
     const { chatbotId, trainData } = await req.json();
 
-    if (!trainData) {
+    if (!trainData || !trainData.content) {
       return NextResponse.json({ message: 'No training data provided' }, { status: 400 });
     }
 
@@ -27,19 +28,42 @@ export async function POST(req: NextRequest) {
       s3Key = await uploadRawDataToS3(content, chatbotId, type);
       const documents = await vectorizeText(content, chatbotId);
       await upsertVectorsToPinecone(documents, chatbotId);
-
-    } else if (type === 'website') {
+    } else if (type === 'website' && Array.isArray(content)) {
       console.log("Processing website data...");
-      s3Key = await uploadRawDataToS3(content, chatbotId, type);
-      const documents = await vectorizeWebsite(content, chatbotId);
-      await upsertVectorsToPinecone(documents, chatbotId);
+
+      // Process each link in the list of URLs
+      for (const urlObject of content) {
+        const url = typeof urlObject === 'string' ? urlObject : urlObject.link;
+
+        if (!url || typeof url !== 'string') {
+          console.error('Invalid URL:', urlObject);
+          continue; // Skip invalid URLs
+        }
+
+        console.log(`Fetching content from ${url}`);
+        
+        const browser = await chromium.launch({ headless: true });
+        const page = await browser.newPage();
+        await page.goto(url);
+
+        const pageContent = await page.content(); // Fetch the entire HTML content
+        await browser.close();
+
+        const jsonData = JSON.stringify({ url, content: pageContent });
+
+        // Upload JSON data to S3
+        s3Key = await uploadRawDataToS3(jsonData, chatbotId, type);
+
+        // Vectorize and upsert the data to Pinecone
+        const documents = await vectorizeWebsite(jsonData, chatbotId);
+        await upsertVectorsToPinecone(documents, chatbotId);
+      }
 
     } else if (type === 'qa') {
       console.log("Processing QA data...");
       s3Key = await uploadRawDataToS3(JSON.stringify(content), chatbotId, type);
       const documents = await vectorizeQA(content, chatbotId);
       await upsertVectorsToPinecone(documents, chatbotId);
-
     } else {
       return NextResponse.json({ message: 'Invalid training data type' }, { status: 400 });
     }
@@ -52,7 +76,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
-
 async function upsertVectorsToPinecone(documents: any[], chatbotId: string) {
   try {
     console.log('Embedding documents...');

@@ -1,3 +1,4 @@
+// components/pages/TrainingPage.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,8 +16,7 @@ import { FileTextIcon, FileIcon, MessageSquare, GlobeIcon } from 'lucide-react';
 import { useTrainingContext } from '@/context/use-training-context';
 import { trainChatbot } from '@/lib/train-chatbot';
 import { getChatbotTrainingsByType } from '@/lib/queries';
-import { uploadToS3, uploadRawDataToS3 } from '@/lib/s3-upload';
-
+import { uploadToS3 } from '@/lib/s3-upload'; // import the S3 upload function
 import { toast } from 'react-hot-toast';
 
 const TrainingPage = ({ params }) => {
@@ -36,30 +36,26 @@ const TrainingPage = ({ params }) => {
 
   const handleTrain = async () => {
     const activeData = trainData[0]; // Assuming trainData is an array with one item.
+
     if (activeData && activeData.type === 'file' && activeData.content) {
       const file = activeData.content;
-      const uploadResult = await uploadToS3(file, file.name);
+      const uploadResult = await uploadToS3(file, file.name); // upload the file to S3
 
       if (uploadResult?.file_key && uploadResult.file_name) {
-        activeData.content = uploadResult.file_key;
+        activeData.content = uploadResult.file_key; // use the S3 key as content
         toast.success("File uploaded successfully");
       } else {
         toast.error("Failed to upload file");
         return;
       }
     }
-    
-    if (activeData && activeData.type === 'text' && activeData.content) {
-      const s3Key = await uploadRawDataToS3(activeData.content, chatbotId, 'text');
-      activeData.content = s3Key;
-    }
 
-    await trainChatbot(chatbotId, activeData);
+    await trainChatbot(chatbotId, activeData); // send the S3 key to the server
     router.refresh();
   };
 
   const handleFormChange = (data, type) => {
-    const isValid = !!data.content && data.content.trim().length >= 100;
+    const isValid = !!data.content;
     setValid(isValid);
 
     setTrainData((prevData) => {

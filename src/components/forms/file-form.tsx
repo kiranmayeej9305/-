@@ -10,9 +10,9 @@ const FileForm = ({ onFormChange, setValid }) => {
     setValid(isValid);
 
     if (file) {
-      onFormChange([{ type: 'file', fileName: file.name, content: file }], 'file');
+      onFormChange({ type: 'file', fileName: file.name, content: file }, 'file');
     } else {
-      onFormChange([], 'file');
+      onFormChange({}, 'file');
     }
   };
 
