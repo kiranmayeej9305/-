@@ -236,38 +236,41 @@ export const initUser = async (newUser: Partial<User>) => {
   return userData
 }
 
-export const upsertAccount = async (account: Account, price?: Plan) => {
-  if (!account.companyEmail) return null;
-  try {
-    const isCreating = !account.id;
+export const upsertAccount = async (account: Account, isCreating: boolean) => {
+  if (!account.companyEmail) {
+    console.error('No company email provided.');
+    return null;
+  }
 
-    // Upsert account
+  try {
     const accountDetails = await db.account.upsert({
       where: { id: account.id || '' },
-      update: account,
+      update: {
+        ...account,
+        updatedAt: new Date(),
+      },
       create: {
         ...account,
         users: {
           connect: { email: account.companyEmail },
         },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
-    // Ensure the account ID is present for newly created accounts
-    const accountId = isCreating ? accountDetails.id : account.id;
-    if (isCreating && !accountId) {
-      throw new Error('Account creation failed');
-    }
+    console.log('Account upserted successfully:', accountDetails);
 
-    // Create sidebar options only if creating a new account
     if (isCreating) {
+      console.log(`Creating sidebar options for account ID: ${accountDetails.id}`);
+
       const parentOptions = [
-        { name: 'Dashboard', icon: 'category', link: `/account/${accountId}` },
-        { name: 'Launchpad', icon: 'clipboardIcon', link: `/account/${accountId}/launchpad` },
-        { name: 'Billing', icon: 'payment', link: `/account/${accountId}/billing` },
-        { name: 'Settings', icon: 'settings', link: `/account/${accountId}/settings` },
-        { name: 'Chatbots', icon: 'person', link: `/account/${accountId}/all-chatbots` },
-        { name: 'Team', icon: 'shield', link: `/account/${accountId}/team` },
+        { name: 'Dashboard', icon: 'category', link: `/account/${accountDetails.id}` },
+        { name: 'Launchpad', icon: 'clipboardIcon', link: `/account/${accountDetails.id}/launchpad` },
+        { name: 'Billing', icon: 'payment', link: `/account/${accountDetails.id}/billing` },
+        { name: 'Settings', icon: 'settings', link: `/account/${accountDetails.id}/settings` },
+        { name: 'Chatbots', icon: 'person', link: `/account/${accountDetails.id}/all-chatbots` },
+        { name: 'Team', icon: 'shield', link: `/account/${accountDetails.id}/team` },
       ];
 
       const parentIds = [];
@@ -275,24 +278,23 @@ export const upsertAccount = async (account: Account, price?: Plan) => {
         const parentOption = await db.accountSidebarOption.create({
           data: {
             ...option,
-            accountId,
+            accountId: accountDetails.id,
           },
         });
         parentIds.push(parentOption.id);
       }
 
-      // Create submenu options
-      await db.accountSidebarOption.createMany({
-        data: [],
-      });
+      console.log('Sidebar options created:', parentIds);
     }
 
     return accountDetails;
   } catch (error) {
-    console.log(error);
+    console.error('Error during account upsert:', error);
     throw new Error('Account upsert failed');
   }
 };
+
+
 
 
 export const getNotificationAndUser = async (accountId: string) => {

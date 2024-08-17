@@ -69,8 +69,6 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
   const { toast } = useToast()
   const router = useRouter()
 
-  //Get authUSerDtails
-
   useEffect(() => {
     if (data.user) {
       const fetchDetails = async () => {
@@ -153,7 +151,7 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
     if (response) {
       toast({
         title: 'Success',
-        description: 'The request was successfull',
+        description: 'The request was successful',
       })
       if (chatbotPermissions) {
         chatbotPermissions.Permissions.find((perm) => {
@@ -193,14 +191,14 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
       if (updatedUser) {
         toast({
           title: 'Success',
-          description: 'Update User Information',
+          description: 'Updated User Information',
         })
         setClose()
         router.refresh()
       } else {
         toast({
           variant: 'destructive',
-          title: 'Oppse!',
+          title: 'Oops!',
           description: 'Could not update user information',
         })
       }
@@ -210,134 +208,131 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>User Details</CardTitle>
-        <CardDescription>Add or update your information</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
-            <FormField
-              disabled={form.formState.isSubmitting}
-              control={form.control}
-              name="avatarUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Profile picture</FormLabel>
-                  <FormControl>
-                    <FileUpload
-                      apiEndpoint="avatar"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              disabled={form.formState.isSubmitting}
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>User full name</FormLabel>
-                  <FormControl>
-                    <Input
-                      required
-                      placeholder="Full Name"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              disabled={form.formState.isSubmitting}
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      readOnly={
-                        userData?.role === 'ACCOUNT_OWNER' ||
-                        form.formState.isSubmitting
-                      }
-                      placeholder="Email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              disabled={form.formState.isSubmitting}
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel> User Role</FormLabel>
-                  <Select
-                    disabled={field.value === 'ACCOUNT_OWNER'}
-                    onValueChange={(value) => {
-                      if (
-                        value === 'CHATBOT_USER' ||
-                        value === 'CHATBOT_GUEST'
-                      ) {
-                        setRoleState(
-                          'You need to have chatbots to assign Chatbot access to team members.'
-                        )
-                      } else {
-                        setRoleState('')
-                      }
-                      field.onChange(value)
-                    }}
-                    defaultValue={field.value}
-                  >
+    <div className="container max-w-3xl py-8 my-10 bg-white rounded-lg shadow-lg">
+      <Card className="w-full h-full">
+        <CardHeader className="border-b pb-4">
+          <CardTitle className="text-2xl font-semibold">User Details</CardTitle>
+          <CardDescription className="text-gray-500">Update your information</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6 pb-0">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                disabled={form.formState.isSubmitting}
+                control={form.control}
+                name="avatarUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profile picture</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select user role..." />
-                      </SelectTrigger>
+                      <FileUpload
+                        apiEndpoint="avatar"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="ACCOUNT_ADMING">
-                        Account Admin
-                      </SelectItem>
-                      {(data?.user?.role === 'ACCOUNT_OWNER' ||
-                        userData?.role === 'ACCOUNT_OWNER') && (
-                        <SelectItem value="ACCOUNT_OWNER">
-                          Account Owner
-                        </SelectItem>
-                      )}
-                      <SelectItem value="CHATBOT_USER">
-                        Chatbot User
-                      </SelectItem>
-                      <SelectItem value="CHATBOT_ADMIN">
-                        Chatbot Admin
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-muted-foreground">{roleState}</p>
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button
-              disabled={form.formState.isSubmitting}
-              type="submit"
-            >
-              {form.formState.isSubmitting ? <Loading /> : 'Save User Details'}
-            </Button>
-            {authUserData?.role === 'ACCOUNT_OWNER' && (
+              <FormField
+                disabled={form.formState.isSubmitting}
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>User full name</FormLabel>
+                    <FormControl>
+                      <Input
+                        required
+                        placeholder="Full Name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                disabled={form.formState.isSubmitting}
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        readOnly
+                        className="border-gray-300 bg-gray-100"
+                        placeholder="Email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                disabled={form.formState.isSubmitting}
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>User Role</FormLabel>
+                    <Select
+                      disabled={field.value === 'ACCOUNT_OWNER'}
+                      onValueChange={(value) => {
+                        if (
+                          value === 'CHATBOT_USER' ||
+                          value === 'CHATBOT_GUEST'
+                        ) {
+                          setRoleState(
+                            'You need to have chatbots to assign Chatbot access to team members.'
+                          )
+                        } else {
+                          setRoleState('')
+                        }
+                        field.onChange(value)
+                      }}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select user role..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ACCOUNT_ADMIN">
+                          Account Admin
+                        </SelectItem>
+                        {(data?.user?.role === 'ACCOUNT_OWNER' ||
+                          userData?.role === 'ACCOUNT_OWNER') && (
+                          <SelectItem value="ACCOUNT_OWNER">
+                            Account Owner
+                          </SelectItem>
+                        )}
+                        <SelectItem value="CHATBOT_USER">
+                          Chatbot User
+                        </SelectItem>
+                        <SelectItem value="CHATBOT_ADMIN">
+                          Chatbot Admin
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground">{roleState}</p>
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end mt-4">
+                <Button
+                  disabled={form.formState.isSubmitting}
+                  type="submit"
+                >
+                  {form.formState.isSubmitting ? <Loading /> : 'Save User Details'}
+                </Button>
+              </div>
+              {authUserData?.role === 'ACCOUNT_OWNER' && (
               <div>
                 <Separator className="my-4" />
                 <FormLabel> User Permissions</FormLabel>
@@ -377,10 +372,11 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
                 </div>
               </div>
             )}
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 

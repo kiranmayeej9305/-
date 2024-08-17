@@ -19,6 +19,7 @@ const SettingsPage = async ({ params }: Props) => {
   })
 
   if (!userDetails) return null
+
   const accountDetails = await db.account.findUnique({
     where: {
       id: params.accountId,
@@ -33,14 +34,17 @@ const SettingsPage = async ({ params }: Props) => {
   const chatbots = accountDetails.Chatbot
 
   return (
-    <div className="flex lg:!flex-row flex-col gap-4">
-      <AccountDetails data={accountDetails} />
-      <UserDetails
-        type="account"
-        id={params.accountId}
-        chatbots={chatbots}
-        userData={userDetails}
-      />
+    <div className="flex flex-col lg:flex-row gap-6 p-8 bg-gray-50 min-h-screen">
+        <AccountDetails
+          data={accountDetails}
+          isCreating={false}  // Pass the isCreating flag
+        />
+        <UserDetails
+          type="account"
+          id={params.accountId}
+          chatbots={chatbots}
+          userData={userDetails}
+        />
     </div>
   )
 }

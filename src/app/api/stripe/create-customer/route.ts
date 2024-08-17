@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   const { address, email, name, shipping }: StripeCustomerType =
     await req.json()
 
-  if (!email || !address || !name || !shipping)
+  if (!email || !name )
     return new NextResponse('Missing data', {
       status: 400,
     })

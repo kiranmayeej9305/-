@@ -1,59 +1,76 @@
-// components/global/FileUpload.tsx
-"use client";
-import React, { useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { Inbox, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { FileIcon, X } from 'lucide-react'
+import Image from 'next/image'
+import React from 'react'
+import { Button } from '../ui/button'
+import { UploadDropzone } from '@/lib/uploadthing'
+type Props = {
+  apiEndpoint: 'file' | 'avatar'
+  onChange: (url?: string) => void
+  value?: string
+}
+const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
+  const type = value?.split('.').pop()
 
-const FileUpload = ({ onFileSelect }) => {
-  const [fileName, setFileName] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  if (value) {
+    return (
+      <div className="flex flex-col justify-center items-center">
+        {type !== 'pdf' && type !== 'doc' && type !== 'docx' && type !== 'txt' ? (
+          <div className="relative w-40 h-40">
+            <Image
+              src={value}
+              alt="uploaded file"
+              className="object-contain"
+              fill
+            />
+          </div>
 
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: { "application/pdf": [".pdf"] },
-    maxFiles: 1,
-    onDrop: async (acceptedFiles) => {
-      const file = acceptedFiles[0];
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File too large");
-        return;
-      }
-      setFileName(file.name);
-      onFileSelect(file);
-    },
-  });
 
-  return (
-    <div className="p-2 bg-white rounded-xl">
-      <div
-        {...getRootProps({
-          className:
-            "border-dashed border-2 rounded-xl cursor-pointer bg-gray-50 py-8 flex justify-center items-center flex-col",
-        })}
-      >
-        <input {...getInputProps()} />
-        {uploading ? (
-          <>
-            <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
-            <p className="mt-2 text-sm text-slate-400">
-              Uploading...
-            </p>
-          </>
+
+
         ) : (
-          <>
-            {fileName ? (
-              <p className="mt-2 text-sm text-slate-400">{fileName}</p>
-            ) : (
-              <>
-                <Inbox className="w-10 h-10 text-blue-500" />
-                <p className="mt-2 text-sm text-slate-400">Drop PDF Here</p>
-              </>
-            )}
-          </>
+          <div className="relative flex flex-col items-center p-2 mt-2 rounded-md bg-background/10">
+            <FileIcon className="h-6 w-6" />
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 text-sm text-indigo-500 dark:text-indigo-400 hover:underline"
+            >
+              View File
+            </a>
+            <Button
+              onClick={() => onChange('')}
+              variant="ghost"
+              type="button"
+              className="mt-2"
+            >
+              <X className="h-4 w-4" />
+              Remove File
+            </Button>
+          </div>
         )}
       </div>
+    )
+  }
+  return (
+    <div className="w-full bg-muted/30 p-4 rounded-md text-center">
+      <UploadDropzone
+        endpoint={apiEndpoint}
+        onClientUploadComplete={(res) => {
+          onChange(res?.[0].url)
+        }}
+        onUploadError={(error: Error) => {
+          console.log(error)
+        }}
+      />
+      {apiEndpoint === 'file' && (
+        <div className="mt-4">
+          <p>Drag & drop files here, or click to select files</p>
+          <p>Supported File Types: .pdf, .doc, .docx, .txt</p>
+        </div>
+      )}
     </div>
-  );
-};
+  )
+}
 
-export default FileUpload;
+export default FileUpload

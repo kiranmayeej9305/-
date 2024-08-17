@@ -13,7 +13,23 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+enum Industry {
+  TECHNOLOGY
+  HEALTHCARE
+  FINANCE
+  EDUCATION
+  RETAIL
+  OTHER
+}
 
+enum ReferralSource {
+  GOOGLE
+  FACEBOOK
+  LINKEDIN
+  TWITTER
+  FRIEND
+  OTHER
+}
 enum Role {
   ACCOUNT_OWNER
   ACCOUNT_ADMIN
@@ -86,25 +102,22 @@ model Permissions {
   @@index([email])
 }
 
+
+
 model Account {
   id               String                @id @default(uuid())
   connectAccountId String?               @default("")
   customerId       String                @default("")
   name             String
-  accountLogo      String                @db.Text
   companyEmail     String                @db.Text
-  companyPhone     String
-  whiteLabel       Boolean               @default(true)
-  address          String
-  city             String
-  zipCode          String
-  state            String
-  country          String
-  goal             Int                   @default(5)
+  industry         Industry              @default(OTHER)
+  otherIndustry    String?               // Optional, only populated if Industry is OTHER
+  referralSource   ReferralSource        @default(OTHER)
+  otherReferralSource String?            // Optional, only populated if ReferralSource is OTHER
   users            User[]
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
-  Chatbot       Chatbot[]
+  Chatbot          Chatbot[]
   SidebarOption    AccountSidebarOption[]
   Invitation       Invitation[]
   Notification     Notification[]

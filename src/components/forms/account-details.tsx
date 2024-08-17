@@ -2,10 +2,9 @@
 import { Account } from '@prisma/client'
 import { useForm } from 'react-hook-form'
 import React, { useEffect, useState } from 'react'
-import { NumberInput } from '@tremor/react'
-import { v4 } from 'uuid'
-
+import { Industry, ReferralSource } from '@prisma/client'
 import { useRouter } from 'next/navigation'
+import { v4 as uuidv4 } from 'uuid'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,155 +27,145 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '../ui/form'
 import { useToast } from '../ui/use-toast'
-
 import * as z from 'zod'
-import FileUpload from '../global/file-upload'
 import { Input } from '../ui/input'
-import { Switch } from '../ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import {
   deleteAccount,
   initUser,
-  saveActivityLogsNotification,
-  updateAccountDetails,
   upsertAccount,
 } from '@/lib/queries'
 import { Button } from '../ui/button'
 import Loading from '../global/loading'
+import { useUser } from '@clerk/nextjs'
 
 type Props = {
   data?: Partial<Account>
+  isCreating: boolean
 }
 
 const FormSchema = z.object({
-  name: z.string().min(2, { message: 'Account name must be atleast 2 chars.' }),
-  companyEmail: z.string().min(1),
-  companyPhone: z.string().min(1),
-  whiteLabel: z.boolean(),
-  address: z.string().min(1),
-  city: z.string().min(1),
-  zipCode: z.string().min(1),
-  state: z.string().min(1),
-  country: z.string().min(1),
-  accountLogo: z.string().min(1),
+  name: z.string().min(2, { message: 'Account name must be at least 2 chars.' }),
+  companyEmail: z.string().email(),
+  industry: z.nativeEnum(Industry),
+  otherIndustry: z.string().optional(),
+  referralSource: z.nativeEnum(ReferralSource),
+  otherReferralSource: z.string().optional(),
 })
 
-const AccountDetails = ({ data }: Props) => {
+const AccountDetails = ({ data, isCreating }: Props) => {
   const { toast } = useToast()
   const router = useRouter()
+  const { isLoaded, user } = useUser()
+  const [showOtherIndustry, setShowOtherIndustry] = useState(false)
+  const [showOtherReferral, setShowOtherReferral] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
+
   const form = useForm<z.infer<typeof FormSchema>>({
     mode: 'onChange',
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      name: data?.name,
-      companyEmail: data?.companyEmail,
-      companyPhone: data?.companyPhone,
-      whiteLabel: data?.whiteLabel || false,
-      address: data?.address,
-      city: data?.city,
-      zipCode: data?.zipCode,
-      state: data?.state,
-      country: data?.country,
-      accountLogo: data?.accountLogo,
+      name: data?.name || '',
+      companyEmail: data?.companyEmail || user?.emailAddresses[0]?.emailAddress || '',
+      industry: Industry.TECHNOLOGY,
+      referralSource: ReferralSource.GOOGLE,
     },
   })
   const isLoading = form.formState.isSubmitting
 
   useEffect(() => {
     if (data) {
-      form.reset(data)
+      form.reset({
+        name: data.name || '',
+        companyEmail: data.companyEmail || user?.emailAddresses[0]?.emailAddress || '',
+        industry: data.industry || Industry.TECHNOLOGY,
+        referralSource: data.referralSource || ReferralSource.GOOGLE,
+        otherIndustry: data.otherIndustry || '',
+        otherReferralSource: data.otherReferralSource || '',
+      })
     }
-  }, [data])
+  }, [data, user, form])
+
+  const handleIndustryChange = (value: Industry) => {
+    form.setValue('industry', value)
+    setShowOtherIndustry(value === Industry.OTHER)
+  }
+
+  const handleReferralSourceChange = (value: ReferralSource) => {
+    form.setValue('referralSource', value)
+    setShowOtherReferral(value === ReferralSource.OTHER)
+  }
 
   const handleSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
-      let newUserData
-      let custId
-      if (!data?.id) {
+      let custId;
+      if (isCreating) {
         const bodyData = {
           email: values.companyEmail,
           name: values.name,
-          shipping: {
-            address: {
-              city: values.city,
-              country: values.country,
-              line1: values.address,
-              postal_code: values.zipCode,
-              state: values.zipCode,
-            },
-            name: values.name,
-          },
-          address: {
-            city: values.city,
-            country: values.country,
-            line1: values.address,
-            postal_code: values.zipCode,
-            state: values.zipCode,
-          },
-        }
-
+        };
+  
         const customerResponse = await fetch('/api/stripe/create-customer', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(bodyData),
-        })
-        const customerData: { customerId: string } =
-          await customerResponse.json()
-        custId = customerData.customerId
+        });
+  
+        if (!customerResponse.ok) {
+          throw new Error('Failed to create customer');
+        }
+  
+        const customerData: { customerId: string } = await customerResponse.json();
+        custId = customerData.customerId;
       }
 
-      newUserData = await initUser({ role: 'ACCOUNT_OWNER' })
-      if (!data?.customerId && !custId) return
-
-      const response = await upsertAccount({
-        id: data?.id ? data.id : v4(),
-        customerId: data?.customerId || custId || '',
-        address: values.address,
-        accountLogo: values.accountLogo,
-        city: values.city,
-        companyPhone: values.companyPhone,
-        country: values.country,
-        name: values.name,
-        state: values.state,
-        whiteLabel: values.whiteLabel,
-        zipCode: values.zipCode,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        companyEmail: values.companyEmail,
-        connectAccountId: '',
-        goal: 5,
-      })
+      const response = await upsertAccount(
+        {
+          id: data?.id || uuidv4(),
+          customerId: data?.customerId || custId || '',
+          name: values.name,
+          companyEmail: values.companyEmail, // Ensure companyEmail is passed
+          industry: values.industry,
+          otherIndustry: values.otherIndustry || null,
+          referralSource: values.referralSource,
+          otherReferralSource: values.otherReferralSource || null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        isCreating
+      );
+  
+      if (!response) {
+        throw new Error('Failed to upsert account');
+      }
+  
       toast({
-        title: 'Created Account',
-      })
-      if (data?.id) return router.refresh()
-      if (response) {
-        return router.refresh()
-      }
+        title: isCreating ? 'Created Account' : 'Updated Account',
+      });
+      router.refresh();
     } catch (error) {
-      console.log(error)
+      console.error('Error during form submission:', error);
       toast({
         variant: 'destructive',
-        title: 'Oppse!',
-        description: 'could not create your account',
-      })
+        title: 'Oops!',
+        description: `Could not ${isCreating ? 'create' : 'update'} your account`,
+      });
     }
-  }
+  };
+
   const handleDeleteAccount = async () => {
     if (!data?.id) return
     setDeletingAccount(true)
-    //WIP: discontinue the subscription
     try {
-      const response = await deleteAccount(data.id)
+      await deleteAccount(data.id)
       toast({
         title: 'Deleted Account',
         description: 'Deleted your account and all chatbots',
@@ -186,292 +175,199 @@ const AccountDetails = ({ data }: Props) => {
       console.log(error)
       toast({
         variant: 'destructive',
-        title: 'Oppse!',
-        description: 'could not delete your account ',
+        title: 'Oops!',
+        description: 'Could not delete your account',
       })
     }
     setDeletingAccount(false)
   }
 
   return (
-    <AlertDialog>
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-          <CardDescription>
-            Lets create an account for you business. You can edit account settings
-            later from the account settings tab.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-4"
-            >
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="accountLogo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Logo</FormLabel>
-                    <FormControl>
-                      <FileUpload
-                        apiEndpoint="accountLogo"
-                        onChange={field.onChange}
-                        value={field.value}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex md:flex-row gap-4">
-                <FormField
-                  disabled={isLoading}
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Account Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Your account name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="companyEmail"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Account Email</FormLabel>
-                      <FormControl>
+    <div className="flex flex-col items-center min-h-screen bg-gray-50">
+      <div className="container mx-auto max-w-3xl p-8 my-10 bg-white rounded-lg shadow-lg">
+        <Card className="w-full">
+          <CardHeader className="border-b pb-4">
+            <CardTitle className="text-2xl font-semibold">Account Information</CardTitle>
+            <CardDescription className="text-gray-500">
+              Update your account details below.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your account name" {...field} className="border-gray-300" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="companyEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Email</FormLabel>
+                        <FormControl>
                         <Input
                           readOnly
+                          className="border-gray-300 bg-gray-100"
                           placeholder="Email"
                           {...field}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="flex md:flex-row gap-4">
-                <FormField
-                  disabled={isLoading}
-                  control={form.control}
-                  name="companyPhone"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Account Phone Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Phone"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="whiteLabel"
-                render={({ field }) => {
-                  return (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border gap-4 p-4">
-                      <div>
-                        <FormLabel>Whitelabel Account</FormLabel>
-                        <FormDescription>
-                          Turning on whilelabel mode will show your account logo
-                          to all chatbots by default. You can overwrite this
-                          functionality through chatbots settings.
-                        </FormDescription>
-                      </div>
-
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )
-                }}
-              />
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="123 st..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex md:flex-row gap-4">
-                <FormField
-                  disabled={isLoading}
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="City"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  disabled={isLoading}
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>State</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="State"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  disabled={isLoading}
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Zipcpde</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Zipcode"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                disabled={isLoading}
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Country</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Country"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {data?.id && (
-                <div className="flex flex-col gap-2">
-                  <FormLabel>Create A Goal</FormLabel>
-                  <FormDescription>
-                    ✨ Create a goal for your account. As your business grows
-                    your goals grow too so dont forget to set the bar higher!
-                  </FormDescription>
-                  <NumberInput
-                    defaultValue={data?.goal}
-                    onValueChange={async (val) => {
-                      if (!data?.id) return
-                      await updateAccountDetails(data.id, { goal: val })
-                      await saveActivityLogsNotification({
-                        accountId: data.id,
-                        description: `Updated the account goal to | ${val} Chatbot`,
-                        chatbotId: undefined,
-                      })
-                      router.refresh()
-                    }}
-                    min={1}
-                    className="bg-background !border !border-input"
-                    placeholder="Chatbot Goal"
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Industry</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={handleIndustryChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="border-gray-300">
+                              <SelectValue placeholder="Select an industry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={Industry.TECHNOLOGY}>Technology</SelectItem>
+                              <SelectItem value={Industry.HEALTHCARE}>Healthcare</SelectItem>
+                              <SelectItem value={Industry.FINANCE}>Finance</SelectItem>
+                              <SelectItem value={Industry.EDUCATION}>Education</SelectItem>
+                              <SelectItem value={Industry.RETAIL}>Retail</SelectItem>
+                              <SelectItem value={Industry.OTHER}>Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {showOtherIndustry && (
+                    <FormField
+                      control={form.control}
+                      name="otherIndustry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Other Industry</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Specify your industry" {...field} className="border-gray-300" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  <FormField
+                    control={form.control}
+                    name="referralSource"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>How did you hear about us?</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={handleReferralSourceChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger className="border-gray-300">
+                              <SelectValue placeholder="Select a referral source" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={ReferralSource.GOOGLE}>Google</SelectItem>
+                              <SelectItem value={ReferralSource.FACEBOOK}>Facebook</SelectItem>
+                              <SelectItem value={ReferralSource.LINKEDIN}>LinkedIn</SelectItem>
+                              <SelectItem value={ReferralSource.TWITTER}>Twitter</SelectItem>
+                              <SelectItem value={ReferralSource.FRIEND}>Friend</SelectItem>
+                              <SelectItem value={ReferralSource.OTHER}>Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {showOtherReferral && (
+                    <FormField
+                      control={form.control}
+                      name="otherReferralSource"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Other Referral Source</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Specify your referral source" {...field} className="border-gray-300" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
-              )}
-              <Button
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? <Loading /> : 'Save Account Information'}
-              </Button>
-            </form>
-          </Form>
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? <Loading /> : 'Save Account Information'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
 
-          {data?.id && (
-            <div className="flex flex-row items-center justify-between rounded-lg border border-destructive gap-4 p-4 mt-4">
-              <div>
-                <div>Danger Zone</div>
+        {/* Separate Delete Account Card */}
+        {data?.id && (
+          <Card className="w-full mt-10 border-red-300">
+            <CardHeader className="bg-red-50 text-red-700 border-b border-red-300 pb-4">
+              <CardTitle className="text-2xl font-semibold">Danger Zone</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-start space-y-4">
+                <p className="text-gray-600">
+                  Deleting your account is a permanent action and cannot be undone.
+                  All data, including chatbots, will be lost.
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={deletingAccount}>
+                      {deletingAccount ? 'Deleting...' : 'Delete Account'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your
+                        account and all related data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={deletingAccount}
+                        className="bg-red-600 hover:bg-red-700"
+                        onClick={handleDeleteAccount}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
-              <div className="text-muted-foreground">
-                Deleting your account cannpt be undone. This will also delete all
-                chatbots and all data related to your chatbots. Sub
-                accounts will no longer have access to funnels, contacts etc.
-              </div>
-              <AlertDialogTrigger
-                disabled={isLoading || deletingAccount}
-                className="text-red-600 p-2 text-center mt-2 rounded-md hove:bg-red-600 hover:text-white whitespace-nowrap"
-              >
-                {deletingAccount ? 'Deleting...' : 'Delete Account'}
-              </AlertDialogTrigger>
-            </div>
-          )}
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-left">
-                Are you absolutely sure?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-left">
-                This action cannot be undone. This will permanently delete the
-                Account account and all related chatbots.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex items-center">
-              <AlertDialogCancel className="mb-2">Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={deletingAccount}
-                className="bg-destructive hover:bg-destructive"
-                onClick={handleDeleteAccount}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </CardContent>
-      </Card>
-    </AlertDialog>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
   )
 }
 
