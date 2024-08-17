@@ -25,9 +25,9 @@ import {
 import { revalidatePath } from 'next/cache'
 import { prepareChatResponse } from './openai'
 export const getAuthUserDetails = async () => {
-  const user = await currentUser()
+  const user = await currentUser();
   if (!user) {
-    return
+    return null;
   }
 
   const userData = await db.user.findUnique({
@@ -37,20 +37,34 @@ export const getAuthUserDetails = async () => {
     include: {
       Account: {
         include: {
-          SidebarOption: true,
-          Chatbot: {
-            include: {
-              SidebarOption: true,
-            },
-          },
+          Chatbot: true,  // Include Chatbots associated with the account
         },
       },
-      Permissions: true,
+      Permissions: true,  // Include permissions associated with the user
     },
-  })
+  });
 
-  return userData
-}
+  if (userData && userData.Account) {
+    // Fetch all AccountSidebarOptions (since they are not tied to a specific account directly)
+    const accountSidebarOptions = await db.accountSidebarOption.findMany();
+
+    // Fetch all ChatbotSidebarOptions (since they are not tied to a specific chatbot directly)
+    const chatbotSidebarOptions = await db.chatbotSidebarOption.findMany();
+
+    // Attach SidebarOptions to Account and Chatbots manually
+    userData.Account.SidebarOptions = accountSidebarOptions;
+
+    userData.Account.Chatbot = userData.Account.Chatbot.map((chatbot) => ({
+      ...chatbot,
+      SidebarOptions: chatbotSidebarOptions.filter(
+        (option) => option.parentId === chatbot.id
+      ),
+    }));
+  }
+
+  return userData;
+};
+
 
 export const saveActivityLogsNotification = async ({
   accountId,
@@ -265,12 +279,11 @@ export const upsertAccount = async (account: Account, isCreating: boolean) => {
       console.log(`Creating sidebar options for account ID: ${accountDetails.id}`);
 
       const parentOptions = [
-        { name: 'Dashboard', icon: 'category', link: `/account/${accountDetails.id}` },
-        { name: 'Launchpad', icon: 'clipboardIcon', link: `/account/${accountDetails.id}/launchpad` },
-        { name: 'Billing', icon: 'payment', link: `/account/${accountDetails.id}/billing` },
-        { name: 'Settings', icon: 'settings', link: `/account/${accountDetails.id}/settings` },
+        { name: 'Analytics & Usage', icon: 'category', link: `/account/${accountDetails.id}/analytics` },
         { name: 'Chatbots', icon: 'person', link: `/account/${accountDetails.id}/all-chatbots` },
+        { name: 'Settings', icon: 'settings', link: `/account/${accountDetails.id}/settings` },
         { name: 'Team', icon: 'shield', link: `/account/${accountDetails.id}/team` },
+        { name: 'Billing', icon: 'payment', link: `/account/${accountDetails.id}/billing` }
       ];
 
       const parentIds = [];
@@ -293,9 +306,6 @@ export const upsertAccount = async (account: Account, isCreating: boolean) => {
     throw new Error('Account upsert failed');
   }
 };
-
-
-
 
 export const getNotificationAndUser = async (accountId: string) => {
   try {
@@ -891,13 +901,16 @@ export const getPipelines = async (chatbotId: string) => {
   return response
 }
 // Get Account Sidebar Options
-export const getAccountSidebarOptions = async (accountId: string) => {
+export const getAccountSidebarOptions = async () => {
   try {
     const sidebarOptions = await db.accountSidebarOption.findMany({
-      where: { accountId },
       orderBy: { createdAt: 'asc' },
     });
-    return sidebarOptions;
+    
+    return sidebarOptions.map(option => ({
+      ...option,
+      link: option.link.replace('{accountId}', ':accountId'),
+    }));
   } catch (error) {
     console.error('Error fetching account sidebar options:', error);
     throw error;
@@ -905,13 +918,16 @@ export const getAccountSidebarOptions = async (accountId: string) => {
 };
 
 // Get Chatbot Sidebar Options
-export const getChatbotSidebarOptions = async (chatbotId: string) => {
+export const getChatbotSidebarOptions = async () => {
   try {
     const sidebarOptions = await db.chatbotSidebarOption.findMany({
-      where: { chatbotId },
       orderBy: { createdAt: 'asc' },
     });
-    return sidebarOptions;
+    
+    return sidebarOptions.map(option => ({
+      ...option,
+      link: option.link.replace('{chatbotId}', ':chatbotId'),
+    }));
   } catch (error) {
     console.error('Error fetching chatbot sidebar options:', error);
     throw error;
@@ -961,16 +977,13 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
     // Create sidebar options only if creating a new chatbot
     if (isCreating) {
       const parentOptions = [
-        { name: 'Launchpad', icon: 'clipboardIcon', link: `/chatbot/${chatbotId}/launchpad` },
+        { name: 'Analytics & Usage', icon: 'settings', link: `/chatbot/${chatbotId}/analytics` },
         { name: 'Settings', icon: 'settings', link: `/chatbot/${chatbotId}/settings` },
-        { name: 'Funnels', icon: 'pipelines', link: `/chatbot/${chatbotId}/funnels` },
-        { name: 'Media', icon: 'database', link: `/chatbot/${chatbotId}/media` },
-        { name: 'Automations', icon: 'chip', link: `/chatbot/${chatbotId}/automations` },
         { name: 'Training', icon: 'info', link: `/chatbot/${chatbotId}/training` },
         { name: 'Integration', icon: 'link', link: `/chatbot/${chatbotId}/integration` },
         { name: 'Conversations', icon: 'messages', link: `/chatbot/${chatbotId}/conversations` },
-        { name: 'Calendar', icon: 'calendar', link: `/chatbot/${chatbotId}/calendar` },
-        { name: 'Campaign', icon: 'send', link: `/chatbot/${chatbotId}/campaign` },
+        { name: 'CRM & Leads', icon: 'messages', link: `/chatbot/${chatbotId}/crm-leads` },
+        { name: 'Support', icon: 'send', link: `/chatbot/${chatbotId}/support` }
       ];
 
       const parentIds = [];
@@ -992,7 +1005,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
             icon: 'settings',
             link: `/chatbot/${chatbotId}/connect`,
             isSubmenu: true,
-            parentId: parentIds[6],
+            parentId: parentIds[3],
             chatbotId,
           },
           {
@@ -1000,7 +1013,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
             icon: 'settings',
             link: `/chatbot/${chatbotId}/embed`,
             isSubmenu: true,
-            parentId: parentIds[6],
+            parentId: parentIds[3],
             chatbotId,
           },
           {
@@ -1014,17 +1027,41 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
           {
             name: 'AI Settings',
             icon: 'compass',
-            link: `/chatbot/${chatbotId}/settings`,
+            link: `/chatbot/${chatbotId}/ai-settings`,
             isSubmenu: true,
             parentId: parentIds[1],
             chatbotId,
           },
           {
-            name: 'User Settings',
+            name: 'Chatbot Settings',
             icon: 'compass',
-            link: `/chatbot/${chatbotId}/user-settings`,
+            link: `/chatbot/${chatbotId}/chatbot-settings`,
             isSubmenu: true,
             parentId: parentIds[1],
+            chatbotId,
+          },
+          {
+            name: 'Calendar',
+            icon: 'compass',
+            link: `/chatbot/${chatbotId}/calendar`,
+            isSubmenu: true,
+            parentId: parentIds[5],
+            chatbotId,
+          },
+          {
+            name: 'Campaign',
+            icon: 'compass',
+            link: `/chatbot/${chatbotId}/campaign`,
+            isSubmenu: true,
+            parentId: parentIds[5],
+            chatbotId,
+          },
+          {
+            name: 'Leads',
+            icon: 'compass',
+            link: `/chatbot/${chatbotId}/leads`,
+            isSubmenu: true,
+            parentId: parentIds[5],
             chatbotId,
           },
         ],

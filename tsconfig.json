@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/(main)/chatbot/[chatbotId]/launchpad", "prisma/seed.mjs"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/(main)/chatbot/[chatbotId]/analytics", "prisma/seed.mjs"],
   "exclude": ["node_modules"]
 }

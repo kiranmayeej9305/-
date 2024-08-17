@@ -1,20 +1,33 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import FileUpload from '@/components/global/file-upload'
-import { upsertInterfaceSettings } from '@/lib/queries'
-import { v4 } from 'uuid'
-import { useToast } from '@/components/ui/use-toast'
-import { useRouter } from 'next/navigation'
-import Loading from '../global/loading'
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import FileUpload from '@/components/global/file-upload';
+import { upsertInterfaceSettings } from '@/lib/queries';
+import { v4 } from 'uuid';
+import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
+import Loading from '../global/loading';
 
 const interfaceSchema = z.object({
   id: z.string().optional(),
@@ -28,55 +41,57 @@ const interfaceSchema = z.object({
   helpdesk: z.boolean().default(false),
   copyRightMessage: z.string().optional(),
   chatbotId: z.string(),
-})
+});
 
-type InterfaceForm = z.infer<typeof interfaceSchema>
+type InterfaceForm = z.infer<typeof interfaceSchema>;
 
 type Props = {
-  data: InterfaceForm
-  chatbotId: string
-}
+  data: InterfaceForm;
+  chatbotId: string;
+};
 
-const InterfaceComponent = ({ data, chatbotId }: Props) => {
-  const { toast } = useToast()
-  const router = useRouter()
+const InterfaceSettings = ({ data, chatbotId }: Props) => {
+  const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<InterfaceForm>({
     resolver: zodResolver(interfaceSchema),
     defaultValues: { ...data, chatbotId },
-  })
+  });
 
   const onSubmit = async (values: InterfaceForm) => {
     try {
       const settingsResponse = await upsertInterfaceSettings({
         ...values,
         id: values.id || v4(),
-      })
-      console.log('Settings saved:', settingsResponse)
+      });
       toast({
         title: 'Success',
         description: 'Settings saved successfully',
-      })
-      router.refresh()
+      });
+      router.refresh();
     } catch (error) {
-      console.error('Error saving settings:', error)
       toast({
         variant: 'destructive',
         title: 'Failed',
         description: 'Error saving settings',
-      })
+      });
     }
-  }
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Chatbot Interface Settings</CardTitle>
-        <CardDescription>Customize the appearance and settings of your chatbot interface</CardDescription>
+    <div className="flex flex-col items-center min-h-screen bg-gray-50">
+      <div className="container mx-auto max-w-3xl p-8 my-10 bg-white rounded-lg shadow-lg">
+    <Card className="w-full lg:max-w-4xl mx-auto shadow-md border border-gray-200">
+      <CardHeader className="border-b pb-4">
+        <CardTitle className="text-xl font-semibold">Chatbot Interface Settings</CardTitle>
+        <CardDescription className="text-gray-500">
+          Customize the appearance and settings of your chatbot interface.
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <CardContent className="pt-6">
+      <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="icon"
@@ -206,17 +221,22 @@ const InterfaceComponent = ({ data, chatbotId }: Props) => {
                 </FormItem>
               )}
             />
-            <Button
-              disabled={form.formState.isSubmitting}
-              type="submit"
-            >
-              {form.formState.isSubmitting ? <Loading /> : 'Save Settings'}
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                disabled={form.formState.isSubmitting}
+                type="submit"
+                className="mt-4"
+              >
+                {form.formState.isSubmitting ? <Loading /> : 'Save Settings'}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>
     </Card>
-  )
-}
+    </div>
+    </div>
+  );
+};
 
-export default InterfaceComponent
+export default InterfaceSettings;

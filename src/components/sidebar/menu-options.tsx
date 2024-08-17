@@ -11,24 +11,15 @@ import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { ChevronsUpDown, Compass, Menu, PlusCircleIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
-import { AspectRatio } from '../ui/aspect-ratio';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '../ui/command';
-import Link from 'next/link';
-import { twMerge } from 'tailwind-merge';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { useModal } from '@/providers/modal-provider';
 import CustomModal from '../global/custom-modal';
 import ChatbotCreate from '@/components/forms/chatbot-create';
 import { Separator } from '../ui/separator';
 import { icons } from '@/lib/constants';
+import { useRouter } from 'next/navigation';
 import { getAccountSidebarOptions, getChatbotSidebarOptions } from '@/lib/queries';
 
 type Props = {
@@ -51,6 +42,7 @@ const MenuOptions = ({
   type,
 }: Props) => {
   const { setOpen } = useModal();
+  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [sidebarOptions, setSidebarOptions] = useState<(AccountSidebarOption | ChatbotSidebarOption)[]>([]);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
@@ -78,7 +70,23 @@ const MenuOptions = ({
       setExpandedMenu((prev) => (prev === optionId ? null : optionId));
     } else {
       setExpandedMenu(null);
+      const option = sidebarOptions.find((opt) => opt.id === optionId);
+      if (option) {
+        handleNavigation(option.link);
+      }
     }
+  };
+
+  const handleNavigation = (link: string) => {
+    console.log(link);
+    const resolvedLink = link
+      .replace(':chatbotId', type === 'Chatbot' ? id : '')
+      .replace(':accountId', type === 'account' ? id : '');
+    console.log(type);
+    console.log(id);
+
+    // Use the router to navigate to the resolved link
+    router.push(resolvedLink);
   };
 
   const renderMenuOptions = (
@@ -90,17 +98,24 @@ const MenuOptions = ({
       .map((option) => {
         const hasSubmenu = options.some((childOption) => childOption.parentId === option.id);
         const IconComponent = icons.find((icon) => icon.value === option.icon)?.path || null;
+
         return (
           <div key={option.id} className={clsx('mt-2', { 'ml-4': parentId })}>
-            <div className="flex items-center justify-between md:w-[320px] w-full">
-              <Link
-                href={!hasSubmenu ? option.link : '#'}
+            <div className="flex items-center justify-between md:w-[300px] w-full group">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleMenuClick(option.id, hasSubmenu)}
-                className="flex items-center gap-2 hover:bg-transparent rounded-md transition-all md:w-full w-[320px]"
+                className={clsx(
+                  'flex items-center gap-2 hover:bg-primary hover:text-white rounded-md transition-all md:w-full w-[300px] text-left',
+                  { 'bg-primary text-white': expandedMenu === option.id }
+                )}
               >
-                {IconComponent && <IconComponent />}
-                <span>{option.name}</span>
-              </Link>
+                {IconComponent && (
+                  <IconComponent className="text-muted-foreground group-hover:text-white" />
+                )}
+                <span className="font-semibold group-hover:text-white">{option.name}</span>
+              </Button>
               {hasSubmenu && (
                 <Button variant="ghost" size="icon" onClick={() => handleMenuClick(option.id, hasSubmenu)}>
                   {expandedMenu === option.id ? <ChevronDown /> : <ChevronRight />}
@@ -108,7 +123,9 @@ const MenuOptions = ({
               )}
             </div>
             {hasSubmenu && expandedMenu === option.id && (
-              <div className="ml-4">{renderMenuOptions(options, option.id)}</div>
+              <div className="ml-4 pl-4 border-l-2 border-primary">
+                {renderMenuOptions(options, option.id)}
+              </div>
             )}
           </div>
         );
@@ -123,84 +140,65 @@ const MenuOptions = ({
         </Button>
       </SheetTrigger>
 
-      <SheetContent showX={!defaultOpen} side={'left'} className={clsx('bg-background/80 backdrop-blur-xl fixed top-0 border-r-[1px] p-6', {
-          'hidden md:inline-block z-0 w-[300px]': defaultOpen,
-          'inline-block md:hidden z-[100] w-full': !defaultOpen,
-        })}
+      <SheetContent
+        showX={!defaultOpen}
+        side={'left'}
+        className={clsx(
+          'bg-background/90 backdrop-blur-xl fixed top-0 border-r-[1px] p-6 transition-all h-screen',
+          {
+            'hidden md:inline-block z-0 w-[300px]': defaultOpen,
+            'inline-block md:hidden z-[100] w-full': !defaultOpen,
+          }
+        )}
       >
         <div>
-          <AspectRatio ratio={16 / 5}>
-            <Image src={sidebarLogo} alt="Sidebar Logo" fill className="rounded-md object-contain" />
-          </AspectRatio>
           <Popover>
             <PopoverTrigger asChild>
-              <Button className="w-full my-4 flex items-center justify-between py-8" variant="ghost">
-                <div className="flex items-center text-left gap-2">
-                  <Compass />
-                  <div className="flex flex-col">
-                    {details.name}
-                    <span className="text-muted-foreground">{details.address}</span>
-                  </div>
+              <Button className="w-full my-4 flex items-center justify-between py-4 bg-secondary text-secondary-foreground rounded-lg shadow hover:bg-secondary-hover transition-all">
+                <div className="flex flex-col text-left">
+                  <span className="font-bold text-lg">{details.name}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {type === 'account' ? details.subscriptionPlan : `${details.type} - ${details.model}`}
+                  </span>
                 </div>
-                <div>
-                  <ChevronsUpDown size={16} className="text-muted-foreground" />
-                </div>
+                <ChevronsUpDown size={16} className="text-muted-foreground" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 h-80 mt-4 z-[200]">
-              <Command className="rounded-lg">
-                <CommandInput placeholder="Search Chatbots..." />
+            <PopoverContent className="w-full mt-4 z-[200] shadow-lg">
+              <Command className="rounded-lg shadow-inner bg-muted-background">
+                <CommandInput placeholder="Search..." className="p-4 text-primary" />
                 <CommandList className="pb-16">
-                  <CommandEmpty> No results found</CommandEmpty>
+                  <CommandEmpty>No results found</CommandEmpty>
                   {(user?.role === 'ACCOUNT_OWNER' || user?.role === 'ACCOUNT_ADMIN') &&
                     user?.Account && (
-                      <CommandGroup heading="Account">
-                        <CommandItem className="!bg-transparent my-2 text-primary border-[1px] border-border p-2 rounded-md hover:!bg-muted cursor-pointer transition-all">
-                          {defaultOpen ? (
-                            <Link href={`/account/${user?.Account?.id}`} className="flex gap-4 w-full h-full">
-                              <div className="relative w-16">
-                                <Image src={user?.Account?.accountLogo} alt="Account Logo" fill className="rounded-md object-contain" />
-                              </div>
-                              <div className="flex flex-col flex-1">
-                                {user?.Account?.name}
-                                <span className="text-muted-foreground">{user?.Account?.address}</span>
-                              </div>
-                            </Link>
-                          ) : (
-                            <SheetClose asChild>
-                              <Link href={`/account/${user?.Account?.id}`} className="flex gap-4 w-full h-full">
-                                <div className="relative w-16">
-                                  <Image src={user?.Account?.accountLogo} alt="Account Logo" fill className="rounded-md object-contain" />
-                                </div>
-                                <div className="flex flex-col flex-1">
-                                  {user?.Account?.name}
-                                  <span className="text-muted-foreground">{user?.Account?.address}</span>
-                                </div>
-                              </Link>
-                            </SheetClose>
-                          )}
+                      <CommandGroup heading="Account" className="p-2 text-muted-foreground">
+                        <CommandItem
+                          className="!bg-transparent my-2 text-primary border-[1px] border-border p-4 rounded-md hover:!bg-muted cursor-pointer transition-all"
+                          onSelect={() => handleNavigation(`/account/${user?.Account?.id}`)}
+                        >
+                          <div className="flex flex-col flex-1">
+                            <span className="font-semibold text-lg">{user?.Account?.name}</span>
+                            <span className="text-muted-foreground text-sm">
+                              {user?.Account?.subscriptionPlan}
+                            </span>
+                          </div>
                         </CommandItem>
                       </CommandGroup>
                     )}
-                  <CommandGroup heading="Chatbots">
+                  <CommandGroup heading="Chatbots" className="p-2 text-muted-foreground">
                     {!!chatbots
                       ? chatbots.map((chatbot) => (
-                          <CommandItem key={chatbot.id}>
-                            {defaultOpen ? (
-                              <Link href={`/chatbot/${chatbot.id}`} className="flex gap-4 w-full h-full">
-                                <div className="flex flex-col flex-1">
-                                  {chatbot.name}
-                                </div>
-                              </Link>
-                            ) : (
-                              <SheetClose asChild>
-                                <Link href={`/chatbot/${chatbot.id}`} className="flex gap-4 w-full h-full">
-                                  <div className="flex flex-col flex-1">
-                                    {chatbot.name}
-                                  </div>
-                                </Link>
-                              </SheetClose>
-                            )}
+                          <CommandItem
+                            key={chatbot.id}
+                            className="!bg-transparent my-2 text-primary border-[1px] border-border p-4 rounded-md hover:!bg-muted cursor-pointer transition-all"
+                            onSelect={() => handleNavigation(`/chatbot/${chatbot.id}`)}
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-lg">{chatbot.name}</span>
+                              <span className="text-muted-foreground text-sm">
+                                {chatbot.type} - {chatbot.model}
+                              </span>
+                            </div>
                           </CommandItem>
                         ))
                       : 'No Chatbots'}
@@ -208,11 +206,13 @@ const MenuOptions = ({
                 </CommandList>
                 {(user?.role === 'ACCOUNT_OWNER' || user?.role === 'ACCOUNT_ADMIN') && (
                   <SheetClose>
-                    <Button className="w-full flex gap-2" onClick={() => {
+                    <Button
+                      className="w-full flex gap-2 justify-center items-center py-4 mt-4 bg-primary text-white rounded-lg shadow-lg hover:bg-primary-hover transition-all"
+                      onClick={() => {
                         setOpen(
                           <CustomModal
                             title="Create A Chatbot"
-                            subheading="You can switch between your account account and the Chatbot from the sidebar"
+                            subheading="You can switch between your account and the Chatbot from the sidebar"
                           >
                             <ChatbotCreate
                               accountId={user?.Account.id as Account}
@@ -223,7 +223,7 @@ const MenuOptions = ({
                         );
                       }}
                     >
-                      <PlusCircleIcon size={15} />
+                      <PlusCircleIcon size={18} />
                       Create Chatbot
                     </Button>
                   </SheetClose>
@@ -231,11 +231,11 @@ const MenuOptions = ({
               </Command>
             </PopoverContent>
           </Popover>
-          <p className="text-muted-foreground text-xs mb-2">MENU LINKS</p>
-          <Separator className="mb-4" />
+          <p className="text-muted-foreground text-xs mb-2 font-semibold">MENU LINKS</p>
+          <Separator className="mb-4 border-primary" />
           <nav className="relative">
             <Command className="rounded-lg overflow-visible bg-transparent">
-              <CommandInput placeholder="Search..." />
+              <CommandInput placeholder="Search..." className="text-primary p-4" />
               <CommandList className="py-4 overflow-visible">
                 <CommandEmpty>No Results Found</CommandEmpty>
                 <CommandGroup className="overflow-visible">

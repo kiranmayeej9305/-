@@ -118,7 +118,6 @@ model Account {
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   Chatbot          Chatbot[]
-  SidebarOption    AccountSidebarOption[]
   Invitation       Invitation[]
   Notification     Notification[]
   Subscription     Subscription?
@@ -174,7 +173,6 @@ model Chatbot {
   goal                Int                       @default(5)
   accountId           String
   Account             Account                    @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  SidebarOption       ChatbotSidebarOption[]
   Permissions         Permissions[]
   Funnels             Funnel[]
   Media               Media[]
@@ -417,32 +415,24 @@ model FunnelPage {
 
 model AccountSidebarOption {
   id        String   @id @default(uuid())
-  name      String   @default("Menu")
-  link      String   @default("#")
-  icon      Icon     @default(info)
-  accountId String
-  parentId  String?  // This field is for submenu parent linkage
+  name      String
+  link      String
+  icon      Icon
+  parentId  String?  // Optional, for submenus
   isSubmenu Boolean  @default(false)
-  Account   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([accountId])
 }
 
 model ChatbotSidebarOption {
   id        String   @id @default(uuid())
-  name      String   @default("Menu")
-  link      String   @default("#")
-  icon      Icon     @default(info)
+  name      String
+  link      String
+  icon      Icon
+  parentId  String?  // Optional, for submenus
+  isSubmenu Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  chatbotId String?
-  parentId  String?  // This field is for submenu parent linkage
-  isSubmenu Boolean  @default(false)
-  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-
-  @@index([chatbotId])
 }
 
 enum InvitationStatus {

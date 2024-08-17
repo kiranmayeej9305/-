@@ -8,7 +8,7 @@ type Props = {
   params: { chatbotId: string };
 };
 
-const ChatbotSettingPage = async ({ params }: Props) => {
+const AiSettingPage = async ({ params }: Props) => {
   const authUser = await currentUser();
   if (!authUser) return null;
 
@@ -32,16 +32,16 @@ const ChatbotSettingPage = async ({ params }: Props) => {
 
   return (
     <BlurPage>
-      <div className="flex lg:!flex-row flex-col gap-4">
-        <ChatbotDetails
-          accountDetails={accountDetails}
-          details={chatbot}
-          userId={userDetails.id}
-          userName={userDetails.name}
-        />
+      <div className="container mx-auto p-4 lg:p-8">
+          <ChatbotDetails
+            accountDetails={accountDetails}
+            details={chatbot}
+            userId={userDetails.id}
+            userName={userDetails.name}
+          />
       </div>
     </BlurPage>
   );
 };
 
-export default ChatbotSettingPage;
+export default AiSettingPage;

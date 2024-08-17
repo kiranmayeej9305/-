@@ -1,4 +1,5 @@
 import UserDetails from '@/components/forms/user-details'
+import ChatbotSettings from '@/components/forms/chatbot-settings';
 import BlurPage from '@/components/global/blur-page'
 import { db } from '@/lib/db'
 import { currentUser } from '@clerk/nextjs'
@@ -8,7 +9,7 @@ type Props = {
   params: { chatbotId: string }
 }
 
-const UserSettingPage = async ({ params }: Props) => {
+const ChatbotSettingPage = async ({ params }: Props) => {
   const authUser = await currentUser()
   if (!authUser) return
   const userDetails = await db.user.findUnique({
@@ -34,6 +35,12 @@ const UserSettingPage = async ({ params }: Props) => {
   return (
     <BlurPage>
       <div className="flex lg:!flex-row flex-col gap-4">
+      <ChatbotSettings
+          accountDetails={accountDetails}
+          details={chatbot}
+          userId={userDetails.id}
+          userName={userDetails.name}
+        />
         <UserDetails
           type="chatbot"
           id={params.chatbotId}
@@ -45,4 +52,4 @@ const UserSettingPage = async ({ params }: Props) => {
   )
 }
 
-export default UserSettingPage
+export default ChatbotSettingPage

@@ -74,7 +74,6 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: details?.name || '',
       welcomeMessage: details?.ChatbotSettings?.welcomeMessage || '',
       aiModelId: details?.ChatbotSettings?.aiModelId || '',
       chatbotTypeId: details?.ChatbotSettings?.chatbotTypeId || '',
@@ -187,172 +186,166 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
   const isLoading = form.formState.isSubmitting;
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Update Chatbot Details</CardTitle>
-        <CardDescription>Please update the chatbot details</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Chatbot Name</FormLabel>
-                  <FormControl>
-                    <Input required placeholder="Your chatbot name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="welcomeMessage"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Welcome Message</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Welcome message" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="aiModelId"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>AI Model</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select AI Model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(aiModels) &&
-                          aiModels.map((model) => (
-                            <SelectItem key={model.id} value={model.id}>
-                              {model.name} - {model.provider}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="chatbotTypeId"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Chatbot Type</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={handleChatbotTypeChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Chatbot Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(chatbotTypes) &&
-                          chatbotTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="knowledgeSources"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Knowledge Sources</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Knowledge Source" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="training">Training Only</SelectItem>
-                        <SelectItem value="generic">Generic AI Knowledge</SelectItem>
-                        <SelectItem value="both">Both</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="creativityLevel"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Creativity Level</FormLabel>
-                  <FormControl>
-                    <Input type="range" min="0" max="1" step="0.01" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="customPrompts"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Custom Prompts</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Provide specific instructions for the chatbot to follow. E.g., 'Greet users with their first name and offer assistance with their queries.'"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="space-y-4">
-              <FormLabel>Filtered Questions</FormLabel>
-              {filteredQuestions.map((question, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    value={question.question}
-                    onChange={(e) => handleQuestionChange(e, index)}
-                    placeholder={`Question ${index + 1}`}
-                  />
-                  <Button
-                    onClick={() => handleRemoveQuestion(index)}
-                    variant="ghost"
-                    type="button"
-                    size="icon"
-                  >
-                    <Trash2 className="h-4 w-4" />
+    <div className="flex flex-col items-center min-h-screen bg-gray-50">
+      <div className="container mx-auto max-w-3xl p-8 my-10 bg-white rounded-lg shadow-lg">
+        <Card className="w-full">
+          <CardHeader className="border-b pb-4">
+            <CardTitle className="text-2xl font-semibold">Update AI Settings</CardTitle>
+            <CardDescription>Update the settings for your AI chatbot to enhance its performance and user interactions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="welcomeMessage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Welcome Message</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Welcome message" {...field} className="border-gray-300" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="aiModelId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>AI Model</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger className="border-gray-300">
+                            <SelectValue placeholder="Select AI Model" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(aiModels) &&
+                              aiModels.map((model) => (
+                                <SelectItem key={model.id} value={model.id}>
+                                  {model.name} - {model.provider}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="chatbotTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chatbot Type</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={handleChatbotTypeChange} value={field.value}>
+                          <SelectTrigger className="border-gray-300">
+                            <SelectValue placeholder="Select Chatbot Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(chatbotTypes) &&
+                              chatbotTypes.map((type) => (
+                                <SelectItem key={type.id} value={type.id}>
+                                  {type.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="knowledgeSources"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Knowledge Sources</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger className="border-gray-300">
+                            <SelectValue placeholder="Select Knowledge Source" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="training">Training Only</SelectItem>
+                            <SelectItem value="generic">Generic AI Knowledge</SelectItem>
+                            <SelectItem value="both">Both</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="creativityLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Creativity Level</FormLabel>
+                      <FormControl>
+                        <Input type="range" min="0" max="1" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="customPrompts"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Custom Prompts</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Provide specific instructions for the chatbot to follow."
+                          {...field}
+                          className="border-gray-300"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="space-y-4">
+                  <FormLabel>Filtered Questions</FormLabel>
+                  {filteredQuestions.map((question, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={question.question}
+                        onChange={(e) => handleQuestionChange(e, index)}
+                        placeholder={`Question ${index + 1}`}
+                        className="border-gray-300"
+                      />
+                      <Button
+                        onClick={() => handleRemoveQuestion(index)}
+                        variant="ghost"
+                        type="button"
+                        size="icon"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button onClick={handleAddQuestion} variant="outline" type="button">
+                    <Plus className="h-4 w-4" />
+                    Add Question
                   </Button>
                 </div>
-              ))}
-              <Button onClick={handleAddQuestion} variant="outline" type="button">
-                <Plus className="h-4 w-4" />
-                Add Question
-              </Button>
-            </div>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? <Loading /> : 'Save Chatbot Information'}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? <Loading /> : 'Save Chatbot Information'}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
