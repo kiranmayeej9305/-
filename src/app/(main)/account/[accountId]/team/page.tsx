@@ -23,7 +23,7 @@ const TeamPage = async ({ params }: Props) => {
       Permissions: { include: { Chatbot: true } },
     },
   })
-
+  console.log(authUser);
   if (!authUser) return null
   const accountDetails = await db.account.findUnique({
     where: {

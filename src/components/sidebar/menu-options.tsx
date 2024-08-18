@@ -1,26 +1,24 @@
 'use client';
 
-import {
-  Account,
-  Chatbot,
-  AccountSidebarOption,
-  ChatbotSidebarOption,
-} from '@prisma/client';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../ui/sheet';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Button } from '../ui/button';
-import { ChevronsUpDown, Compass, Menu, PlusCircleIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronsUpDown, Menu, ChevronDown, ChevronRight, Bot } from 'lucide-react'; // Import Bot icon for chatbot
+import { Landmark } from 'lucide-react'; // Import Office icon for account
 import clsx from 'clsx';
-import Image from 'next/image';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
-import { useModal } from '@/providers/modal-provider';
-import CustomModal from '../global/custom-modal';
-import ChatbotCreate from '@/components/forms/chatbot-create';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '../ui/dropdown-menu';
 import { Separator } from '../ui/separator';
-import { icons } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { getAccountSidebarOptions, getChatbotSidebarOptions } from '@/lib/queries';
+import { icons } from '@/lib/constants';
+import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 
 type Props = {
   defaultOpen?: boolean;
@@ -32,117 +30,116 @@ type Props = {
   type: 'account' | 'chatbot';
 };
 
-const MenuOptions = ({
-  details,
-  id,
-  sidebarLogo,
-  chatbots,
-  user,
-  defaultOpen,
-  type,
-}: Props) => {
-  const { setOpen } = useModal();
+const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen, type }) => {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
-  const [sidebarOptions, setSidebarOptions] = useState<(AccountSidebarOption | ChatbotSidebarOption)[]>([]);
+  const [sidebarOptions, setSidebarOptions] = useState<
+    (AccountSidebarOption | ChatbotSidebarOption)[]
+  >([]);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [selectedMenu, setSelectedMenu] = useState<string | null>(null);
+  const [context, setContext] = useState(type);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const openState = useMemo(() => (defaultOpen ? { open: true } : {}), [defaultOpen]);
+  const openState = useMemo(
+    () => (defaultOpen ? { open: true } : {}),
+    [defaultOpen]
+  );
 
   useEffect(() => {
-    setIsMounted(true);
     const fetchSidebarOptions = async () => {
-      let options;
-      if (type === 'account') {
-        options = await getAccountSidebarOptions(id);
-      } else {
-        options = await getChatbotSidebarOptions(id);
-      }
+      const options = context === 'account'
+        ? await getAccountSidebarOptions(id)
+        : await getChatbotSidebarOptions(id);
       setSidebarOptions(options);
     };
+
+    setIsMounted(true);
     fetchSidebarOptions();
-  }, [id, type]);
+  }, [context, id]);
 
-  if (!isMounted) return null;
-
-  const handleMenuClick = (optionId: string, hasSubmenu: boolean) => {
+  const handleMenuClick = useCallback((optionId: string, hasSubmenu: boolean, parentId?: string) => {
     if (hasSubmenu) {
-      setExpandedMenu((prev) => (prev === optionId ? null : optionId));
+      setExpandedMenu(prev => (prev === optionId ? null : optionId));
     } else {
-      setExpandedMenu(null);
-      const option = sidebarOptions.find((opt) => opt.id === optionId);
-      if (option) {
-        handleNavigation(option.link);
-      }
+      setExpandedMenu(parentId || null);
+      setSelectedMenu(optionId);
+      const option = sidebarOptions.find(opt => opt.id === optionId);
+      if (option) handleNavigation(option.link);
     }
-  };
+  }, [sidebarOptions]);
 
-  const handleNavigation = (link: string) => {
-    console.log(link);
+  const handleNavigation = useCallback((link: string) => {
     const resolvedLink = link
-      .replace(':chatbotId', type === 'Chatbot' ? id : '')
-      .replace(':accountId', type === 'account' ? id : '');
-    console.log(type);
-    console.log(id);
-
-    // Use the router to navigate to the resolved link
+      .replace(':chatbotId', context === 'chatbot' ? id : '')
+      .replace(':accountId', context === 'account' ? id : '');
     router.push(resolvedLink);
-  };
+  }, [context, id, router]);
 
-  const renderMenuOptions = (
-    options: (AccountSidebarOption | ChatbotSidebarOption)[],
-    parentId: string | null = null
-  ) => {
+  const renderMenuOptions = useCallback((options: (AccountSidebarOption | ChatbotSidebarOption)[], parentId: string | null = null) => {
     return options
-      .filter((option) => option.parentId === parentId)
-      .map((option) => {
-        const hasSubmenu = options.some((childOption) => childOption.parentId === option.id);
-        const IconComponent = icons.find((icon) => icon.value === option.icon)?.path || null;
+      .filter(option => option.parentId === parentId)
+      .map(option => {
+        const hasSubmenu = options.some(childOption => childOption.parentId === option.id);
+        const IconComponent = icons.find(icon => icon.value === option.icon)?.path;
 
         return (
-          <div key={option.id} className={clsx('mt-2', { 'ml-4': parentId })}>
-            <div className="flex items-center justify-between md:w-[300px] w-full group">
+          <div key={option.id} className={clsx('mt-2', { 'ml-6': parentId })}>
+            <div className="flex items-center justify-between w-full group">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleMenuClick(option.id, hasSubmenu)}
+                onClick={() => handleMenuClick(option.id, hasSubmenu, parentId)}
                 className={clsx(
-                  'flex items-center gap-2 hover:bg-primary hover:text-white rounded-md transition-all md:w-full w-[300px] text-left',
-                  { 'bg-primary text-white': expandedMenu === option.id }
+                  'flex items-center gap-2 hover:bg-primary hover:text-white rounded-md transition-all w-full text-left justify-start',
+                  { 'bg-primary text-white': expandedMenu === option.id || selectedMenu === option.id }
                 )}
               >
                 {IconComponent && (
                   <IconComponent className="text-muted-foreground group-hover:text-white" />
                 )}
-                <span className="font-semibold group-hover:text-white">{option.name}</span>
+                <span className="font-semibold group-hover:text-white">
+                  {option.name}
+                </span>
               </Button>
               {hasSubmenu && (
-                <Button variant="ghost" size="icon" onClick={() => handleMenuClick(option.id, hasSubmenu)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-auto"
+                  onClick={() => handleMenuClick(option.id, hasSubmenu)}
+                >
                   {expandedMenu === option.id ? <ChevronDown /> : <ChevronRight />}
                 </Button>
               )}
             </div>
             {hasSubmenu && expandedMenu === option.id && (
-              <div className="ml-4 pl-4 border-l-2 border-primary">
+              <div className="ml-6 pl-4 border-l-2 border-primary">
                 {renderMenuOptions(options, option.id)}
               </div>
             )}
           </div>
         );
       });
-  };
+  }, [expandedMenu, selectedMenu, handleMenuClick]);
+
+  const filteredChatbots = useMemo(() => {
+    return chatbots.filter(chatbot => chatbot.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [chatbots, searchQuery]);
+
+  if (!isMounted) return null;
 
   return (
     <Sheet modal={false} {...openState}>
       <SheetTrigger asChild className="absolute left-4 top-4 z-[100] md:!hidden flex">
-        <Button variant="outline" size={'icon'}>
+        <Button variant="outline" size="icon">
           <Menu />
         </Button>
       </SheetTrigger>
 
       <SheetContent
         showX={!defaultOpen}
-        side={'left'}
+        side="left"
         className={clsx(
           'bg-background/90 backdrop-blur-xl fixed top-0 border-r-[1px] p-6 transition-all h-screen',
           {
@@ -151,100 +148,70 @@ const MenuOptions = ({
           }
         )}
       >
-        <div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button className="w-full my-4 flex items-center justify-between py-4 bg-secondary text-secondary-foreground rounded-lg shadow hover:bg-secondary-hover transition-all">
-                <div className="flex flex-col text-left">
-                  <span className="font-bold text-lg">{details.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {type === 'account' ? details.subscriptionPlan : `${details.type} - ${details.model}`}
-                  </span>
-                </div>
-                <ChevronsUpDown size={16} className="text-muted-foreground" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full mt-4 z-[200] shadow-lg">
-              <Command className="rounded-lg shadow-inner bg-muted-background">
-                <CommandInput placeholder="Search..." className="p-4 text-primary" />
-                <CommandList className="pb-16">
-                  <CommandEmpty>No results found</CommandEmpty>
-                  {(user?.role === 'ACCOUNT_OWNER' || user?.role === 'ACCOUNT_ADMIN') &&
-                    user?.Account && (
-                      <CommandGroup heading="Account" className="p-2 text-muted-foreground">
-                        <CommandItem
-                          className="!bg-transparent my-2 text-primary border-[1px] border-border p-4 rounded-md hover:!bg-muted cursor-pointer transition-all"
-                          onSelect={() => handleNavigation(`/account/${user?.Account?.id}`)}
-                        >
-                          <div className="flex flex-col flex-1">
-                            <span className="font-semibold text-lg">{user?.Account?.name}</span>
-                            <span className="text-muted-foreground text-sm">
-                              {user?.Account?.subscriptionPlan}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      </CommandGroup>
-                    )}
-                  <CommandGroup heading="Chatbots" className="p-2 text-muted-foreground">
-                    {!!chatbots
-                      ? chatbots.map((chatbot) => (
-                          <CommandItem
-                            key={chatbot.id}
-                            className="!bg-transparent my-2 text-primary border-[1px] border-border p-4 rounded-md hover:!bg-muted cursor-pointer transition-all"
-                            onSelect={() => handleNavigation(`/chatbot/${chatbot.id}`)}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-lg">{chatbot.name}</span>
-                              <span className="text-muted-foreground text-sm">
-                                {chatbot.type} - {chatbot.model}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))
-                      : 'No Chatbots'}
-                  </CommandGroup>
-                </CommandList>
-                {(user?.role === 'ACCOUNT_OWNER' || user?.role === 'ACCOUNT_ADMIN') && (
-                  <SheetClose>
-                    <Button
-                      className="w-full flex gap-2 justify-center items-center py-4 mt-4 bg-primary text-white rounded-lg shadow-lg hover:bg-primary-hover transition-all"
-                      onClick={() => {
-                        setOpen(
-                          <CustomModal
-                            title="Create A Chatbot"
-                            subheading="You can switch between your account and the Chatbot from the sidebar"
-                          >
-                            <ChatbotCreate
-                              accountId={user?.Account.id as Account}
-                              userId={user?.id as string}
-                              userName={user?.name}
-                            />
-                          </CustomModal>
-                        );
-                      }}
-                    >
-                      <PlusCircleIcon size={18} />
-                      Create Chatbot
-                    </Button>
-                  </SheetClose>
-                )}
-              </Command>
-            </PopoverContent>
-          </Popover>
-          <p className="text-muted-foreground text-xs mb-2 font-semibold">MENU LINKS</p>
-          <Separator className="mb-4 border-primary" />
-          <nav className="relative">
-            <Command className="rounded-lg overflow-visible bg-transparent">
-              <CommandInput placeholder="Search..." className="text-primary p-4" />
-              <CommandList className="py-4 overflow-visible">
-                <CommandEmpty>No Results Found</CommandEmpty>
-                <CommandGroup className="overflow-visible">
-                  {renderMenuOptions(sidebarOptions)}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </nav>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="lg" className="flex items-center justify-between w-full border border-black rounded-md">
+              <span className="font-bold text-lg">
+                {context === 'account' ? 'Select Chatbot' : 'Select Account'}
+              </span>
+              <ChevronsUpDown size={16} className="ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-full max-h-60 overflow-y-auto border border-black shadow-md">
+            <DropdownMenuLabel className="px-2">Accounts</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => {
+              setContext('account');
+              handleNavigation(`/account/${user.Account.id}`);
+            }}>
+              {user.Account.name}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="px-2">Chatbots</DropdownMenuLabel>
+            <div className="px-2 pb-2">
+              <input
+                type="text"
+                placeholder="Search Chatbots..."
+                className="w-full p-2 rounded-md border border-muted"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {filteredChatbots.map(chatbot => (
+              <DropdownMenuItem
+                key={chatbot.id}
+                onClick={() => {
+                  setContext('chatbot');
+                  handleNavigation(`/chatbot/${chatbot.id}`);
+                }}
+              >
+                {chatbot.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Card className="mb-4 p-6 text-center bg-blue-100 text-primary rounded-lg shadow-lg mt-6 flex flex-col items-center">
+          {context === 'account' ? (
+            <Landmark size={48} className="text-primary mb-4" />
+          ) : (
+            <Bot size={48} className="text-primary mb-4" />
+          )}
+          <div className="font-bold text-lg">
+            {context === 'account' ? user.Account.name : details.name}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {context === 'account' ? 'Free Tier' : `${details?.ChatbotSettings?.ChatbotType?.name || 'Custom Type'} - ${details?.ChatbotSettings?.AIModel?.name || 'Unknown Model'}`}
+          </div>
+        </Card>
+
+        <Separator className="mb-4 border-primary" />
+        <nav className="relative">
+          <div className="py-4 overflow-visible">
+            <Card className="overflow-visible p-4">
+              {renderMenuOptions(sidebarOptions)}
+            </Card>
+          </div>
+        </nav>
       </SheetContent>
     </Sheet>
   );

@@ -30,7 +30,7 @@ const CreateChatbotButton = ({ className, id, user }: Props) => {
       className={twMerge('w-full flex gap-4', className)}
       onClick={() => {
         setOpen(
-          <CustomModal title="Create a Chatbot" subheading="You can switch between">
+          <CustomModal title="Create a Chatbot" subheading="You can always customize your chatbot anytime in settings. ">
             <ChatbotCreate accountId={accountDetails.id} userId={user.id} userName={user.name} />
           </CustomModal>
         );

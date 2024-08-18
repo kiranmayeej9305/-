@@ -57,7 +57,7 @@ const ChatbotLayout = async ({ children, params }: Props) => {
     <div className="h-screen overflow-hidden">
       <Sidebar
         id={params.chatbotId}
-        type="Chatbot"
+        type="chatbot"
       />
 
       <div className="md:pl-[300px]">

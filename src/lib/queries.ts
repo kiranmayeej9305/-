@@ -1,7 +1,6 @@
 'use server'
 
 import { clerkClient, currentUser } from '@clerk/nextjs'
-import { pusherServer , pusherClient} from '@/lib/pusher';
 import { db } from './db'
 import { redirect } from 'next/navigation'
 import {
@@ -1765,5 +1764,29 @@ export const createTrainingHistory = async (chatbotId: string, data: any) => {
   });
   return trainingHistory;
 };
+export const fetchChatbotsWithDetails = async (accountId: string) => {
+  try {
+    console.log(accountId);
+    const chatbots = await db.chatbot.findMany({
+      where: {
+        accountId: accountId,
+      },
+      include: {
+        ChatbotSettings: {
+          include: {
+            AIModel: true, // This should be handled as optional
+            ChatbotType: true, // This too should be optional
+          },
+        },
+      },
+    });
+
+    return chatbots;
+  } catch (error) {
+    console.error('Error fetching chatbots:', error);
+    throw error;
+  }
+};
+
 
 

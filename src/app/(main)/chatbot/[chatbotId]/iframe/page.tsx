@@ -1,5 +1,5 @@
 import { fetchChatbotStatus } from '@/lib/queries';
-import ChatRoom from '../preview/chat-room';
+import ChatRoom from '../playground/chat-room';
 import { ChatProvider } from '@/context/use-chat-context';
 import { notFound } from 'next/navigation';
 
