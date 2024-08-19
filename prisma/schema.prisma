@@ -618,16 +618,40 @@ model Customer {
 
 
 model Interface {
-  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  icon           String?
-  userAvtar      String?
-  chatbotAvtar   String?
-  background     String?
-  textColor      String?
-  userMsgBackGroundColour String?
-  chatbotMsgBackGroundColour String?
-  helpdesk       Boolean @default(false)
-  copyRightMessage String?
-  Chatbot         Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId       String? @unique @db.Uuid
+  id                         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  icon                       String?
+  userAvatar                 String?
+  chatbotAvatar              String?
+  background                 String?
+  textColor                  String?
+  userMsgBackgroundColour    String?
+  chatbotMsgBackgroundColour String?
+  helpdesk                   Boolean @default(false)
+  copyRightMessage           String?
+  footerText                 String?
+  messagePlaceholder         String?
+  suggestedMessage           String?
+  themeColor                 String?
+  botDisplayName             String?
+  chatIcon                   String?
+  chatBubbleButtonColor      String?
+  helpdeskLiveAgentColor     String?
+  chatbot                    Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbotId                  String?  @unique @db.Uuid
 }
+
+
+
+export const getInterfaceSettings = async (chatbotId: string) => {
+  return prisma.interface.findUnique({
+    where: { chatbotId },
+  });
+};
+
+export const upsertInterfaceSettings = async (data: InterfaceForm) => {
+  return prisma.interface.upsert({
+    where: { chatbotId: data.chatbotId },
+    update: { ...data },
+    create: { ...data },
+  });
+};

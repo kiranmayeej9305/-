@@ -42,12 +42,12 @@ export default function MessagesFooter({ onSendMessage }: MessagesFooterProps) {
         onKeyPress={handleKeyPress}
         className="flex-grow p-2 border border-gray-300 dark:border-gray-700 rounded-md"
         placeholder="Type your message..."
-        disabled={isSendingRef.current} // Disable input if sending
+        disabled={isSendingRef.current} 
       />
       <button
         onClick={handleSendMessage}
         className="ml-3 p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md"
-        disabled={isSendingRef.current} // Disable button if sending
+        disabled={isSendingRef.current} 
       >
         Send
       </button>

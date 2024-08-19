@@ -14,7 +14,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '../ui/dropdown-menu';
-import { Separator } from '../ui/separator';
 import { useRouter } from 'next/navigation';
 import { getAccountSidebarOptions, getChatbotSidebarOptions } from '@/lib/queries';
 import { icons } from '@/lib/constants';
@@ -84,7 +83,7 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
         const IconComponent = icons.find(icon => icon.value === option.icon)?.path;
 
         return (
-          <div key={option.id} className={clsx('mt-2', { 'ml-6': parentId })}>
+          <div key={option.id} className={clsx('mt-2', { 'ml-2': parentId })}>
             <div className="flex items-center justify-between w-full group">
               <Button
                 variant="ghost"
@@ -114,7 +113,7 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
               )}
             </div>
             {hasSubmenu && expandedMenu === option.id && (
-              <div className="ml-6 pl-4 border-l-2 border-primary">
+              <div className="ml-2 pl-1 border-l-2 border-primary">
                 {renderMenuOptions(options, option.id)}
               </div>
             )}
@@ -203,8 +202,6 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
             {context === 'account' ? 'Free Tier' : `${details?.ChatbotSettings?.ChatbotType?.name || 'Custom Type'} - ${details?.ChatbotSettings?.AIModel?.name || 'Unknown Model'}`}
           </div>
         </Card>
-
-        <Separator className="mb-4 border-primary" />
         <nav className="relative">
           <div className="py-4 overflow-visible">
             <Card className="overflow-visible p-4">

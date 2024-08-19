@@ -28,19 +28,35 @@ import { v4 } from 'uuid';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import Loading from '../global/loading';
+import ChatBubblePreview from './preview/chat-bubble-preview';
+import Preview from './preview/preview';
 
 const interfaceSchema = z.object({
   id: z.string().optional(),
   icon: z.string().optional(),
-  userAvtar: z.string().optional(),
-  chatbotAvtar: z.string().optional(),
+  userAvatar: z.string().optional(),
+  chatbotAvatar: z.string().optional(),
+  chatIcon: z.string().optional(),
   background: z.string().optional(),
-  textColor: z.string().optional(),
-  userMsgBackGroundColour: z.string().optional(),
-  chatbotMsgBackGroundColour: z.string().optional(),
+  userMsgBackgroundColour: z.string().optional(),
+  chatbotMsgBackgroundColour: z.string().optional(),
+  userTextColor: z.string().optional(),
+  chatbotTextColor: z.string().optional(),
   helpdesk: z.boolean().default(false),
-  copyRightMessage: z.string().optional(),
+  copyRightMessage: z.string().optional().refine(val => {
+    return val?.split('|').length === 3;
+  }, "Format must be: Text | Link Text | Link URL"),
+  footerText: z.string().optional().refine(val => {
+    return val?.split('|').length === 3;
+  }, "Format must be: Text | Link Text | Link URL"),
+  messagePlaceholder: z.string().optional(),
+  suggestedMessage: z.string().optional(),
+  themeColor: z.string().optional(),
+  botDisplayName: z.string().optional(),
+  chatBubbleButtonColor: z.string().optional(),
+  helpdeskLiveAgentColor: z.string().optional(),
   chatbotId: z.string(),
+  isLiveAgentEnabled: z.boolean().optional(),
 });
 
 type InterfaceForm = z.infer<typeof interfaceSchema>;
@@ -61,7 +77,7 @@ const InterfaceSettings = ({ data, chatbotId }: Props) => {
 
   const onSubmit = async (values: InterfaceForm) => {
     try {
-      const settingsResponse = await upsertInterfaceSettings({
+      await upsertInterfaceSettings({
         ...values,
         id: values.id || v4(),
       });
@@ -81,160 +97,279 @@ const InterfaceSettings = ({ data, chatbotId }: Props) => {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-3xl p-8 my-10 bg-white rounded-lg shadow-lg">
-    <Card className="w-full lg:max-w-4xl mx-auto shadow-md border border-gray-200">
-      <CardHeader className="border-b pb-4">
-        <CardTitle className="text-xl font-semibold">Chatbot Interface Settings</CardTitle>
-        <CardDescription className="text-gray-500">
-          Customize the appearance and settings of your chatbot interface.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-6">
-      <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="icon"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Icon</FormLabel>
-                  <FormControl>
-                    <FileUpload
-                      apiEndpoint="avatar"
-                      value={field.value}
-                      onChange={field.onChange}
+      <div className="container mx-auto max-w-7xl p-4 md:p-8 my-4 md:my-10 bg-white rounded-lg shadow-lg">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
+          <Card className="shadow-md border border-gray-200">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="text-lg md:text-xl font-semibold">Chatbot Interface Settings</CardTitle>
+              <CardDescription className="text-gray-500">
+                Customize the appearance and settings of your chatbot interface.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <FormField
+                      control={form.control}
+                      name="botDisplayName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bot Display Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter bot display name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="userAvtar"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User Avatar</FormLabel>
-                  <FormControl>
-                    <FileUpload
-                      apiEndpoint="avatar"
-                      value={field.value}
-                      onChange={field.onChange}
+                    <FormItem className="flex items-center">
+                      <FormLabel className="mr-2">Live Agent</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="isLiveAgentEnabled"
+                        render={({ field }) => (
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        )}
+                      />
+                    </FormItem>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="themeColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Theme Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="chatbotAvtar"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chatbot Avatar</FormLabel>
-                  <FormControl>
-                    <FileUpload
-                      apiEndpoint="avatar"
-                      value={field.value}
-                      onChange={field.onChange}
+                    <FormField
+                      control={form.control}
+                      name="chatBubbleButtonColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chat Bubble Button Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="background"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Background</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="textColor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Text Color</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="userMsgBackGroundColour"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User Message Background Color</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="chatbotMsgBackGroundColour"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chatbot Message Background Color</FormLabel>
-                  <FormControl>
-                    <Input type="color" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="helpdesk"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Helpdesk</FormLabel>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="copyRightMessage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Copyright Message</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter copyright message" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end">
-              <Button
-                disabled={form.formState.isSubmitting}
-                type="submit"
-                className="mt-4"
-              >
-                {form.formState.isSubmitting ? <Loading /> : 'Save Settings'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="background"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Background Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="userMsgBackgroundColour"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>User Message Background</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="chatbotMsgBackgroundColour"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chatbot Message Background</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="userTextColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>User Text Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="chatbotTextColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chatbot Text Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="suggestedMessage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Suggested Message</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter suggested message" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="messagePlaceholder"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message Placeholder</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Type your message..." />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="footerText"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Footer Text</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter footer text in format: By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="copyRightMessage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Copyright Message</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter copyright message in format: Powered By | Your Company | https://example.com" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* File Uploads in a responsive layout */}
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+                    <FormField
+                      control={form.control}
+                      name="userAvatar"
+                      render={({ field }) => (
+                        <FormItem className="flex-1 min-w-[100px] sm:min-w-[120px]">
+                          <FormLabel>User Avatar</FormLabel>
+                          <FormControl>
+                            <FileUpload
+                              apiEndpoint="avatar"
+                              value={field.value}
+                              onChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="chatbotAvatar"
+                      render={({ field }) => (
+                        <FormItem className="flex-1 min-w-[100px] sm:min-w-[120px]">
+                          <FormLabel>Chatbot Avatar</FormLabel>
+                          <FormControl>
+                            <FileUpload
+                              apiEndpoint="avatar"
+                              value={field.value}
+                              onChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="chatIcon"
+                      render={({ field }) => (
+                        <FormItem className="flex-1 min-w-[100px] sm:min-w-[120px]">
+                          <FormLabel>Chat Icon</FormLabel>
+                          <FormControl>
+                            <FileUpload
+                              apiEndpoint="avatar"
+                              value={field.value}
+                              onChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      disabled={form.formState.isSubmitting}
+                      type="submit"
+                      className="mt-4"
+                    >
+                      {form.formState.isSubmitting ? <Loading /> : 'Save Settings'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-md border border-gray-200">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="text-lg md:text-xl font-semibold">Chatbot Preview</CardTitle>
+              <CardDescription className="text-gray-500">    
+              See how your chatbot will look for users based on your settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 md:p-6">
+              <Preview settings={form.watch()} />
+              <div className="flex justify-end mt-4">
+                <ChatBubblePreview color={form.watch('chatBubbleButtonColor')} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

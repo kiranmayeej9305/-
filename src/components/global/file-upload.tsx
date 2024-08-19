@@ -1,15 +1,17 @@
-import { FileIcon, X } from 'lucide-react'
-import Image from 'next/image'
-import React from 'react'
-import { Button } from '../ui/button'
-import { UploadDropzone } from '@/lib/uploadthing'
+import { FileIcon, X } from 'lucide-react';
+import Image from 'next/image';
+import React from 'react';
+import { Button } from '../ui/button';
+import { UploadButton } from '@/lib/uploadthing';
+
 type Props = {
-  apiEndpoint: 'file' | 'avatar'
-  onChange: (url?: string) => void
-  value?: string
-}
+  apiEndpoint: 'file' | 'avatar';
+  onChange: (url?: string) => void;
+  value?: string;
+};
+
 const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
-  const type = value?.split('.').pop()
+  const type = value?.split('.').pop();
 
   if (value) {
     return (
@@ -22,11 +24,13 @@ const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
               className="object-contain"
               fill
             />
+            <button
+              onClick={() => onChange('')}
+              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
+            >
+              ✕
+            </button>
           </div>
-
-
-
-
         ) : (
           <div className="relative flex flex-col items-center p-2 mt-2 rounded-md bg-background/10">
             <FileIcon className="h-6 w-6" />
@@ -50,17 +54,19 @@ const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
           </div>
         )}
       </div>
-    )
+    );
   }
+
   return (
     <div className="w-full bg-muted/30 p-4 rounded-md text-center">
-      <UploadDropzone
+      <UploadButton
         endpoint={apiEndpoint}
         onClientUploadComplete={(res) => {
-          onChange(res?.[0].url)
+          const uploadedUrl = res?.[0].url;
+          onChange(uploadedUrl); // Update the parent component with the new URL
         }}
         onUploadError={(error: Error) => {
-          console.log(error)
+          console.log(error);
         }}
       />
       {apiEndpoint === 'file' && (
@@ -70,7 +76,7 @@ const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default FileUpload
+export default FileUpload;
