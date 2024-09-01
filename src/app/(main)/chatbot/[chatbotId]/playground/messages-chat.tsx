@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
+import Notification from '@/components/ui/notification'; 
 import { pusherClient } from '@/lib/pusher';
 import { InterfaceSettings } from '@/context/use-interface-settings-context';
 
@@ -48,18 +49,26 @@ export default function MessagesChat({ settings }: MessagesChatProps) {
       {chats.length > 0 ? (
         chats.map((chat) => (
           <div key={chat.id} className="flex items-start mb-4 last:mb-0">
-            <Bubble
-              message={chat.message}
-              createdAt={chat.createdAt}
-              sender={chat.sender}
-              isChatbot={chat.sender === 'chatbot'}
-              userMsgBackgroundColour={settings.userMsgBackgroundColour}
-              chatbotMsgBackgroundColour={settings.chatbotMsgBackgroundColour}
-              userTextColor={settings.userTextColor}
-              chatbotTextColor={settings.chatbotTextColor}
-              userAvatar={settings.userAvatar}
-              chatbotAvatar={settings.chatbotAvatar}
-            />
+            {chat.sender === 'system' ? (
+              <Notification
+                message={chat.message}
+                themeColor={settings.themeColor}
+                botDisplayNameColor={settings.botDisplayNameColor}
+              />
+            ) : (
+              <Bubble
+                message={chat.message}
+                createdAt={chat.createdAt}
+                sender={chat.sender}
+                isChatbot={chat.sender === 'chatbot'}
+                userMsgBackgroundColour={settings.userMsgBackgroundColour}
+                chatbotMsgBackgroundColour={settings.chatbotMsgBackgroundColour}
+                userTextColor={settings.userTextColor}
+                chatbotTextColor={settings.chatbotTextColor}
+                userAvatar={settings.userAvatar}
+                chatbotAvatar={settings.chatbotAvatar}
+              />
+            )}
           </div>
         ))
       ) : (

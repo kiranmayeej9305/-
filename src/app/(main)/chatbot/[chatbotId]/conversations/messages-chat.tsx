@@ -3,8 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
-import Notification from './notification';
-
+import Notification from '@/components/ui/notification'; 
 export default function MessagesChat({ settings }) {
   const { chats } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
