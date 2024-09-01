@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
 import { pusherClient } from '@/lib/pusher';
-import { InterfaceSettings } from '@/context/InterfaceSettingsContext';
+import { InterfaceSettings } from '@/context/use-interface-settings-context';
 
 interface MessagesChatProps {
   settings: InterfaceSettings;

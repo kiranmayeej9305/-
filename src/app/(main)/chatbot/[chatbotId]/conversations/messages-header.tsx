@@ -1,3 +1,4 @@
+// src/components/messages-header.tsx
 'use client';
 
 import { useInterfaceSettings } from '@/context/use-interface-settings-context';
@@ -5,6 +6,7 @@ import { useFlyoutContext } from '@/context/flyout-context';
 import { useChatContext } from '@/context/use-chat-context';
 import { RadioTower } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import SystemMessageSender from './system-message-sender';
 import { toggleLiveAgentMode } from '@/lib/queries';
 
 export default function MessagesHeader() {
@@ -15,9 +17,12 @@ export default function MessagesHeader() {
 
   const handleToggle = async () => {
     if (!chatRoom) return;
-    const result = await toggleLiveAgentMode(chatRoom, !isLiveAgent);
+    const result = await toggleLiveAgentMode(chatRoom.id, !isLiveAgent);
     if (result.success) {
       setIsLiveAgent(!isLiveAgent);
+
+      const systemMessage = isLiveAgent ? 'Live Agent has left the chat.' : 'Live Agent has joined the chat.';
+      await SystemMessageSender.sendSystemMessage(chatRoom.id, systemMessage);
     }
   };
 

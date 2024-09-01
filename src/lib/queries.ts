@@ -1678,7 +1678,7 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
         id: chatbotId,
         chatbotId,
         customerId: chatbotId,
-        live: true,
+        live: false,
       },
     });
 
@@ -1702,7 +1702,7 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
       data: {
         chatbotId,
         customerId: customer.id,
-        live: true,
+        live: false,
       },
     });
 
@@ -1736,10 +1736,7 @@ export const fetchChatbotStatus = async (chatbotId) => {
 };
 export const fetchChatRoomByChatbotId = async (chatbotId: string) => {
   const chatRoom = await prisma.chatRoom.findFirst({
-    where: {
-      chatbotId,
-      live: true,
-    },
+    where: { id: chatbotId },
     include: {
       ChatMessages: {
         orderBy: {

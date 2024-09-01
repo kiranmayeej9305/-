@@ -29,6 +29,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
+  useEffect(() => {
+    // Initialize any state or side effects here if needed
+  }, []);
+
   return (
     <ChatContext.Provider
       value={{
