@@ -1578,16 +1578,6 @@ export const createMessageInChatRoom = async (
     },
   });
 
-  // // Save to training history if the sender is a customer or user
-  // if (sender === 'customer' || sender === 'user') {
-  //   await createTraining(chatRoomId, {
-  //     type: 'chat',
-  //     content: message,
-  //     chatbotId: chatbotId,  // Use the correct chatbotId
-  //     userId: sender === 'customer' ? 'anonymous' : sender, 
-  //   });
-  // }
-
   // Trigger the message event via Pusher or any other event system
   pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
     id: chatMessage.id,
@@ -1596,8 +1586,8 @@ export const createMessageInChatRoom = async (
     createdAt: chatMessage.createdAt,
   });
 
-  // Optionally generate an AI response if the sender is a customer
-  if (sender === 'customer') {
+  // Check if the live agent is active; if so, prevent the chatbot from responding
+  if (sender === 'customer' && !chatRoom.live) {
     const aiResponse = await prepareChatResponse(message, chatbotId);
     if (aiResponse) {
       await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
@@ -1606,6 +1596,7 @@ export const createMessageInChatRoom = async (
 
   return chatMessage;
 };
+
 
 
 
@@ -1823,7 +1814,7 @@ export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
     });
 
     const systemMessage = isLive 
-      ? `${userDetails.name} has joined the chat as a live agent.` 
+      ? `${userDetails.name} has joined the chat.` 
       : `${userDetails.name} has left the chat.`;
 
     // Save the system message to the database
@@ -1831,7 +1822,8 @@ export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
       data: {
         chatRoomId,
         message: systemMessage,
-        sender: 'system'      },
+        sender: 'system',
+      },
     });
 
     // Trigger the system message via Pusher after saving it to the database

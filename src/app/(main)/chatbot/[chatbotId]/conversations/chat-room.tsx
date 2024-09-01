@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import { useInterfaceSettings } from '@/context/use-interface-settings-context';
-import MessagesHeader from './messages-header';
-import MessagesChat from './messages-chat';
-import MessagesFooter from './messages-footer';
+import MessagesBody from './messages-body';
 import { toggleLiveAgentMode, fetchChatRoomById, createMessageInChatRoom } from '@/lib/queries';
 import { pusherClient } from '@/lib/pusher';
 
@@ -17,6 +15,7 @@ export default function ChatRoom({ chatRoomId }: ChatRoomProps) {
   const { chatRoom, setChatRoom, setChats, setLoading } = useChatContext();
   const { settings, loading } = useInterfaceSettings();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isLiveAgent, setIsLiveAgent] = useState(false); // Track if the live agent is active
 
   useEffect(() => {
     const initializeChatRoom = async () => {
@@ -28,6 +27,7 @@ export default function ChatRoom({ chatRoomId }: ChatRoomProps) {
         if (existingChatRoom) {
           setChatRoom(existingChatRoom);
           setChats(existingChatRoom.ChatMessages || []);
+          setIsLiveAgent(existingChatRoom.agentId !== null);
         } else {
           console.error('Chat room not found.');
         }
@@ -62,11 +62,12 @@ export default function ChatRoom({ chatRoomId }: ChatRoomProps) {
   const handleToggleLiveAgent = async () => {
     if (!chatRoom) return;
 
-    const isLiveAgent = chatRoom.agentId !== null;
-    const result = await toggleLiveAgentMode(chatRoom.id, !isLiveAgent);
-    
+    const isLive = chatRoom.agentId !== null;
+    const result = await toggleLiveAgentMode(chatRoom.id, !isLive);
+
     if (result.success) {
       setChatRoom(result.chatRoom);
+      setIsLiveAgent(!isLive); // Update the local state
     }
   };
 
@@ -75,7 +76,8 @@ export default function ChatRoom({ chatRoomId }: ChatRoomProps) {
 
     try {
       if (chatRoom) {
-        await createMessageInChatRoom(chatRoom.id, newMessage, 'customer');
+        const sender = isLiveAgent ? 'chatbot' : 'customer';
+        await createMessageInChatRoom(chatRoom.id, newMessage, sender);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -88,15 +90,12 @@ export default function ChatRoom({ chatRoomId }: ChatRoomProps) {
 
   return (
     <div className="chat-room flex flex-col h-full">
-      <MessagesHeader 
+      <MessagesBody 
+        onSendMessage={handleSendMessage} 
         settings={settings} 
+        isLiveAgent={isLiveAgent} 
         onToggleLiveAgent={handleToggleLiveAgent} 
-        isLive={chatRoom?.live || false} 
-      /> 
-      <div className="flex-grow overflow-auto">
-        <MessagesChat settings={settings} />
-      </div>
-      <MessagesFooter onSendMessage={handleSendMessage} settings={settings} />
+      />
       <div ref={messagesEndRef} aria-hidden="true" />
     </div>
   );

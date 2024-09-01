@@ -7,9 +7,10 @@ import { Send } from 'lucide-react';
 interface MessagesFooterProps {
   onSendMessage: (message: string) => Promise<void>;
   settings: InterfaceSettings;
+  isLiveAgent: boolean;
 }
 
-export default function MessagesFooter({ onSendMessage, settings }: MessagesFooterProps) {
+export default function MessagesFooter({ onSendMessage, settings, isLiveAgent }: MessagesFooterProps) {
   const [newMessage, setNewMessage] = useState('');
   const isSendingRef = useRef(false);
 
