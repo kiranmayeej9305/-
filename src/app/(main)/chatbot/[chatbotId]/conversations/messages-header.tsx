@@ -1,39 +1,19 @@
-// src/components/messages-header.tsx
 'use client';
 
-import { useInterfaceSettings } from '@/context/use-interface-settings-context';
+import React from 'react';
 import { useFlyoutContext } from '@/context/flyout-context';
-import { useChatContext } from '@/context/use-chat-context';
 import { RadioTower } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import SystemMessageSender from './system-message-sender';
-import { toggleLiveAgentMode } from '@/lib/queries';
 
-export default function MessagesHeader() {
-  const { settings } = useInterfaceSettings();
+export default function MessagesHeader({ settings, onToggleLiveAgent, isLive }) {
   const { flyoutOpen, setFlyoutOpen } = useFlyoutContext();
-  const { chatRoom, setChatRoom } = useChatContext();
-  const [isLiveAgent, setIsLiveAgent] = useState(false);
-
-  const handleToggle = async () => {
-    if (!chatRoom) return;
-    const result = await toggleLiveAgentMode(chatRoom.id, !isLiveAgent);
-    if (result.success) {
-      setIsLiveAgent(!isLiveAgent);
-
-      const systemMessage = isLiveAgent ? 'Live Agent has left the chat.' : 'Live Agent has joined the chat.';
-      await SystemMessageSender.sendSystemMessage(chatRoom.id, systemMessage);
-    }
-  };
-
-  useEffect(() => {
-    if (chatRoom) {
-      setIsLiveAgent(chatRoom.agentId !== null);
-    }
-  }, [chatRoom]);
 
   return (
-    <div className="sticky top-0 bg-slate-50 dark:bg-[#161F32] border-b border-slate-200 dark:border-slate-700 z-10">
+    <div
+      className="sticky top-0 border-b border-slate-200 dark:border-slate-700 z-10"
+      style={{
+        backgroundColor: settings.themeColor || '#f0f0f0',
+      }}
+    >
       <div className="flex items-center justify-between px-4 sm:px-6 md:px-5 h-16">
         <div className="flex items-center">
           <button
@@ -48,22 +28,32 @@ export default function MessagesHeader() {
             </svg>
           </button>
           <img
-            src={settings.chatbotIcon || '/images/bot.png'}
+            src={settings.chatIcon || '/images/bot.png'}
             alt="Chat Icon"
             className="h-10 w-10 rounded-full object-cover"
           />
-          <h2 className="ml-3 text-lg font-medium text-slate-900 dark:text-slate-100">
+          <h2
+            className="ml-3 text-lg font-medium"
+            style={{
+              color: settings.botDisplayNameColor || '#000',
+            }}
+          >
             {settings.botDisplayName || 'Chatbot'}
           </h2>
         </div>
         <button
-          onClick={handleToggle}
-          className={`ml-auto flex items-center justify-center px-4 py-2 rounded-md ${
-            isLiveAgent ? 'bg-green-600' : 'bg-gray-400'
-          } text-white`}
+          onClick={onToggleLiveAgent}
+          className={`ml-auto flex items-center justify-center px-5 py-2 rounded-full shadow-lg transition-all duration-300 ${
+            isLive ? 'bg-green-600 hover:bg-green-500' : 'bg-gray-400 hover:bg-gray-500'
+          } text-white transform ${isLive ? 'scale-105' : 'scale-100'}`}
+          style={{
+            boxShadow: isLive ? '0px 4px 15px rgba(0, 255, 0, 0.3)' : '0px 4px 15px rgba(0, 0, 0, 0.1)',
+          }}
         >
-          {isLiveAgent ? 'Live Agent On' : 'Live Agent Off'}
-          <RadioTower className="ml-2 h-5 w-5" />
+          <span className="flex items-center space-x-2">
+            <span>{isLive ? 'Live Agent On' : 'Live Agent Off'}</span>
+            <RadioTower className="h-5 w-5" />
+          </span>
         </button>
       </div>
     </div>

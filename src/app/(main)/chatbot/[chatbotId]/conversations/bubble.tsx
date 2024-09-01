@@ -24,9 +24,6 @@ export default function Bubble({
   chatbotTextColor,
 }: Props) {
   const isChatbot = sender === 'chatbot';
-
-  console.log('Bubble colors:', { userMsgBackgroundColour, chatbotMsgBackgroundColour });
-
   return (
     <div className={`flex w-full ${isChatbot ? 'justify-end' : 'justify-start'} mb-4 items-end`}>
       {!isChatbot && (

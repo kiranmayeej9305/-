@@ -1734,7 +1734,7 @@ export const fetchChatbotStatus = async (chatbotId) => {
     return null;
   }
 };
-export const fetchChatRoomByChatbotId = async (chatbotId: string) => {
+export const fetchChatRoomById = async (chatbotId: string) => {
   const chatRoom = await prisma.chatRoom.findFirst({
     where: { id: chatbotId },
     include: {
@@ -1798,7 +1798,7 @@ export const fetchChatbotsWithDetails = async (accountId: string) => {
 
 export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
   try {
-    const authUser = await currentUser(); // Fetch the currently logged-in user's information
+    const authUser = await currentUser();
     if (!authUser) {
       throw new Error('User not authenticated');
     }
@@ -1817,18 +1817,33 @@ export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
     const chatRoom = await db.chatRoom.update({
       where: { id: chatRoomId },
       data: {
-        agentId: agentId, // Set the agent ID if live mode is enabled
-        live: isLive,     // Toggle the live mode
+        agentId: agentId,
+        live: isLive,
       },
     });
 
-    // Send a system message to notify the chatroom about the live agent mode change
-    await sendSystemMessage(
-      chatRoomId,
-      isLive 
-        ? `${userDetails.name} has joined the chat as a live agent.` 
-        : `${userDetails.name} has left the chat.`
-    );
+    const systemMessage = isLive 
+      ? `${userDetails.name} has joined the chat as a live agent.` 
+      : `${userDetails.name} has left the chat.`;
+
+    // Save the system message to the database
+    const savedSystemMessage = await db.chatMessage.create({
+      data: {
+        chatRoomId,
+        message: systemMessage,
+        sender: 'system'      },
+    });
+
+    // Trigger the system message via Pusher after saving it to the database
+    pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
+      id: savedSystemMessage.id,
+      message: savedSystemMessage.message,
+      sender: 'system',
+      createdAt: savedSystemMessage.createdAt,
+    });
+
+    // Trigger an event to notify the UI that live mode has been toggled
+    pusherServer.trigger(`chatroom-${chatRoomId}`, 'live-mode-toggled', { isLive });
 
     return { success: true, chatRoom };
   } catch (error) {
@@ -1837,13 +1852,17 @@ export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
   }
 }
 
-async function sendSystemMessage(chatRoomId: string, message: string) {
+
+
+
+
+export async function sendSystemMessage(chatRoomId: string, message: string) {
   try {
     await db.chatMessage.create({
       data: {
         chatRoomId,
         message,
-        sender: 'system', // Mark this as a system message
+        sender: 'system', 
       },
     });
   } catch (error) {

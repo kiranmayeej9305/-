@@ -1,26 +1,43 @@
 'use client';
 
+import { useState } from 'react';
 import { ChatProvider } from '@/context/use-chat-context';
 import { FlyoutProvider } from '@/context/flyout-context';
 import { InterfaceSettingsProvider } from '@/context/use-interface-settings-context';
-import MessagesSidebar from './messages-sidebar';
-import MessagesBody from './messages-body';
 import { Card, CardContent } from '@/components/ui/card';
+import MessagesSidebar from './messages-sidebar';
+import ChatRoom from './chat-room';
 
 interface ChatPageProps {
   params: { chatbotId: string };
 }
 
 export default function ChatPage({ params }: ChatPageProps) {
+  const [selectedChatRoomId, setSelectedChatRoomId] = useState<string | null>(null);
+
+  const handleChatSelect = (roomId: string) => {
+    setSelectedChatRoomId(roomId);
+  };
+
   return (
     <FlyoutProvider>
       <ChatProvider>
         <InterfaceSettingsProvider chatbotId={params.chatbotId}>
-          <div className="flex justify-center items-start h-screen bg-gray-100 dark:bg-gray-900 p-6"> {/* Adjusted padding and alignment */}
-            <Card className="w-full max-w-7xl shadow-lg mt-16"> {/* Increased margin-top */}
-              <CardContent className="flex flex-col md:flex-row h-[85vh]"> {/* Adjusted height */}
-                <MessagesSidebar chatbotId={params.chatbotId} />
-                <MessagesBody />
+          <div className="flex justify-center items-start h-screen bg-gray-100 dark:bg-gray-900 p-4 md:p-6">
+            <Card className="w-full max-w-7xl shadow-lg mt-4 md:mt-16">
+              <CardContent className="flex flex-col md:flex-row h-[85vh]">
+                <MessagesSidebar chatbotId={params.chatbotId} onChatSelect={handleChatSelect} />
+                <div className="flex-grow flex flex-col">
+                  {selectedChatRoomId ? (
+                    <ChatRoom chatRoomId={selectedChatRoomId} />
+                  ) : (
+                    <div className="flex items-center justify-center flex-grow">
+                      <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
+                        Please select a conversation to view messages.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>

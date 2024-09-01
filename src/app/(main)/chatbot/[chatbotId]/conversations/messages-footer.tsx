@@ -1,28 +1,30 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { useChatContext } from '@/context/use-chat-context';
-import { useInterfaceSettings } from '@/context/use-interface-settings-context';
+import { InterfaceSettings } from '@/context/use-interface-settings-context';
 import { Send } from 'lucide-react';
 
-export default function MessagesFooter({ onSendMessage }) {
-  const { chatRoom } = useChatContext();
-  const { settings } = useInterfaceSettings();
+interface MessagesFooterProps {
+  onSendMessage: (message: string) => Promise<void>;
+  settings: InterfaceSettings;
+}
+
+export default function MessagesFooter({ onSendMessage, settings }: MessagesFooterProps) {
   const [newMessage, setNewMessage] = useState('');
   const isSendingRef = useRef(false);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || isSendingRef.current || !chatRoom?.live) return;
+    if (!newMessage.trim() || isSendingRef.current) return;
 
-    isSendingRef.current = true;
+    isSendingRef.current = true; // Lock the send function
 
     try {
       await onSendMessage(newMessage);
-      setNewMessage('');
+      setNewMessage(''); // Clear input field after sending
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
-      isSendingRef.current = false;
+      isSendingRef.current = false; // Unlock the send function after message is sent
     }
   };
 
@@ -31,6 +33,28 @@ export default function MessagesFooter({ onSendMessage }) {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const renderLinkText = (text?: string | null) => {
+    if (!text || typeof text !== 'string') {
+      return null;
+    }
+
+    const parts = text.split('|').map(part => part.trim());
+
+    if (parts.length === 3) {
+      const [beforeLink, linkText, linkUrl] = parts;
+      return (
+        <span>
+          {beforeLink}{' '}
+          <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+            {linkText}
+          </a>
+        </span>
+      );
+    }
+
+    return text;
   };
 
   return (
@@ -43,19 +67,31 @@ export default function MessagesFooter({ onSendMessage }) {
           onKeyPress={handleKeyPress}
           className="flex-grow p-2 border border-gray-300 dark:border-gray-700 rounded-l-md"
           placeholder={settings.messagePlaceholder || 'Type your message...'}
-          disabled={isSendingRef.current || !chatRoom?.live}
+          disabled={isSendingRef.current} 
         />
         <button
           onClick={handleSendMessage}
           className="flex items-center justify-center px-4 py-2 rounded-r-md"
-          disabled={isSendingRef.current || !chatRoom?.live}
+          disabled={isSendingRef.current} 
           style={{ backgroundColor: settings.themeColor || '#3b82f6' }}
         >
           <Send
             className="h-5 w-5"
-            style={{ color: settings.botDisplayNameColor || '#fff' }}
+            style={{ color: settings.botDisplayNameColor || '#fff' }} // Ensure the icon color is synced with the chatBubbleButtonColor
           />
         </button>
+      </div>
+      <div className="flex flex-col items-center py-2 text-xs text-center text-gray-500 dark:text-gray-400">
+        {settings.copyRightMessage && (
+          <div className="mb-1">
+            {renderLinkText(settings.copyRightMessage)}
+          </div>
+        )}
+        {settings.footerText && (
+          <div>
+            {renderLinkText(settings.footerText)}
+          </div>
+        )}
       </div>
     </div>
   );

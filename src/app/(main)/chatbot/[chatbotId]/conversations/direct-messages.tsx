@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 type DirectMessagesProps = {
@@ -11,55 +13,86 @@ type DirectMessagesProps = {
     }[];
     Customer: {
       email: string;
-      avatarUrl?: string; // Add avatarUrl to hold the user's avatar image URL
+      avatarUrl?: string;
     };
   }[];
   onChatSelect: (roomId: string) => void;
+  settings: {
+    themeColor: string;
+    botDisplayNameColor: string;
+  };
 };
 
-export default function DirectMessages({ chatRooms, onChatSelect }: DirectMessagesProps) {
+export default function DirectMessages({ chatRooms, onChatSelect, settings }: DirectMessagesProps) {
   const truncateMessage = (message: string) => {
     if (message.length > 30) {
-      return message.substring(0, 30) + '...'; // Adjust length for better appearance
+      return message.substring(0, 30) + '...';
     }
     return message;
   };
 
   return (
-    <div className="mt-4 space-y-4 px-4">
-      <div className="text-xs font-semibold text-gray-500 uppercase mb-3">
+    <div className="mt-2 px-2 space-y-4">
+      <div 
+        className="text-xs font-semibold uppercase mb-3"
+        style={{ color: settings.themeColor || '#4A5568' }} 
+      >
         Direct Messages
       </div>
-      <ul className="space-y-2">
-        {chatRooms.map((room) => (
-          <li key={room.id}>
-            <button
-              className="flex items-center w-full p-3 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow-sm transition"
-              onClick={() => onChatSelect(room.id)}
-            >
-              <div className="flex-shrink-0">
-                <img
-                  src={room.Customer?.avatarUrl || '/images/user.png'} // Use avatarUrl from settings or database
-                  alt="User Avatar"
-                  className="h-12 w-12 rounded-full mr-3 object-cover border-2 border-gray-200 dark:border-gray-700"
-                />
+      <ul className="space-y-3">
+        {chatRooms.map((room) => {
+          const latestMessageColor = room.ChatMessages?.[0]?.message 
+            ? settings.themeColor 
+            : settings.botDisplayNameColor;
+
+          return (
+            <li key={room.id}>
+              <div
+                className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md transition-all duration-200"
+                style={{
+                  borderColor: settings.themeColor || '#E2E8F0',
+                  borderWidth: '1px',
+                }}
+              >
+                <button
+                  className="flex items-center w-full"
+                  onClick={() => onChatSelect(room.id)}
+                >
+                  <div className="flex-shrink-0">
+                    <img
+                      src={room.Customer?.avatarUrl || '/images/user.png'}
+                      alt="User Avatar"
+                      className="h-12 w-12 rounded-full object-cover border-2"
+                      style={{ borderColor: settings.themeColor || '#E2E8F0' }} 
+                    />
+                  </div>
+                  <div className="ml-3 flex flex-col items-start justify-center overflow-hidden">
+                    <span 
+                      className="text-sm font-bold truncate" // Customer name/email in bold
+                      style={{ color: latestMessageColor || '#1A202C' }}
+                    >
+                      {room.Customer?.email || 'Unknown User'}
+                    </span>
+                    <span 
+                      className="text-xs truncate"
+                      style={{ color: settings.themeColor || '#718096' }} 
+                    >
+                      {truncateMessage(room.ChatMessages?.[0]?.message || 'No recent message')}
+                    </span>
+                  </div>
+                  {!room.ChatMessages?.[0]?.seen && (
+                    <div
+                      className="ml-auto text-xs font-medium rounded-full px-2 py-1"
+                      style={{ backgroundColor: settings.themeColor || '#F56565', color: '#FFF' }} 
+                    >
+                      New
+                    </div>
+                  )}
+                </button>
               </div>
-              <div className="flex flex-col items-start justify-center overflow-hidden">
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                  {room.Customer?.email || 'Unknown User'}
-                </span>
-                <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                  {truncateMessage(room.ChatMessages?.[0]?.message || 'No recent message')}
-                </span>
-              </div>
-              {!room.ChatMessages?.[0]?.seen && (
-                <div className="ml-auto text-xs font-medium bg-red-500 text-white rounded-full px-2 py-1">
-                  New
-                </div>
-              )}
-            </button>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

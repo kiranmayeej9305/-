@@ -1,58 +1,51 @@
 'use client';
 
 import React from 'react';
+import { useFlyoutContext } from '@/context/flyout-context';
+import { useChatContext } from '@/context/use-chat-context';
 import { RadioTower } from 'lucide-react';
 
-type MessagesHeaderProps = {
-  botDisplayName: string;
-  chatIcon: string;
-  isLiveAgentEnabled: boolean;
-  helpdeskLiveAgentColor?: string;
-  themeColor?: string;
-  botDisplayNameColor?: string; // New prop for bot display name color
-};
+export default function MessagesHeader({ settings, onToggleLiveAgent }) {
+  const { flyoutOpen, setFlyoutOpen } = useFlyoutContext();
+  const { chatRoom } = useChatContext();
 
-const MessagesHeader: React.FC<MessagesHeaderProps> = ({
-  botDisplayName,
-  chatIcon,
-  isLiveAgentEnabled,
-  helpdeskLiveAgentColor,
-  themeColor,
-  botDisplayNameColor, // Receive the new prop
-}) => {
-  console.log('botDisplayNameColor:', botDisplayNameColor); // Log the color to ensure it's being passed correctly
+  // Check if chatRoom is live to determine live agent mode
+  const isLiveAgent = chatRoom?.live || false;
 
   return (
-    <div
-      className="flex items-center justify-between p-3"
-      style={{ backgroundColor: themeColor || '#3b82f6', color: '#fff' }}
-    >
-      <div className="flex items-center space-x-2 relative">
-        <div className="relative">
+    <div className="sticky top-0 bg-slate-50 dark:bg-[#161F32] border-b border-slate-200 dark:border-slate-700 z-10">
+      <div className="flex items-center justify-between px-4 sm:px-6 md:px-5 h-16">
+        <div className="flex items-center">
+          <button
+            className="md:hidden text-slate-400 hover:text-slate-500 mr-4"
+            onClick={() => setFlyoutOpen(!flyoutOpen)}
+            aria-controls="messages-sidebar"
+            aria-expanded={flyoutOpen}
+          >
+            <span className="sr-only">Toggle sidebar</span>
+            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+              <path d="M3 12h18M9 6l6 6-6 6" />
+            </svg>
+          </button>
           <img
-            src={chatIcon || '/images/bot.png'}
+            src={settings?.chatIcon || '/images/bot.png'}
             alt="Chat Icon"
             className="h-10 w-10 rounded-full object-cover"
           />
-          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
+          <h2 className="ml-3 text-lg font-medium text-slate-900 dark:text-slate-100">
+            {settings?.botDisplayName || 'Chatbot'}
+          </h2>
         </div>
-        <h3
-          className="text-lg font-semibold"
-          style={{ color: botDisplayNameColor || '#fff' }} // Apply the new color
+        <button
+          onClick={onToggleLiveAgent}
+          className={`ml-auto flex items-center justify-center px-4 py-2 rounded-md ${
+            isLiveAgent ? 'bg-green-600' : 'bg-gray-400'
+          } text-white`}
         >
-          {botDisplayName || 'Chatbot'}
-        </h3>
+          {isLiveAgent ? 'Live Agent On' : 'Live Agent Off'}
+          <RadioTower className="ml-2 h-5 w-5" />
+        </button>
       </div>
-      {isLiveAgentEnabled && (
-        <div
-          className="flex items-center space-x-2 animate-pulse"
-          style={{ color: helpdeskLiveAgentColor || '#ff0000' }}
-        >
-          <RadioTower className="h-6 w-6" />
-        </div>
-      )}
     </div>
   );
-};
-
-export default MessagesHeader;
+}
