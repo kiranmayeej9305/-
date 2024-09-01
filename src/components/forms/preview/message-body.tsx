@@ -12,8 +12,10 @@ type MessagesBodyProps = {
   chatbotTextColor?: string;
   userAvatar?: string;
   chatbotAvatar?: string;
-  footerText?: React.ReactNode;
-  copyRightMessage?: React.ReactNode;
+  footerText?: string;
+  copyRightMessage?: string;
+  messagePlaceholder?: string;
+  themeColor?: string;
 };
 
 const MessagesBody: React.FC<MessagesBodyProps> = ({
@@ -26,6 +28,9 @@ const MessagesBody: React.FC<MessagesBodyProps> = ({
   chatbotAvatar,
   footerText,
   copyRightMessage,
+  messagePlaceholder,
+  themeColor,
+  botDisplayNameColor
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -41,10 +46,11 @@ const MessagesBody: React.FC<MessagesBodyProps> = ({
         />
       </div>
       <MessagesFooter
-       onSendMessage={() => {}}
         footerText={footerText}
         copyRightMessage={copyRightMessage}
-        
+        messagePlaceholder={messagePlaceholder}
+        themeColor={themeColor}
+        botDisplayNameColor = {botDisplayNameColor}
       />
     </div>
   );

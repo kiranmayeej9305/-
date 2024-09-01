@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import FileUpload from '@/components/global/file-upload';
-import { upsertInterfaceSettings } from '@/lib/queries';
+import { upsertInterfaceSettings, getInterfaceSettings } from '@/lib/queries';
 import { v4 } from 'uuid';
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
@@ -53,6 +53,7 @@ const interfaceSchema = z.object({
   suggestedMessage: z.string().optional(),
   themeColor: z.string().optional(),
   botDisplayName: z.string().optional(),
+  botDisplayNameColor: z.string().optional(), // New field for bot display name color
   chatBubbleButtonColor: z.string().optional(),
   helpdeskLiveAgentColor: z.string().optional(),
   chatbotId: z.string(),
@@ -62,18 +63,63 @@ const interfaceSchema = z.object({
 type InterfaceForm = z.infer<typeof interfaceSchema>;
 
 type Props = {
-  data: InterfaceForm;
   chatbotId: string;
 };
 
-const InterfaceSettings = ({ data, chatbotId }: Props) => {
+const InterfaceSettings = ({ chatbotId }: Props) => {
   const { toast } = useToast();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<InterfaceForm>({
     resolver: zodResolver(interfaceSchema),
-    defaultValues: { ...data, chatbotId },
+    defaultValues: {
+      id: '',
+      icon: '',
+      userAvatar: '',
+      chatbotAvatar: '',
+      chatIcon: '',
+      background: '#ffffff',
+      userMsgBackgroundColour: '#ffffff',
+      chatbotMsgBackgroundColour: '#f0f0f0',
+      userTextColor: '#000000',
+      chatbotTextColor: '#000000',
+      botDisplayNameColor: '#000000', // Default value for bot display name color
+      helpdesk: false,
+      copyRightMessage: '',
+      footerText: '',
+      messagePlaceholder: '',
+      suggestedMessage: '',
+      themeColor: '#3b82f6',
+      botDisplayName: 'Chatbot',
+      chatBubbleButtonColor: '#3b82f6',
+      helpdeskLiveAgentColor: '#ff0000',
+      chatbotId: chatbotId,
+      isLiveAgentEnabled: false,
+    },
   });
+
+  // Fetch existing settings from the database
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await getInterfaceSettings(chatbotId);
+        if (settings) {
+          form.reset({ ...settings });
+        }
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load settings.',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, [chatbotId, form, toast]);
 
   const onSubmit = async (values: InterfaceForm) => {
     try {
@@ -94,6 +140,10 @@ const InterfaceSettings = ({ data, chatbotId }: Props) => {
       });
     }
   };
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50">
@@ -197,6 +247,19 @@ const InterfaceSettings = ({ data, chatbotId }: Props) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Chatbot Message Background</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="botDisplayNameColor" // New color picker for bot display name
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bot Display Name Color</FormLabel>
                           <FormControl>
                             <Input type="color" {...field} />
                           </FormControl>
@@ -357,8 +420,8 @@ const InterfaceSettings = ({ data, chatbotId }: Props) => {
           <Card className="shadow-md border border-gray-200">
             <CardHeader className="border-b pb-4">
               <CardTitle className="text-lg md:text-xl font-semibold">Chatbot Preview</CardTitle>
-              <CardDescription className="text-gray-500">    
-              See how your chatbot will look for users based on your settings.
+              <CardDescription className="text-gray-500">
+                See how your chatbot will look for users based on your settings.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 md:p-6">

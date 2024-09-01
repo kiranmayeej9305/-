@@ -515,7 +515,7 @@ model ChatRoom {
   updatedAt   DateTime      @updatedAt
   customerId  String        @db.Uuid
   chatbotId   String        @db.Uuid
-  agentId     String?       @db.Uuid // Added to link with an agent
+  agentId     String?       
 
   Customer    Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   Chatbot     Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
@@ -619,39 +619,29 @@ model Customer {
 
 model Interface {
   id                         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  icon                       String?
-  userAvatar                 String?
-  chatbotAvatar              String?
-  background                 String?
-  textColor                  String?
-  userMsgBackgroundColour    String?
-  chatbotMsgBackgroundColour String?
+  icon                       String? @default("")
+  userAvatar                 String? @default("")
+  chatbotAvatar              String? @default("")
+  chatIcon                   String? @default("")
+  background                 String? @default("#ffffff")
+  userMsgBackgroundColour    String? @default("#ffffff")
+  chatbotMsgBackgroundColour String? @default("#f0f0f0")
+  userTextColor              String? @default("#000000")
+  chatbotTextColor           String? @default("#000000")
   helpdesk                   Boolean @default(false)
-  copyRightMessage           String?
-  footerText                 String?
-  messagePlaceholder         String?
-  suggestedMessage           String?
-  themeColor                 String?
-  botDisplayName             String?
-  chatIcon                   String?
-  chatBubbleButtonColor      String?
-  helpdeskLiveAgentColor     String?
+  copyRightMessage           String? @default("Powered By | Your Company | https://example.com")
+  footerText                 String? @default("By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy")
+  messagePlaceholder         String? @default("Type your message...")
+  suggestedMessage           String? @default("")
+  themeColor                 String? @default("#3b82f6")
+  botDisplayName             String? @default("Chatbot")
+  botDisplayNameColor        String? @default("#000000") // New field for bot display name color
+  chatBubbleButtonColor      String? @default("#3b82f6")
+  helpdeskLiveAgentColor     String? @default("#ff0000")
+  isLiveAgentEnabled         Boolean @default(false)
   chatbot                    Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId                  String?  @unique @db.Uuid
+  chatbotId                  String   @unique @db.Uuid
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 }
 
-
-
-export const getInterfaceSettings = async (chatbotId: string) => {
-  return prisma.interface.findUnique({
-    where: { chatbotId },
-  });
-};
-
-export const upsertInterfaceSettings = async (data: InterfaceForm) => {
-  return prisma.interface.upsert({
-    where: { chatbotId: data.chatbotId },
-    update: { ...data },
-    create: { ...data },
-  });
-};

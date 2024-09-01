@@ -1,86 +1,70 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 
 type MessagesFooterProps = {
-  onSendMessage: (message: string) => Promise<void>;
   footerText?: string | null;
   copyRightMessage?: string | null;
+  messagePlaceholder?: string | null;
+  themeColor?: string;
+  botDisplayNameColor? : string | null;
 };
 
 const MessagesFooter: React.FC<MessagesFooterProps> = ({
-  onSendMessage,
-  footerText = 'By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy',
-  copyRightMessage = 'Powered By | Your Company | https://example.com',
+  footerText,
+  copyRightMessage,
+  messagePlaceholder,
+  themeColor,
+  botDisplayNameColor
 }) => {
   const [newMessage, setNewMessage] = useState('');
-  const isSendingRef = useRef(false);
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || isSendingRef.current) return;
-
-    isSendingRef.current = true;
-    try {
-      await onSendMessage(newMessage);
-      setNewMessage('');
-    } catch (error) {
-      console.error('Footer: Error sending message:', error);
-    } finally {
-      isSendingRef.current = false;
-    }
-  };
 
   const renderLinkText = (text?: string | null) => {
     if (!text || typeof text !== 'string') {
-      return null; // Return null if text is not valid
+      return null;
     }
 
     const parts = text.split('|').map(part => part.trim());
 
     if (parts.length === 3) {
-      const [prefixText, linkText, linkUrl] = parts;
+      const [beforeLink, linkText, linkUrl] = parts;
       return (
         <span>
-          {prefixText}{' '}
-          <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+          {beforeLink}{' '}
+          <a href={linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
             {linkText}
           </a>
         </span>
       );
     }
 
-    return <span>{text}</span>; // Fallback to plain text if the format is incorrect
+    return text;
   };
 
   return (
-    <div className="flex flex-col items-center p-4 border-t border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-      <div className="w-full max-w-2xl flex items-center">
+    <div className="border-t">
+      <div className="py-3 px-4 bg-gray-50 dark:bg-gray-800 flex items-center">
         <input
           type="text"
+          placeholder={messagePlaceholder || 'Type your message...'}
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-900 dark:text-white"
-          placeholder="Enter message..."
+          onChange={e => setNewMessage(e.target.value)}
+          className="grow px-4 py-2 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white outline-none"
         />
         <button
-          onClick={handleSendMessage}
-          className="ml-4 p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center"
+          className="flex items-center justify-center px-4 py-2 rounded-r-lg text-white"
+          style={{ backgroundColor: themeColor || '#3b82f6' }}
         >
-          <Send className="w-5 h-5" />
+          <Send
+            className="h-5 w-5"
+            style={{ color: botDisplayNameColor || '#fff' }} 
+          />
         </button>
       </div>
-      <div className="w-full max-w-2xl mt-4 pt-2 flex flex-col items-center space-y-1">
-        {copyRightMessage && (
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            {renderLinkText(copyRightMessage)}
-          </p>
-        )}
-        {footerText && (
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            {renderLinkText(footerText)}
-          </p>
-        )}
+      <div className="flex flex-col items-center py-4 px-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+        <div className="mb-2">{renderLinkText(copyRightMessage)}</div>
+        <div>{renderLinkText(footerText)}</div>
       </div>
     </div>
   );

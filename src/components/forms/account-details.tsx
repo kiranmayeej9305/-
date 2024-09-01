@@ -104,6 +104,7 @@ const AccountDetails = ({ data, isCreating }: Props) => {
 
   const handleSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
+      let newUserData;
       let custId;
       if (isCreating) {
         const bodyData = {
@@ -125,10 +126,12 @@ const AccountDetails = ({ data, isCreating }: Props) => {
   
         const customerData: { customerId: string } = await customerResponse.json();
         custId = customerData.customerId;
+        newUserData = await initUser({ role: 'ACCOUNT_OWNER' })
+
       }
 
       const response = await upsertAccount(
-        {
+      {
           id: data?.id || uuidv4(),
           customerId: data?.customerId || custId || '',
           name: values.name,

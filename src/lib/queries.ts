@@ -278,28 +278,28 @@ export const upsertAccount = async (account: Account, isCreating: boolean) => {
     if (isCreating) {
       console.log(`Creating sidebar options for account ID: ${accountDetails.id}`);
 
-      const parentOptions = [
-        { name: 'Analytics & Usage', icon: 'category', link: `/account/${accountDetails.id}/analytics` },
-        { name: 'Chatbots', icon: 'person', link: `/account/${accountDetails.id}/all-chatbots` },
-        { name: 'Settings', icon: 'settings', link: `/account/${accountDetails.id}/settings` },
-        { name: 'Team', icon: 'shield', link: `/account/${accountDetails.id}/team` },
-        { name: 'Billing', icon: 'payment', link: `/account/${accountDetails.id}/billing` }
-      ];
+    //   const parentOptions = [
+    //     { name: 'Analytics & Usage', icon: 'category', link: `/account/${accountDetails.id}/analytics` },
+    //     { name: 'Chatbots', icon: 'person', link: `/account/${accountDetails.id}/all-chatbots` },
+    //     { name: 'Settings', icon: 'settings', link: `/account/${accountDetails.id}/settings` },
+    //     { name: 'Team', icon: 'shield', link: `/account/${accountDetails.id}/team` },
+    //     { name: 'Billing', icon: 'payment', link: `/account/${accountDetails.id}/billing` }
+    //   ];
 
-      const parentIds = [];
-      for (const option of parentOptions) {
-        const parentOption = await db.accountSidebarOption.create({
-          data: {
-            ...option,
-            accountId: accountDetails.id,
-          },
-        });
-        parentIds.push(parentOption.id);
-      }
+    //   const parentIds = [];
+    //   for (const option of parentOptions) {
+    //     const parentOption = await db.accountSidebarOption.create({
+    //       data: {
+    //         ...option,
+    //         accountId: accountDetails.id,
+    //       },
+    //     });
+    //     parentIds.push(parentOption.id);
+    //   }
 
-      console.log('Sidebar options created:', parentIds);
+    //   console.log('Sidebar options created:', parentIds);
+    // }
     }
-
     return accountDetails;
   } catch (error) {
     console.error('Error during account upsert:', error);
@@ -323,33 +323,33 @@ export const getNotificationAndUser = async (accountId: string) => {
   }
 }
 
-export const upsertInterfaceSettings = async (interfaceSettings: any) => {
-  if (!interfaceSettings.chatbotId) {
-    throw new Error("chatbotId is required");
-  }
+// export const upsertInterfaceSettings = async (interfaceSettings: any) => {
+//   if (!interfaceSettings.chatbotId) {
+//     throw new Error("chatbotId is required");
+//   }
 
-  try {
-    const existingSettings = await prisma.interface.findUnique({
-      where: { chatbotId: interfaceSettings.chatbotId },
-    });
+//   try {
+//     const existingSettings = await prisma.interface.findUnique({
+//       where: { chatbotId: interfaceSettings.chatbotId },
+//     });
 
-    if (existingSettings) {
-      const response = await prisma.interface.update({
-        where: { id: existingSettings.id },
-        data: interfaceSettings,
-      });
-      return response;
-    } else {
-      const response = await prisma.interface.create({
-        data: interfaceSettings,
-      });
-      return response;
-    }
-  } catch (error) {
-    console.error('Error upserting interface settings:', error);
-    throw error;
-  }
-};
+//     if (existingSettings) {
+//       const response = await prisma.interface.update({
+//         where: { id: existingSettings.id },
+//         data: interfaceSettings,
+//       });
+//       return response;
+//     } else {
+//       const response = await prisma.interface.create({
+//         data: interfaceSettings,
+//       });
+//       return response;
+//     }
+//   } catch (error) {
+//     console.error('Error upserting interface settings:', error);
+//     throw error;
+//   }
+// };
 
 export const getUserPermissions = async (userId: string) => {
   const response = await db.user.findUnique({
@@ -471,15 +471,15 @@ export const getMedia = async (chatbotId: string) => {
   })
   return mediafiles
 }
-export const getInterfaceSettings = async (chatbotId: string) => {
-  const interfaceSettings = await db.chatbot.findUnique({
-    where: {
-      id: chatbotId,
-    },
-    include: { Interface: true },
-  })
-  return interfaceSettings
-}
+// export const getInterfaceSettings = async (chatbotId: string) => {
+//   const interfaceSettings = await db.chatbot.findUnique({
+//     where: {
+//       id: chatbotId,
+//     },
+//     include: { Interface: true },
+//   })
+//   return interfaceSettings
+// }
 export const createMedia = async (
   chatbotId: string,
   mediaFile: CreateMediaType
@@ -935,151 +935,115 @@ export const getChatbotSidebarOptions = async () => {
 };
 export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating: boolean) => {
   if (!chatbot.name) return null;
+
   try {
-    const accountOwner = await db.user.findFirst({
-      where: {
-        Account: {
-          id: chatbot.accountId,
-        },
-        role: 'ACCOUNT_OWNER',
-      },
-    });
-
-    if (!accountOwner) {
-      console.log('🔴 Error: Could not find Account Owner');
-      return null;
-    }
-
-    const permissionId = v4();
-
-    const response = await db.chatbot.upsert({
-      where: { id: chatbot.id || '' },
-      update:  chatbot,
-      create:  {
-        ...chatbot,
-        Permissions: {
-          create: {
-            access: true,
-            email: accountOwner.email,
-            id: permissionId,
+    return await db.$transaction(async (transaction) => {
+      // Find the Account Owner
+      const accountOwner = await transaction.user.findFirst({
+        where: {
+          Account: {
+            id: chatbot.accountId,
           },
+          role: 'ACCOUNT_OWNER',
         },
-        Pipeline: { create: { name: 'Lead Cycle' } },
-      } ,
-    });
+      });
 
-    // Ensure the chatbot ID is present for newly created chatbots
-    const chatbotId = response.id || chatbot.id;
-    if (!chatbotId) {
-      throw new Error('Chatbot creation failed');
-    }
-
-    // Create sidebar options only if creating a new chatbot
-    if (isCreating) {
-      const parentOptions = [
-        { name: 'Analytics & Usage', icon: 'settings', link: `/chatbot/${chatbotId}/analytics` },
-        { name: 'Settings', icon: 'settings', link: `/chatbot/${chatbotId}/settings` },
-        { name: 'Training', icon: 'info', link: `/chatbot/${chatbotId}/training` },
-        { name: 'Integration', icon: 'link', link: `/chatbot/${chatbotId}/integration` },
-        { name: 'Conversations', icon: 'messages', link: `/chatbot/${chatbotId}/conversations` },
-        { name: 'CRM & Leads', icon: 'messages', link: `/chatbot/${chatbotId}/crm-leads` },
-        { name: 'Support', icon: 'send', link: `/chatbot/${chatbotId}/support` }
-      ];
-
-      const parentIds = [];
-      for (const option of parentOptions) {
-        const parentOption = await db.chatbotSidebarOption.create({
-          data: {
-            ...option,
-            chatbotId,
-          },
-        });
-        parentIds.push(parentOption.id);
+      if (!accountOwner) {
+        console.log('🔴 Error: Could not find Account Owner');
+        throw new Error('Account owner not found');
       }
 
-      // Create submenu options
-      await db.chatbotSidebarOption.createMany({
-        data: [
-          {
-            name: 'Connect',
-            icon: 'settings',
-            link: `/chatbot/${chatbotId}/connect`,
-            isSubmenu: true,
-            parentId: parentIds[3],
-            chatbotId,
+      const permissionId = v4();
+
+      // Upsert the Chatbot
+      const response = await transaction.chatbot.upsert({
+        where: { id: chatbot.id || '' },
+        update: chatbot,
+        create: {
+          ...chatbot,
+          Permissions: {
+            create: {
+              access: true,
+              email: accountOwner.email,
+              id: permissionId,
+            },
           },
-          {
-            name: 'Embed',
-            icon: 'settings',
-            link: `/chatbot/${chatbotId}/embed`,
-            isSubmenu: true,
-            parentId: parentIds[3],
-            chatbotId,
-          },
-          {
-            name: 'Interface',
-            icon: 'compass',
-            link: `/chatbot/${chatbotId}/interface`,
-            isSubmenu: true,
-            parentId: parentIds[1],
-            chatbotId,
-          },
-          {
-            name: 'AI Settings',
-            icon: 'compass',
-            link: `/chatbot/${chatbotId}/ai-settings`,
-            isSubmenu: true,
-            parentId: parentIds[1],
-            chatbotId,
-          },
-          {
-            name: 'Chatbot Settings',
-            icon: 'compass',
-            link: `/chatbot/${chatbotId}/chatbot-settings`,
-            isSubmenu: true,
-            parentId: parentIds[1],
-            chatbotId,
-          },
-          {
-            name: 'Calendar',
-            icon: 'compass',
-            link: `/chatbot/${chatbotId}/calendar`,
-            isSubmenu: true,
-            parentId: parentIds[5],
-            chatbotId,
-          },
-          {
-            name: 'Campaign',
-            icon: 'compass',
-            link: `/chatbot/${chatbotId}/campaign`,
-            isSubmenu: true,
-            parentId: parentIds[5],
-            chatbotId,
-          },
-          {
-            name: 'Leads',
-            icon: 'compass',
-            link: `/chatbot/${chatbotId}/leads`,
-            isSubmenu: true,
-            parentId: parentIds[5],
-            chatbotId,
-          },
-        ],
+          Pipeline: { create: { name: 'Lead Cycle' } },
+        },
       });
-    }
 
-    await db.chatbotSettings.upsert({
-      where: { chatbotId },
-      update: settings,
-      create: { ...settings, chatbotId },
+      // Ensure the chatbot ID is present for newly created chatbots
+      const chatbotId = response.id || chatbot.id;
+      if (!chatbotId) {
+        throw new Error('Chatbot creation failed');
+      }
+
+      // Create sidebar options only if creating a new chatbot
+      if (isCreating) {
+        await transaction.interface.upsert({
+          where: { chatbotId: chatbotId },
+          update: {
+            icon: "",
+            userAvatar: "",
+            chatbotAvatar: "",
+            chatIcon: "/images/bot.png",
+            background: "#ffffff",
+            userMsgBackgroundColour: "#ffffff",
+            chatbotMsgBackgroundColour: "#f0f0f0",
+            userTextColor: "#000000",
+            chatbotTextColor: "#000000",
+            botDisplayNameColor: "#000000", // New field for bot display name color
+            helpdesk: false,
+            copyRightMessage: "Powered By | Your Company | https://example.com",
+            footerText: "By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy",
+            messagePlaceholder: "Type your message...",
+            suggestedMessage: "",
+            themeColor: "#3b82f6",
+            botDisplayName: "Chatbot",
+            chatBubbleButtonColor: "#3b82f6",
+            helpdeskLiveAgentColor: "#ff0000",
+            isLiveAgentEnabled: false,
+          },
+          create: {
+            id: v4(),
+            chatbotId: chatbotId,
+            icon: "",
+            userAvatar: "/images/user.png",
+            chatbotAvatar: "/images/chatbot.png",
+            chatIcon: "/images/bot.png",
+            background: "#ffffff",
+            userMsgBackgroundColour: "#ffffff",
+            chatbotMsgBackgroundColour: "#f0f0f0",
+            userTextColor: "#000000",
+            chatbotTextColor: "#000000",
+            botDisplayNameColor: "#000000", // New field for bot display name color
+            helpdesk: false,
+            copyRightMessage: "Powered By | Your Company | https://example.com",
+            footerText: "By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy",
+            messagePlaceholder: "Type your message...",
+            suggestedMessage: "",
+            themeColor: "#3b82f6",
+            botDisplayName: "Chatbot",
+            chatBubbleButtonColor: "#3b82f6",
+            helpdeskLiveAgentColor: "#ff0000",
+            isLiveAgentEnabled: false,
+          },
+        });
+        await transaction.chatbotSettings.upsert({
+          where: { chatbotId },
+          update: settings,
+          create: { ...settings, chatbotId },
+        });
+      }
+      return response;
     });
-
-    return response;
   } catch (error) {
-    console.log(error);
+    console.log('Error during chatbot upsert transaction:', error);
     throw new Error('Chatbot upsert failed');
   }
 };
+
+
 
 
 export const upsertChatbotSettings = async (chatbotId: string, settingsData: any) => {
@@ -1138,7 +1102,6 @@ export const fetchChatbotData = async (chatbotId: string) => {
             ChatbotType: true,
           },
         },
-        // Include other relations as needed
       },
     });
 
@@ -1160,6 +1123,30 @@ export const upsertAndFetchChatbotData = async (chatbotData, settingsData, isCre
     if (!chatbotId) {
       throw new Error('Chatbot ID is missing after upsert');
     }
+    if (isCreating) {
+      await upsertInterfaceSettings({
+        chatbotId,
+        icon: "",
+        userAvatar: "/images/user.png",
+        chatbotAvatar: "/images/chatbot.png",
+        background: "#ffffff",
+        userMsgBackgroundColour: "#ffffff",
+        chatbotMsgBackgroundColour: "#f0f0f0",
+        userTextColor: "#000000",
+        chatbotTextColor: "#000000",
+        helpdesk: false,
+        copyRightMessage: "Powered By | Your Company | https://example.com",
+        footerText: "By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy",
+        messagePlaceholder: "Type your message...",
+        suggestedMessage: "",
+        themeColor: "#3b82f6",
+        botDisplayName: "Chatbot",
+        chatIcon: "/images/bot.png",
+        chatBubbleButtonColor: "#3b82f6",
+        helpdeskLiveAgentColor: "#ff0000",
+        isLiveAgentEnabled: false,
+      });
+    }
 
     await upsertChatbotSettings(chatbotId, settingsData);
     
@@ -1173,7 +1160,52 @@ export const upsertAndFetchChatbotData = async (chatbotData, settingsData, isCre
     throw error;
   }
 };
+export const upsertInterfaceSettings = async (data) => {
+  try {
+    const { chatbotId, ...restData } = data;
 
+    const result = await prisma.interface.upsert({
+      where: {
+        chatbotId: chatbotId,
+      },
+      update: {
+        ...restData,
+        chatbot: {
+          connect: {
+            id: chatbotId,
+          },
+        },
+      },
+      create: {
+        ...restData,
+        chatbot: {
+          connect: {
+            id: chatbotId,
+          },
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error upserting interface settings:', error);
+    throw new Error('Interface settings upsert failed');
+  }
+};
+
+export const getInterfaceSettings = async (chatbotId: string) => {
+  try {
+    const interfaceSettings = await db.interface.findUnique({
+      where: { chatbotId },
+    });
+    return interfaceSettings;
+  } catch (error) {
+    console.error('Error fetching interface settings:', error);
+    throw new Error('Error fetching interface settings');
+  }
+};
 export const getFilteredQuestions = async (chatbotId: string) => {
   try {
     const questions = await prisma.filterQuestions.findMany({
@@ -1601,44 +1633,6 @@ export const assignAgentToChatRoom = async (chatRoomId: string, agentId: string)
   });
 };
 
-export const createOrFetchChatRoom = async (chatbotId: string, customerId: string, sessionActive: boolean) => {
-  console.log('Fetching or creating chat room:', { chatbotId, customerId, sessionActive });
-
-  let chatRoom;
-
-  if (sessionActive) {
-    chatRoom = await prisma.chatRoom.findFirst({
-      where: {
-        chatbotId,
-        customerId,
-        live: true, // Only fetch if session is still active
-      },
-      include: {
-        ChatMessages: true,
-      },
-    });
-  }
-
-  if (!chatRoom) {
-    console.log('No active chat room found. Creating a new one...');
-    chatRoom = await prisma.chatRoom.create({
-      data: {
-        chatbotId,
-        customerId,
-        live: true,
-      },
-      include: {
-        ChatMessages: true,
-      },
-    });
-    console.log('New chat room created:', chatRoom);
-  } else {
-    console.log('Active chat room found:', chatRoom);
-  }
-
-  return chatRoom;
-};
-
 // End a chatroom session
 export const endChatRoomSession = async (chatRoomId: string) => {
   return await prisma.chatRoom.update({
@@ -1662,25 +1656,40 @@ export async function sendMessageToChatGPT(message: string) {
 
 export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground: boolean) => {
   let customer;
-  
-  // Generate a dynamic name (e.g., Customer1, Customer2, ...)
-  const customerCount = await prisma.customer.count({
-    where: { chatbotId },
-  });
-  const dynamicName = `Customer${customerCount + 1}`;
+  let chatRoom;
 
   if (isPlayground) {
+    // When in playground mode, use chatbotId as both customerId and chatRoomId
     customer = await prisma.customer.upsert({
-      where: { id: `${chatbotId}-${dynamicName}` },
+      where: { id: chatbotId },
       update: {},
       create: {
-        id: `${chatbotId}-${dynamicName}`,
-        name: dynamicName,
+        id: chatbotId,
+        name: `Customer_${chatbotId}`,
         email: null, // Start with no email
-        chatbotId, 
+        chatbotId,
       },
     });
+
+    chatRoom = await prisma.chatRoom.upsert({
+      where: { id: chatbotId },
+      update: {},
+      create: {
+        id: chatbotId,
+        chatbotId,
+        customerId: chatbotId,
+        live: true,
+      },
+    });
+
+    return { customerId: chatbotId, chatRoomId: chatbotId };
   } else {
+    // Generate a dynamic name (e.g., Customer1, Customer2, ...)
+    const customerCount = await prisma.customer.count({
+      where: { chatbotId },
+    });
+    const dynamicName = `Customer${customerCount + 1}`;
+
     customer = await prisma.customer.create({
       data: {
         name: dynamicName,
@@ -1688,18 +1697,19 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
         chatbotId,
       },
     });
+
+    chatRoom = await prisma.chatRoom.create({
+      data: {
+        chatbotId,
+        customerId: customer.id,
+        live: true,
+      },
+    });
+
+    return { customerId: customer.id, chatRoomId: chatRoom.id };
   }
-
-  const chatRoom = await prisma.chatRoom.create({
-    data: {
-      chatbotId,
-      customerId: customer.id,
-      live: true,
-    },
-  });
-
-  return { customerId: customer.id, chatRoomId: chatRoom.id };
 };
+
 export const updateChatbotStatus = async (chatbotId, isPublic) => {
   try {
     await prisma.chatbot.update({
@@ -1789,5 +1799,57 @@ export const fetchChatbotsWithDetails = async (accountId: string) => {
   }
 };
 
+export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
+  try {
+    const authUser = await currentUser(); // Fetch the currently logged-in user's information
+    if (!authUser) {
+      throw new Error('User not authenticated');
+    }
 
+    const userDetails = await db.user.findUnique({
+      where: {
+        email: authUser.emailAddresses[0].emailAddress,
+      },
+    });
 
+    if (!userDetails) {
+      throw new Error('User details not found');
+    }
+
+    const agentId = isLive ? userDetails.id : null;
+    const chatRoom = await db.chatRoom.update({
+      where: { id: chatRoomId },
+      data: {
+        agentId: agentId, // Set the agent ID if live mode is enabled
+        live: isLive,     // Toggle the live mode
+      },
+    });
+
+    // Send a system message to notify the chatroom about the live agent mode change
+    await sendSystemMessage(
+      chatRoomId,
+      isLive 
+        ? `${userDetails.name} has joined the chat as a live agent.` 
+        : `${userDetails.name} has left the chat.`
+    );
+
+    return { success: true, chatRoom };
+  } catch (error) {
+    console.error('Failed to toggle live agent mode:', error);
+    return { success: false, error };
+  }
+}
+
+async function sendSystemMessage(chatRoomId: string, message: string) {
+  try {
+    await db.chatMessage.create({
+      data: {
+        chatRoomId,
+        message,
+        sender: 'system', // Mark this as a system message
+      },
+    });
+  } catch (error) {
+    console.error('Failed to send system message:', error);
+  }
+}

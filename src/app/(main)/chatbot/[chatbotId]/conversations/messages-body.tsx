@@ -1,4 +1,3 @@
-// components/messages-body.tsx
 'use client';
 
 import React from 'react';
@@ -7,19 +6,18 @@ import MessagesHeader from './messages-header';
 import MessagesChat from './messages-chat';
 import MessagesFooter from './messages-footer';
 
-export default function MessagesBody() {
+export default function MessagesBody({ onSendMessage, settings }: any) {
   const { chatRoom } = useChatContext();
 
   return (
-    <div className="flex flex-col flex-grow h-full md:translate-x-0 transition-transform duration-300 ease-in-out">
-      {/* Added background color to check visibility */}
-      <MessagesHeader />
+    <div className="flex flex-col flex-grow h-full pt-4"> 
       {chatRoom ? (
         <>
+          <MessagesHeader settings={settings} />
           <div className="flex-grow overflow-auto">
-            <MessagesChat />
+            <MessagesChat settings={settings} />
           </div>
-          <MessagesFooter />
+          <MessagesFooter onSendMessage={onSendMessage} settings={settings} />
         </>
       ) : (
         <div className="flex items-center justify-center flex-grow">

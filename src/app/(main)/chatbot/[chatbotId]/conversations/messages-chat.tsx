@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
-import { pusherClient } from '@/lib/pusher'; 
+import { pusherClient } from '@/lib/pusher';
+import { InterfaceSettings } from '@/context/InterfaceSettingsContext';
 
-export default function MessagesChat() {
+interface MessagesChatProps {
+  settings: InterfaceSettings;
+}
+
+export default function MessagesChat({ settings }: MessagesChatProps) {
   const { chats, setChats, chatRoom } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -13,9 +18,14 @@ export default function MessagesChat() {
     if (!chatRoom) return;
 
     const channel = pusherClient.subscribe(`chatroom-${chatRoom}`);
-    
     channel.bind('new-message', (data: any) => {
-      setChats((prevChats) => [...prevChats, data]);
+      setChats((prevChats) => {
+        const isDuplicate = prevChats.some((chat) => chat.id === data.id);
+        if (!isDuplicate) {
+          return [...prevChats, data];
+        }
+        return prevChats;
+      });
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     });
 
@@ -28,12 +38,24 @@ export default function MessagesChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chats]);
 
+  console.log('Bubble Settings:', settings); // Log settings to ensure they are passed correctly
+
   return (
-    <div className="grow px-4 sm:px-6 md:px-5 py-6 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
+    <div className="px-4 sm:px-6 md:px-5 py-6 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
       {chats.length > 0 ? (
-        chats.map((chat, index) => (
-          <div key={index} className="flex items-start mb-4 last:mb-0">
-            <Bubble message={chat.message} createdAt={chat.createdAt} sender={chat.sender} />
+        chats.map((chat) => (
+          <div key={chat.id} className="flex items-start mb-4 last:mb-0">
+            <Bubble
+              message={chat.message}
+              createdAt={chat.createdAt}
+              sender={chat.sender}
+              userAvatar={settings?.userAvatar || '/images/user.png'}
+              chatbotAvatar={settings?.chatbotAvatar || '/images/chatbot.png'}
+              userMsgBackgroundColour={settings?.userMsgBackgroundColour || '#E2E8F0'}
+              chatbotMsgBackgroundColour={settings?.chatbotMsgBackgroundColour || '#3B82F6'}
+              userTextColor={settings?.userTextColor || '#000000'}
+              chatbotTextColor={settings?.chatbotTextColor || '#FFFFFF'}
+            />
           </div>
         ))
       ) : (

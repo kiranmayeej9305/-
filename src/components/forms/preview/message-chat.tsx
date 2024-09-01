@@ -1,4 +1,3 @@
-// MessagesChat Component
 'use client';
 
 import React from 'react';
@@ -35,6 +34,7 @@ const MessagesChat: React.FC<MessagesChatProps> = ({
         }}
         avatar={chatbotAvatar}
       />
+      <div className="my-2"></div> {/* This is the gap between bubbles */}
       <Bubble
         message="I need a custom chatbot for my website"
         createdAt={new Date()}

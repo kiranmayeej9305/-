@@ -1,46 +1,41 @@
-// components/MessagesChat.tsx
-
 'use client';
 
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import Bubble from './bubble';
 import { pusherClient } from '@/lib/pusher';
+import { InterfaceSettings } from '@/context/use-interface-settings-context';
 
-export default function MessagesChat() {
+interface MessagesChatProps {
+  settings: InterfaceSettings;
+}
+
+export default function MessagesChat({ settings }: MessagesChatProps) {
   const { chats, setChats, chatRoom } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chatRoom) return;
 
-    console.log(`MessagesChat: Subscribing to chatroom-${chatRoom}`);
+    const channel = pusherClient.subscribe(`chatroom-${chatRoom.id}`);
 
-    const channel = pusherClient.subscribe(`chatroom-${chatRoom}`);
-
-    channel.bind('new-message', (data: any) => {
-      console.log('MessagesChat: Received new message from Pusher:', data);
-
-      // Add the new message to the chat only if it doesn't exist
+    const handleMessage = (data: any) => {
       setChats((prevChats) => {
         const isDuplicate = prevChats.some((chat) => chat.id === data.id);
         if (!isDuplicate) {
-          console.log('MessagesChat: Adding new message to chat:', data);
           return [...prevChats, data];
-        } else {
-          console.warn('MessagesChat: Duplicate message detected and ignored:', data);
-          return prevChats;
         }
+        return prevChats;
       });
-
-      // Scroll to the bottom of the chat
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    });
+    };
+
+    channel.bind('new-message', handleMessage);
 
     return () => {
-      console.log(`MessagesChat: Unsubscribing from chatroom-${chatRoom}`);
-      channel.unbind('new-message');
-      pusherClient.unsubscribe(`chatroom-${chatRoom}`);
+      // Cleanup the subscription when the component unmounts or chatRoom changes
+      channel.unbind('new-message', handleMessage);
+      pusherClient.unsubscribe(`chatroom-${chatRoom.id}`);
     };
   }, [chatRoom, setChats]);
 
@@ -53,7 +48,18 @@ export default function MessagesChat() {
       {chats.length > 0 ? (
         chats.map((chat) => (
           <div key={chat.id} className="flex items-start mb-4 last:mb-0">
-            <Bubble message={chat.message} createdAt={chat.createdAt} sender={chat.sender} />
+            <Bubble
+              message={chat.message}
+              createdAt={chat.createdAt}
+              sender={chat.sender}
+              isChatbot={chat.sender === 'chatbot'}
+              userMsgBackgroundColour={settings.userMsgBackgroundColour}
+              chatbotMsgBackgroundColour={settings.chatbotMsgBackgroundColour}
+              userTextColor={settings.userTextColor}
+              chatbotTextColor={settings.chatbotTextColor}
+              userAvatar={settings.userAvatar}
+              chatbotAvatar={settings.chatbotAvatar}
+            />
           </div>
         ))
       ) : (

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 type Props = {
@@ -12,7 +14,9 @@ export default function Bubble({ message, createdAt, sender, style, avatar }: Pr
   const isChatbot = sender === 'chatbot';
 
   return (
-    <div className={`flex w-full ${isChatbot ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div
+      className={`flex w-full ${isChatbot ? 'justify-end' : 'justify-start'} mb-4`}
+    >
       <div className="flex items-center space-x-3">
         {!isChatbot && (
           <img
@@ -26,7 +30,7 @@ export default function Bubble({ message, createdAt, sender, style, avatar }: Pr
             isChatbot ? 'rounded-br-none' : 'rounded-bl-none'
           }`}
           style={{
-            backgroundColor: style?.backgroundColor || (isChatbot ? '#4f46e5' : 'inherit'),
+            backgroundColor: style?.backgroundColor || (isChatbot ? '#4f46e5' : '#f3f4f6'),
             color: style?.color || (isChatbot ? '#ffffff' : '#333'),
           }}
         >
