@@ -78,10 +78,10 @@ export default function SupportForm({ userEmail, chatbotData, accountData }: { u
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 dark:bg-black">
-      <div className="container mx-auto max-w-3xl p-6 my-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg">
-        <Card className="w-full p-4">
-          <CardHeader className="border-b pb-3">
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 dark:bg-black p-8 sm:p-6">
+      <div className="w-full max-w-xl">
+        <Card className="w-full p-8 sm:p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg">
+          <CardHeader className="border-b pb-4">
             <CardTitle className="text-xl font-semibold">
               Submit a case to our support team.
             </CardTitle>
@@ -122,8 +122,8 @@ export default function SupportForm({ userEmail, chatbotData, accountData }: { u
                 />
               </div>
 
-              <div className="flex gap-2 space-y-1">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 space-y-1">
                   <Label htmlFor="selectedProblem" className="text-sm">Selected Problem</Label>
                   <Select onValueChange={(value) => setSelectedProblem(value)}>
                     <SelectTrigger id="selectedProblem" className="border-gray-300 text-sm">
@@ -137,7 +137,7 @@ export default function SupportForm({ userEmail, chatbotData, accountData }: { u
                   </Select>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 space-y-1">
                   <Label htmlFor="selectedSeverity" className="text-sm">Selected Severity</Label>
                   <Select onValueChange={(value) => setSelectedSeverity(value)}>
                     <SelectTrigger id="selectedSeverity" className="border-gray-300 text-sm">
@@ -172,12 +172,12 @@ export default function SupportForm({ userEmail, chatbotData, accountData }: { u
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
-                  className="border-gray-300 h-24 text-sm"
+                  className="border-gray-300 h-32 text-sm"
                 />
               </div>
 
-              <CardFooter>
-                <Button type="submit" className="w-full bg-black text-white hover:bg-gray-800 text-sm">
+              <CardFooter className="flex justify-end">
+                <Button type="submit" className="bg-black text-white hover:bg-gray-800 text-sm">
                   Submit
                 </Button>
               </CardFooter>
