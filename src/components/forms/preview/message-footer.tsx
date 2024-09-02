@@ -8,7 +8,7 @@ type MessagesFooterProps = {
   copyRightMessage?: string | null;
   messagePlaceholder?: string | null;
   themeColor?: string;
-  botDisplayNameColor? : string | null;
+  botDisplayNameColor?: string | null;
 };
 
 const MessagesFooter: React.FC<MessagesFooterProps> = ({
@@ -16,7 +16,7 @@ const MessagesFooter: React.FC<MessagesFooterProps> = ({
   copyRightMessage,
   messagePlaceholder,
   themeColor,
-  botDisplayNameColor
+  botDisplayNameColor,
 }) => {
   const [newMessage, setNewMessage] = useState('');
 
@@ -25,7 +25,7 @@ const MessagesFooter: React.FC<MessagesFooterProps> = ({
       return null;
     }
 
-    const parts = text.split('|').map(part => part.trim());
+    const parts = text.split('|').map((part) => part.trim());
 
     if (parts.length === 3) {
       const [beforeLink, linkText, linkUrl] = parts;
@@ -49,17 +49,14 @@ const MessagesFooter: React.FC<MessagesFooterProps> = ({
           type="text"
           placeholder={messagePlaceholder || 'Type your message...'}
           value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
+          onChange={(e) => setNewMessage(e.target.value)}
           className="grow px-4 py-2 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white outline-none"
         />
         <button
           className="flex items-center justify-center px-4 py-2 rounded-r-lg text-white"
           style={{ backgroundColor: themeColor || '#3b82f6' }}
         >
-          <Send
-            className="h-5 w-5"
-            style={{ color: botDisplayNameColor || '#fff' }} 
-          />
+          <Send className="h-5 w-5" style={{ color: botDisplayNameColor || '#fff' }} />
         </button>
       </div>
       <div className="flex flex-col items-center py-4 px-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">

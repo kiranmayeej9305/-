@@ -1597,7 +1597,22 @@ export const createMessageInChatRoom = async (
   return chatMessage;
 };
 
+// Example functions to fetch data from your database
+export async function getChatbotData(chatbotId: string) {
+  // Fetch chatbot data from the database
+  const chatbot = await prisma.chatbot.findUnique({
+    where: { id: chatbotId },
+  });
+  return chatbot;
+}
 
+export async function getAccountData(accountId: string) {
+  // Fetch account data from the database
+  const account = await prisma.account.findUnique({
+    where: { id: accountId },
+  });
+  return account;
+}
 
 
 export const updateMessagesToSeen = async (chatRoomId: string) => {

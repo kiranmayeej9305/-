@@ -16,6 +16,7 @@ type MessagesBodyProps = {
   copyRightMessage?: string;
   messagePlaceholder?: string;
   themeColor?: string;
+  botDisplayNameColor?: string;
 };
 
 const MessagesBody: React.FC<MessagesBodyProps> = ({
@@ -30,7 +31,7 @@ const MessagesBody: React.FC<MessagesBodyProps> = ({
   copyRightMessage,
   messagePlaceholder,
   themeColor,
-  botDisplayNameColor
+  botDisplayNameColor,
 }) => {
   return (
     <div className="flex flex-col h-full">
@@ -50,7 +51,7 @@ const MessagesBody: React.FC<MessagesBodyProps> = ({
         copyRightMessage={copyRightMessage}
         messagePlaceholder={messagePlaceholder}
         themeColor={themeColor}
-        botDisplayNameColor = {botDisplayNameColor}
+        botDisplayNameColor={botDisplayNameColor}
       />
     </div>
   );

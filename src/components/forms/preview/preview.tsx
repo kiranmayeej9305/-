@@ -39,7 +39,6 @@ const Preview: React.FC<PreviewProps> = ({ settings }) => {
         messagePlaceholder={settings.messagePlaceholder}
         themeColor={settings.themeColor}
         botDisplayNameColor={settings.botDisplayNameColor}
-
       />
     </div>
   );
