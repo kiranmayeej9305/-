@@ -4,6 +4,7 @@ import { clerkClient, currentUser } from '@clerk/nextjs'
 import { db } from './db'
 import { redirect } from 'next/navigation'
 import { pusherServer , pusherClient} from '@/lib/pusher';
+import { sendEmailAndSmsNotifications } from '@/lib/live-agent-notifications';
 import {
   Account,
   Lane,
@@ -644,6 +645,20 @@ export const _getTicketsWithAllRelations = async (laneId: string) => {
   })
   return response
 }
+export const getChatbotUsersWithAccess = async (chatbotId: string) => {
+  const chatbotUsersWithAccess = await db.user.findMany({
+    where: {
+      Permissions: {
+        some: {
+          chatbotId: chatbotId,
+          access: true,  // Only include users who have access to this chatbot
+        },
+      },
+    },
+  });
+
+  return chatbotUsersWithAccess;
+};
 
 export const getChatbotTeamMembers = async (chatbotId: string) => {
   const chatbotUsersWithAccess = await db.user.findMany({
@@ -1746,8 +1761,6 @@ export async function toggleLiveAgentMode(chatRoomId: string, isLive: boolean) {
 
 
 
-
-
 export async function sendSystemMessage(chatRoomId: string, message: string) {
   try {
     await db.chatMessage.create({
@@ -1835,6 +1848,14 @@ export const handleChatMessage = async (
     // Fetch chat room details to check if the conversation is live
     const chatRoom = await db.chatRoom.findUnique({
       where: { id: chatRoomId },
+      include: {
+        Customer: true,
+        Chatbot: {
+          include: {
+            Account: true,
+          },
+        },
+      },
     });
 
     // If the chat is handled by a live agent, exit the process
@@ -1884,7 +1905,24 @@ export const handleChatMessage = async (
 
       // Save the AI response in the chatroom
       await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
+ // Check if AI response contains "(realtime)"
+ if (aiResponse.includes('(realtime)')) {
+  const customerName = chatRoom.Customer?.name || 'Unknown';
+  const customerEmail = chatRoom.Customer?.email || 'Unknown';
+  const chatbotName = chatRoom.Chatbot?.name || 'Unknown';
+  const accountName = chatRoom.Chatbot?.Account?.name || 'Unknown';
+  const chatbotId = chatRoom.Chatbot?.id;
 
+  // Trigger email and SMS notifications
+  await sendEmailAndSmsNotifications(
+    chatRoomId,
+    customerName,
+    customerEmail,
+    chatbotName,
+    accountName,
+    chatbotId
+  );
+}
       return { aiResponse };
     }
   } catch (error) {
