@@ -1774,40 +1774,58 @@ export async function sendSystemMessage(chatRoomId: string, message: string) {
     console.error('Failed to send system message:', error);
   }
 }
-// Fetch the next unanswered question for the chatbot and customer
+
 export const getNextUnansweredQuestion = async (chatbotId: string, customerId: string) => {
   const question = await db.filterQuestions.findFirst({
     where: {
       chatbotId,
-      answered: false,  // Only fetch unanswered questions
-      customerResponses: {
-        none: {  // Ensure no customer responses exist for this question
-          customerId,
-          responseText: { not: '' }, // Filter out questions already answered by the customer
+      OR: [
+        // No responses at all for this customer
+        {
+          customerResponses: {
+            none: {
+              customerId,
+            },
+          },
         },
-      },
+        // Unanswered responses for this customer
+        {
+          customerResponses: {
+            some: {
+              customerId,
+              answered: false,
+            },
+          },
+        },
+      ],
     },
     orderBy: {
-      createdAt: 'asc',  // Fetch questions in the order they were created
+      createdAt: 'asc', // Fetch in the order they were created
     },
   });
   return question;
 };
 
+
+
 // Save the AI-asked question with an empty response initially
 export const saveAskedQuestion = async (
   customerId: string,
+  filterQuestionId: string,
   questionText: string
 ) => {
   const savedQuestion = await db.customerResponses.create({
     data: {
       customerId,
+      filterQuestionId,  // Link it to the FilterQuestions table
       question: questionText,
-      responseText: '', // Initially, no response from the customer
+      responseText: '',  // Initially, no response from the customer
+      answered: false,  // Mark the question as unanswered
     },
   });
   return savedQuestion;
 };
+
 
 // Update customer response for a previously asked question
 export const updateCustomerResponse = async (
@@ -1828,13 +1846,6 @@ export const updateCustomerResponse = async (
   return updatedResponse;
 };
 
-// Mark a question as answered in FilterQuestions table
-export const markQuestionAsAnswered = async (questionId: string) => {
-  await db.filterQuestions.update({
-    where: { id: questionId },
-    data: { answered: true },
-  });
-};
 
 export const handleChatMessage = async (
   chatRoomId: string,
@@ -1867,18 +1878,18 @@ export const handleChatMessage = async (
     const lastAskedQuestion = await db.customerResponses.findFirst({
       where: {
         customerId: chatRoom.customerId,
-        responseText: '',  // Find the last unanswered question
+        answered: false,  // Find the last unanswered question
       },
     });
-
+    
     if (lastAskedQuestion) {
       // If the last question was unanswered, update it with the customer's response
-      await processCustomerResponse(chatRoom.customerId, lastAskedQuestion.question, customerMessage);
+      await processCustomerResponse(chatRoom.customerId, lastAskedQuestion.filterQuestionId!, customerMessage);
     }
 
     // Get the next unanswered question for the customer
     const nextQuestion = await getNextUnansweredQuestion(chatbotId, chatRoom.customerId);
-
+    console.log(nextQuestion);
     // Handle the next unanswered question
     if (nextQuestion) {
       // Generate AI response for the next question
@@ -1892,7 +1903,7 @@ export const handleChatMessage = async (
       await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
 
       // Save the asked question for tracking
-      await saveAskedQuestion(chatRoom.customerId, nextQuestion.question);
+      await saveAskedQuestion(chatRoom.customerId, nextQuestion.id, nextQuestion.question);
 
       return { aiResponse };
     } else {
@@ -1905,24 +1916,25 @@ export const handleChatMessage = async (
 
       // Save the AI response in the chatroom
       await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
- // Check if AI response contains "(realtime)"
- if (aiResponse.includes('(realtime)')) {
-  const customerName = chatRoom.Customer?.name || 'Unknown';
-  const customerEmail = chatRoom.Customer?.email || 'Unknown';
-  const chatbotName = chatRoom.Chatbot?.name || 'Unknown';
-  const accountName = chatRoom.Chatbot?.Account?.name || 'Unknown';
-  const chatbotId = chatRoom.Chatbot?.id;
+      
+      // Check if AI response contains "(realtime)"
+      if (aiResponse.includes('(realtime)')) {
+        const customerName = chatRoom.Customer?.name || 'Unknown';
+        const customerEmail = chatRoom.Customer?.email || 'Unknown';
+        const chatbotName = chatRoom.Chatbot?.name || 'Unknown';
+        const accountName = chatRoom.Chatbot?.Account?.name || 'Unknown';
+        const chatbotId = chatRoom.Chatbot?.id;
 
-  // Trigger email and SMS notifications
-  await sendEmailAndSmsNotifications(
-    chatRoomId,
-    customerName,
-    customerEmail,
-    chatbotName,
-    accountName,
-    chatbotId
-  );
-}
+        // Trigger email and SMS notifications
+        await sendEmailAndSmsNotifications(
+          chatRoomId,
+          customerName,
+          customerEmail,
+          chatbotName,
+          accountName,
+          chatbotId
+        );
+      }
       return { aiResponse };
     }
   } catch (error) {
@@ -1931,33 +1943,31 @@ export const handleChatMessage = async (
   }
 };
 
-
-
-
-// Process the customer's response and save it
+// Process the customer's response and mark the response as answered
 export const processCustomerResponse = async (
   customerId: string,
-  question: string,
+  filterQuestionId: string,
   customerResponse: string
 ) => {
   try {
     // Update the customer response in CustomerResponses
-    await updateCustomerResponse(customerId, question, customerResponse);
-
-    // Find and mark the question as answered in FilterQuestions
-    const questionData = await db.filterQuestions.findFirst({
-      where: { question, answered: false },
+    await db.customerResponses.updateMany({
+      where: {
+        customerId,
+        filterQuestionId,
+        answered: false,  // Ensure we are only updating unanswered questions
+      },
+      data: {
+        responseText: customerResponse,  // Update the response
+        answered: true,  // Mark the question as answered
+      },
     });
-
-    if (questionData) {
-      await markQuestionAsAnswered(questionData.id);
-    }
-
   } catch (error) {
     console.error('Error processing customer response:', error);
     throw error;
   }
 };
+
 
 
 

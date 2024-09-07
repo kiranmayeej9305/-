@@ -541,25 +541,25 @@ model HelpDesk {
 model FilterQuestions {
   id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   question  String
-  answered  Boolean @default(false)
   createdAt DateTime @default(now())
 
   Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId String? @db.Uuid
-  customerResponses CustomerResponses[] // This establishes the relationship
-
+  chatbotId String?  @db.Uuid
+  customerResponses CustomerResponses[] // Establish relationship with responses
 }
 
 model CustomerResponses {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question     String
-  responseText String?
-  customerId   String    @db.Uuid
-  filterQuestionId String?    @db.Uuid
-  FilterQuestion FilterQuestions? @relation(fields: [filterQuestionId], references: [id], onDelete: Cascade)
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question        String
+  responseText    String?          // Nullable for optional text responses
+  answered        Boolean          @default(false)  // New field to track if answered
+  customerId      String           @db.Uuid
+  filterQuestionId String?         @db.Uuid  // Associate response with FilterQuestion
+  FilterQuestion  FilterQuestions? @relation(fields: [filterQuestionId], references: [id], onDelete: Cascade)
 
-  Customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  Customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
+
 
 
 model Customer {

@@ -29,10 +29,10 @@ export async function prepareChatResponse(
         If all questions are answered, continue assisting the customer naturally.
         Always maintain character and stay respectfull and answer related to sales and support. 
         please don't answer anything beyond sales and support.
-        If the customer says something out of context or inapporpriate. Simply say this is beyond you and you will get a real human to continue the conversation. And add a keyword (realtime) at the end.
-        Please include (realtime).Its important.
         Current context: ${context}
         The next question to ask: ${questionToAsk}.
+         If the customer says something out of context or inapporpriate. Simply say this is beyond you and you will get a real human to continue the conversation. And add a keyword (realtime) at the end.
+        Please include (realtime) only when you cannot answer the question as its out of conext not for in context question.Its important.
       `,
     };
 
