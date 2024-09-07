@@ -174,7 +174,6 @@ model Chatbot {
   accountId           String
   Account             Account                    @relation(fields: [accountId], references: [id], onDelete: Cascade)
   Permissions         Permissions[]
-  Funnels             Funnel[]
   Media               Media[]
   Contact             Contact[]
   Trigger             Trigger[]
@@ -366,34 +365,6 @@ model Media {
   @@index([chatbotId])
 }
 
-model ClassName {
-  id         String   @id @default(uuid())
-  name       String
-  color      String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  funnelId   String
-  customData String?  @db.Text
-  Funnel     Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-
-  @@index([funnelId])
-}
-
-model FunnelPage {
-  id           String   @id @default(uuid())
-  name         String
-  pathName     String   @default("")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  visits       Int      @default(0)
-  content      String?  @db.Text
-  order        Int
-  previewImage String?  @db.Text
-  funnelId     String
-  Funnel       Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-
-  @@index([funnelId])
-}
 
 model AccountSidebarOption {
   id        String   @id @default(uuid())
@@ -571,9 +542,12 @@ model FilterQuestions {
   id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   question  String
   answered  Boolean @default(false)
-  
+  createdAt DateTime @default(now())
+
   Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   chatbotId String? @db.Uuid
+  customerResponses CustomerResponses[] // This establishes the relationship
+
 }
 
 model CustomerResponses {
@@ -581,6 +555,8 @@ model CustomerResponses {
   question     String
   responseText String?
   customerId   String    @db.Uuid
+  filterQuestionId String?    @db.Uuid
+  FilterQuestion FilterQuestions? @relation(fields: [filterQuestionId], references: [id], onDelete: Cascade)
 
   Customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }

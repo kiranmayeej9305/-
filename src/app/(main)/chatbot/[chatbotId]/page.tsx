@@ -1,7 +1,6 @@
 import BlurPage from '@/components/global/blur-page'
 import CircleProgress from '@/components/global/circle-progress'
 import PipelineValue from '@/components/global/pipeline-value'
-import ChatbotFunnelChart from '@/components/global/Chatbot-funnel-chart'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -104,23 +103,6 @@ const ChatbotPageId = async ({ params, searchParams }: Props) => {
     ).toFixed(2)
   }
 
-  const funnels = await db.funnel.findMany({
-    where: {
-      chatbotId: params.chatbotId,
-    },
-    include: {
-      FunnelPages: true,
-    },
-  })
-
-  const funnelPerformanceMetrics = funnels.map((funnel) => ({
-    ...funnel,
-    totalFunnelVisits: funnel.FunnelPages.reduce(
-      (total, page) => total + page.visits,
-      0
-    ),
-  }))
-
   return (
     <BlurPage>
       <div className="relative h-full">
@@ -198,7 +180,6 @@ const ChatbotPageId = async ({ params, searchParams }: Props) => {
                 <CardDescription>Funnel Performance</CardDescription>
               </CardHeader>
               <CardContent className=" text-sm text-muted-foreground flex flex-col gap-12 justify-between ">
-                <ChatbotFunnelChart data={funnelPerformanceMetrics} />
                 <div className="lg:w-[150px]">
                   Total page visits across all funnels. Hover over to get more
                   details on funnel page performance.

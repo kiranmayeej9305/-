@@ -1,43 +1,56 @@
-import { Configuration, OpenAIApi } from "openai-edge";
-import { getContext } from "@/lib/context";
+import { Configuration, OpenAIApi } from 'openai-edge';
+import { getContext } from '@/lib/context';
 
 const config = new Configuration({
   apiKey: process.env.OPEN_AI_KEY,
 });
 const openai = new OpenAIApi(config);
 
-export async function prepareChatResponse(message: string, chatbotId: string): Promise<string> {
+export async function prepareChatResponse(
+  message: string,
+  nextQuestion: string | null,
+  chatbotId: string,
+): Promise<string> {
   try {
+    // Get the conversation context
     const context = await getContext(message, chatbotId);
 
+    // Determine the next question or default to a normal conversation
+    const questionToAsk = nextQuestion
+      ? `${nextQuestion}`
+      : 'There are no unanswered questions. You may proceed with normal conversation.';
+
+    // Construct the system prompt with context and the next question
     const prompt = {
-      role: "system",
-      content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
-      The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
-      AI is a well-behaved and well-mannered individual.
-      AI is always friendly, kind, and inspiring, and eager to provide vivid and thoughtful responses to the user.
-      AI has the sum of all knowledge in its brain, and is able to accurately answer nearly any question about any topic in conversation.
-      START CONTEXT BLOCK
-      ${context}
-      END OF CONTEXT BLOCK
-      AI assistant will take into account any CONTEXT BLOCK that is provided in a conversation.
-      If the context does not provide the answer to a question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
-      AI assistant will not apologize for previous responses, but instead will indicate that new information was gained.
-      AI assistant will not invent anything that is not drawn directly from the context.`,
+      role: 'assistant',
+      content: `
+        You are a customer support assistant for a chatbot service. 
+        Your task is to ask the customer any remaining questions from a pre-defined array of questions, one at a time. 
+        If all questions are answered, continue assisting the customer naturally.
+        Always maintain character and stay respectfull and answer related to sales and support. 
+        please don't answer anything beyond sales and support.
+        If the customer says something out of context or inapporpriate. Simply say this is beyond you and you will get a real human to continue the conversation. And add a keyword (realtime) at the end.
+        Current context: ${context}
+        The next question to ask: ${questionToAsk}.
+      `,
     };
 
+    // Call OpenAI's API with the prompt and user's message
     const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
+      model: 'gpt-3.5-turbo',
       messages: [
         prompt,
-        { role: "user", content: message },
+        { role: 'user', content: message },
       ],
     });
-    const completion = await response.json();
 
-    return completion.choices[0].message.content.trim();
+    const completion = await response.json();
+    const responseContent = completion.choices[0].message.content.trim();
+
+    console.log('AI Response:', responseContent);
+    return responseContent;
   } catch (error) {
-    console.error('Error during chat response generation:', error);
+    console.error('Error generating AI chat response:', error);
     throw error;
   }
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/context/use-chat-context';
 import { useInterfaceSettings } from '@/context/use-interface-settings-context';
 import MessagesBody from './messages-body';
-import { createCustomerAndChatRoom, createMessageInChatRoom, fetchChatRoomById, getChatMessages } from '@/lib/queries';
+import { createCustomerAndChatRoom, createMessageInChatRoom, handleChatMessage, fetchChatRoomById, getChatMessages } from '@/lib/queries';
 import { pusherClient } from '@/lib/pusher';  
 import BlurPage from '@/components/global/blur-page'; 
 interface ChatRoomProps {
@@ -87,7 +87,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
         setChatRoom({ id: chatRoomId, live: true, ...chatMessagesData });
         setChats(chatMessagesData.ChatMessages || []);
       } else {
-        await createMessageInChatRoom(chatRoom.id, newMessage, 'customer');
+        await handleChatMessage(chatRoom.id, chatbotId, newMessage);
+        // await createMessageInChatRoom(chatRoom.id, newMessage, 'customer');
       }
     } catch (error) {
       console.error("Error sending message:", error);

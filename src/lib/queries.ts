@@ -17,12 +17,6 @@ import {
   User,
 } from '@prisma/client'
 import { v4 } from 'uuid'
-import {
-  CreateFunnelFormSchema,
-  CreateMediaType,
-  UpsertFunnelPage,
-} from './types'
-import { revalidatePath } from 'next/cache'
 import { prepareChatResponse } from './openai'
 export const getAuthUserDetails = async () => {
   const user = await currentUser();
@@ -535,23 +529,7 @@ export const getLanesWithTicketAndTags = async (pipelineId: string) => {
   return response
 }
 
-export const upsertFunnel = async (
-  chatbotId: string,
-  funnel: z.infer<typeof CreateFunnelFormSchema> & { liveProducts: string },
-  funnelId: string
-) => {
-  const response = await db.funnel.upsert({
-    where: { id: funnelId },
-    update: funnel,
-    create: {
-      ...funnel,
-      id: funnelId || v4(),
-      chatbotId: chatbotId,
-    },
-  })
 
-  return response
-}
 
 export const upsertPipeline = async (
   pipeline: Prisma.PipelineUncheckedCreateWithoutLaneInput
@@ -778,96 +756,6 @@ export const upsertContact = async (
   return response
 }
 
-export const getFunnels = async (chatbotId: string) => {
-  const funnels = await db.funnel.findMany({
-    where: { chatbotId: chatbotId },
-    include: { FunnelPages: true },
-  })
-
-  return funnels
-}
-
-export const getFunnel = async (funnelId: string) => {
-  const funnel = await db.funnel.findUnique({
-    where: { id: funnelId },
-    include: {
-      FunnelPages: {
-        orderBy: {
-          order: 'asc',
-        },
-      },
-    },
-  })
-
-  return funnel
-}
-
-export const updateFunnelProducts = async (
-  products: string,
-  funnelId: string
-) => {
-  const data = await db.funnel.update({
-    where: { id: funnelId },
-    data: { liveProducts: products },
-  })
-  return data
-}
-
-export const upsertFunnelPage = async (
-  chatbotId: string,
-  funnelPage: UpsertFunnelPage,
-  funnelId: string
-) => {
-  if (!chatbotId || !funnelId) return
-  const response = await db.funnelPage.upsert({
-    where: { id: funnelPage.id || '' },
-    update: { ...funnelPage },
-    create: {
-      ...funnelPage,
-      content: funnelPage.content
-        ? funnelPage.content
-        : JSON.stringify([
-            {
-              content: [],
-              id: '__body',
-              name: 'Body',
-              styles: { backgroundColor: 'white' },
-              type: '__body',
-            },
-          ]),
-      funnelId,
-    },
-  })
-
-  revalidatePath(`/chatbot/${chatbotId}/funnels/${funnelId}`, 'page')
-  return response
-}
-
-export const deleteFunnelePage = async (funnelPageId: string) => {
-  const response = await db.funnelPage.delete({ where: { id: funnelPageId } })
-
-  return response
-}
-
-export const getFunnelPageDetails = async (funnelPageId: string) => {
-  const response = await db.funnelPage.findUnique({
-    where: {
-      id: funnelPageId,
-    },
-  })
-
-  return response
-}
-
-export const getDomainContent = async (subDomainName: string) => {
-  const response = await db.funnel.findUnique({
-    where: {
-      subDomainName,
-    },
-    include: { FunnelPages: true },
-  })
-  return response
-}
 
 export const getChatbotTrainingsByType = async (chatbotId: string, type: string) => {
   return await db.trainingHistory.findMany({
@@ -1557,11 +1445,11 @@ export const createMessageInChatRoom = async (
 ) => {
   const chatRoom = await db.chatRoom.findUnique({
     where: { id: chatRoomId },
-    include: { Chatbot: true },  // Assuming there's a relation between chatRoom and chatbot
+    include: { Chatbot: true },
   });
 
   if (!chatRoom) {
-    throw new Error("Chat room not found");
+    throw new Error('Chat room not found');
   }
 
   const chatbotId = chatRoom.chatbotId;
@@ -1574,11 +1462,11 @@ export const createMessageInChatRoom = async (
     data: {
       chatRoomId,
       message,
-      sender: sender,
+      sender
     },
   });
 
-  // Trigger the message event via Pusher or any other event system
+  // Trigger the message event via Pusher or another event system
   pusherServer.trigger(`chatroom-${chatRoomId}`, 'new-message', {
     id: chatMessage.id,
     message: chatMessage.message,
@@ -1586,12 +1474,9 @@ export const createMessageInChatRoom = async (
     createdAt: chatMessage.createdAt,
   });
 
-  // Check if the live agent is active; if so, prevent the chatbot from responding
+  // Check if the live agent is active; if live agent mode is active, the AI should not respond
   if (sender === 'customer' && !chatRoom.live) {
-    const aiResponse = await prepareChatResponse(message, chatbotId);
-    if (aiResponse) {
-      await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
-    }
+    return chatMessage; // AI response is already handled in handleChatMessage
   }
 
   return chatMessage;
@@ -1876,11 +1761,170 @@ export async function sendSystemMessage(chatRoomId: string, message: string) {
     console.error('Failed to send system message:', error);
   }
 }
+// Fetch the next unanswered question for the chatbot and customer
+export const getNextUnansweredQuestion = async (chatbotId: string, customerId: string) => {
+  const question = await db.filterQuestions.findFirst({
+    where: {
+      chatbotId,
+      answered: false,  // Only fetch unanswered questions
+      customerResponses: {
+        none: {  // Ensure no customer responses exist for this question
+          customerId,
+          responseText: { not: '' }, // Filter out questions already answered by the customer
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'asc',  // Fetch questions in the order they were created
+    },
+  });
+  return question;
+};
 
-// queries.ts
+// Save the AI-asked question with an empty response initially
+export const saveAskedQuestion = async (
+  customerId: string,
+  questionText: string
+) => {
+  const savedQuestion = await db.customerResponses.create({
+    data: {
+      customerId,
+      question: questionText,
+      responseText: '', // Initially, no response from the customer
+    },
+  });
+  return savedQuestion;
+};
 
-export const getFilterQuestionsForChatbot = async (chatbotId: string) => {
-  const questions = await db.filterQuestions.findMany({
+// Update customer response for a previously asked question
+export const updateCustomerResponse = async (
+  customerId: string,
+  question: string,
+  responseText: string
+) => {
+  const updatedResponse = await db.customerResponses.updateMany({
+    where: {
+      customerId,
+      question,
+      responseText: '',  // Only update if the response was previously unanswered
+    },
+    data: {
+      responseText,  // Update with the customer's response
+    },
+  });
+  return updatedResponse;
+};
+
+// Mark a question as answered in FilterQuestions table
+export const markQuestionAsAnswered = async (questionId: string) => {
+  await db.filterQuestions.update({
+    where: { id: questionId },
+    data: { answered: true },
+  });
+};
+
+export const handleChatMessage = async (
+  chatRoomId: string,
+  chatbotId: string,
+  customerMessage: string
+) => {
+  try {
+    // Save the customer's message in the chatroom
+    await createMessageInChatRoom(chatRoomId, customerMessage, 'customer');
+
+    // Fetch chat room details to check if the conversation is live
+    const chatRoom = await db.chatRoom.findUnique({
+      where: { id: chatRoomId },
+    });
+
+    // If the chat is handled by a live agent, exit the process
+    if (chatRoom.live) {
+      return 'Live agent is handling the conversation.';
+    }
+
+    // Process the customer's response to the previous question
+    const lastAskedQuestion = await db.customerResponses.findFirst({
+      where: {
+        customerId: chatRoom.customerId,
+        responseText: '',  // Find the last unanswered question
+      },
+    });
+
+    if (lastAskedQuestion) {
+      // If the last question was unanswered, update it with the customer's response
+      await processCustomerResponse(chatRoom.customerId, lastAskedQuestion.question, customerMessage);
+    }
+
+    // Get the next unanswered question for the customer
+    const nextQuestion = await getNextUnansweredQuestion(chatbotId, chatRoom.customerId);
+
+    // Handle the next unanswered question
+    if (nextQuestion) {
+      // Generate AI response for the next question
+      const aiResponse = await prepareChatResponse(
+        customerMessage,
+        nextQuestion.question,
+        chatbotId
+      );
+     
+      // Save AI's response (the next question) in the chatroom
+      await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
+
+      // Save the asked question for tracking
+      await saveAskedQuestion(chatRoom.customerId, nextQuestion.question);
+
+      return { aiResponse };
+    } else {
+      // If no unanswered questions remain, proceed with normal AI response
+      const aiResponse = await prepareChatResponse(
+        customerMessage,
+        null,
+        chatbotId
+      );
+
+      // Save the AI response in the chatroom
+      await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
+
+      return { aiResponse };
+    }
+  } catch (error) {
+    console.error('Error handling chat message:', error);
+    throw error;
+  }
+};
+
+
+
+
+// Process the customer's response and save it
+export const processCustomerResponse = async (
+  customerId: string,
+  question: string,
+  customerResponse: string
+) => {
+  try {
+    // Update the customer response in CustomerResponses
+    await updateCustomerResponse(customerId, question, customerResponse);
+
+    // Find and mark the question as answered in FilterQuestions
+    const questionData = await db.filterQuestions.findFirst({
+      where: { question, answered: false },
+    });
+
+    if (questionData) {
+      await markQuestionAsAnswered(questionData.id);
+    }
+
+  } catch (error) {
+    console.error('Error processing customer response:', error);
+    throw error;
+  }
+};
+
+
+
+export const getFirstUnansweredQuestion = async (chatbotId: string) => {
+  const firstUnansweredQuestion = await db.filterQuestions.findFirst({
     where: {
       chatbotId,
       answered: false,  // Fetch unanswered questions
@@ -1890,34 +1934,6 @@ export const getFilterQuestionsForChatbot = async (chatbotId: string) => {
     },
   });
 
-  return questions;
+  return firstUnansweredQuestion;
 };
 
-export const saveCustomerResponse = async (
-  customerId: string,
-  chatbotId: string,
-  question: string,
-  response: string
-) => {
-  const savedResponse = await db.customerResponses.create({
-    data: {
-      customerId,
-      chatbotId,
-      question,
-      responseText: response,
-    },
-  });
-
-  return savedResponse;
-};
-
-export const markQuestionAsAnswered = async (questionId: string) => {
-  await db.filterQuestions.update({
-    where: {
-      id: questionId,
-    },
-    data: {
-      answered: true,
-    },
-  });
-};
