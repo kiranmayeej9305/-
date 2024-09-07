@@ -1876,3 +1876,48 @@ export async function sendSystemMessage(chatRoomId: string, message: string) {
     console.error('Failed to send system message:', error);
   }
 }
+
+// queries.ts
+
+export const getFilterQuestionsForChatbot = async (chatbotId: string) => {
+  const questions = await db.filterQuestions.findMany({
+    where: {
+      chatbotId,
+      answered: false,  // Fetch unanswered questions
+    },
+    orderBy: {
+      createdAt: 'asc',  // Ask questions in the order they were created
+    },
+  });
+
+  return questions;
+};
+
+export const saveCustomerResponse = async (
+  customerId: string,
+  chatbotId: string,
+  question: string,
+  response: string
+) => {
+  const savedResponse = await db.customerResponses.create({
+    data: {
+      customerId,
+      chatbotId,
+      question,
+      responseText: response,
+    },
+  });
+
+  return savedResponse;
+};
+
+export const markQuestionAsAnswered = async (questionId: string) => {
+  await db.filterQuestions.update({
+    where: {
+      id: questionId,
+    },
+    data: {
+      answered: true,
+    },
+  });
+};

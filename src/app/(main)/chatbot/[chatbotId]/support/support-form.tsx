@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import BlurPage from '@/components/global/blur-page'; 
 
 export default function SupportForm({ userEmail, chatbotData, accountData }: { userEmail: string, chatbotData: any, accountData: any }) {
   const [email, setEmail] = useState(userEmail || '');
@@ -78,7 +79,8 @@ export default function SupportForm({ userEmail, chatbotData, accountData }: { u
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 dark:bg-black p-8 sm:p-6">
+<BlurPage>
+      <div className="flex flex-col items-center min-h-screen bg-gray-50 dark:bg-black p-8 sm:p-6">
       <div className="w-full max-w-xl">
         <Card className="w-full p-8 sm:p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg">
           <CardHeader className="border-b pb-4">
@@ -186,5 +188,6 @@ export default function SupportForm({ userEmail, chatbotData, accountData }: { u
         </Card>
       </div>
     </div>
+    </BlurPage>
   );
 }

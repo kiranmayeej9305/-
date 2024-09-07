@@ -5,8 +5,8 @@ import { useChatContext } from '@/context/use-chat-context';
 import { useInterfaceSettings } from '@/context/use-interface-settings-context';
 import MessagesBody from './messages-body';
 import { createCustomerAndChatRoom, createMessageInChatRoom, fetchChatRoomById, getChatMessages } from '@/lib/queries';
-import { pusherClient } from '@/lib/pusher';
-
+import { pusherClient } from '@/lib/pusher';  
+import BlurPage from '@/components/global/blur-page'; 
 interface ChatRoomProps {
   chatbotId: string;
   isPlayground: boolean;
@@ -97,10 +97,12 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
   };
 
   return (
+    <BlurPage>
     <div className="chat-room flex flex-col h-full">
       <MessagesBody onSendMessage={handleSendMessage} settings={settings} />
       <div ref={messageWindowRef} aria-hidden="true" />
     </div>
+    </BlurPage>
   );
 };
 

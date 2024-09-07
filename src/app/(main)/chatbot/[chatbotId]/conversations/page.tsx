@@ -7,6 +7,7 @@ import { InterfaceSettingsProvider } from '@/context/use-interface-settings-cont
 import { Card, CardContent } from '@/components/ui/card';
 import MessagesSidebar from './messages-sidebar';
 import ChatRoom from './chat-room';
+import BlurPage from '@/components/global/blur-page';
 
 interface ChatPageProps {
   params: { chatbotId: string };
@@ -20,6 +21,8 @@ export default function ChatPage({ params }: ChatPageProps) {
   };
 
   return (
+    <BlurPage>
+
     <FlyoutProvider>
       <ChatProvider>
         <InterfaceSettingsProvider chatbotId={params.chatbotId}>
@@ -44,5 +47,7 @@ export default function ChatPage({ params }: ChatPageProps) {
         </InterfaceSettingsProvider>
       </ChatProvider>
     </FlyoutProvider>
+    </BlurPage>
+
   );
 }

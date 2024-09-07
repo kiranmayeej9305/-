@@ -81,9 +81,9 @@ const TrainingPage = ({ params }) => {
   }, [selectedTab]);
 
   return (
-    <CardHeader>
-      <CardTitle>Train your chatbot</CardTitle>
-      <CardDescription>Train your chatbot from different sources</CardDescription>
+          <CardHeader className="border-b pb-4">
+          <CardTitle>Train your chatbot</CardTitle>
+          <CardDescription>Train your chatbot from different sources</CardDescription>
       <CardContent>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-2/3">

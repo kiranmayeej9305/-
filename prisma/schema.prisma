@@ -366,24 +366,6 @@ model Media {
   @@index([chatbotId])
 }
 
-model Funnel {
-  id            String       @id @default(uuid())
-  name          String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  description   String?
-  published     Boolean      @default(false)
-  subDomainName String?      @unique
-  favicon       String?      @db.Text
-  chatbotId  String
-  Chatbot    Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  FunnelPages   FunnelPage[]
-  liveProducts  String?      @default("[]")
-  ClassName     ClassName[]
-
-  @@index([chatbotId])
-}
-
 model ClassName {
   id         String   @id @default(uuid())
   name       String
