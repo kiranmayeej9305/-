@@ -5,7 +5,17 @@ import { NextResponse } from 'next/server'
 // Please edit this to allow other routes to be public as needed.
 // See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your Middleware
 export default authMiddleware({
-  publicRoutes: ['/site', '/api/uploadthing','/api/backblazeb2','/chatbot/:chatbotId/iframe'],
+  publicRoutes: [
+    '/site', 
+    '/api/uploadthing', 
+    'accounts.google.com',
+    '/api/backblazeb2', 
+    '/chatbot/:chatbotId/iframe',
+    '/api/calendar-integrations/google/initiate',
+    '/api/calendar-integrations/google/callback',
+    '/api/calendar-integrations/calendly/initiate',
+    '/api/calendar-integrations/calendly/callback',
+  ],
   async beforeAuth(auth, req) {},
   async afterAuth(auth, req) {
     //rewrite for domains

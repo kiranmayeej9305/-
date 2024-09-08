@@ -5,6 +5,7 @@ import { db } from './db'
 import { redirect } from 'next/navigation'
 import { pusherServer , pusherClient} from '@/lib/pusher';
 import { sendEmailAndSmsNotifications } from '@/lib/live-agent-notifications';
+import { google } from 'googleapis';
 import {
   Account,
   Lane,
@@ -1985,3 +1986,129 @@ export const getFirstUnansweredQuestion = async (chatbotId: string) => {
   return firstUnansweredQuestion;
 };
 
+export async function setDefaultCalendarIntegration(chatbotId: string, integrationId: string) {
+  try {
+    // Reset all integrations to not be default
+    await db.calendarIntegration.updateMany({
+      where: { chatbotId },
+      data: { isDefault: false },
+    });
+
+    // Set the selected integration as default
+    await db.calendarIntegration.update({
+      where: { id: integrationId },
+      data: { isDefault: true },
+    });
+
+    return { success: true, message: 'Default calendar set successfully' };
+  } catch (error) {
+    console.error('Error setting default calendar:', error);
+    throw new Error('Failed to set default calendar');
+  }
+}
+export async function fetchGoogleAppointments(chatbotId: string) {
+  const integration = await db.calendarIntegration.findFirst({
+    where: { chatbotId, platform: 'google', isDefault: true },
+  });
+
+  if (!integration) throw new Error('No Google Calendar integration found');
+
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({ access_token: integration.accessToken });
+
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+  const events = await calendar.events.list({
+    calendarId: 'primary',
+    timeMin: new Date().toISOString(),
+    maxResults: 10,
+    singleEvents: true,
+    orderBy: 'startTime',
+  });
+
+  const appointments = events.data.items?.map(event => ({
+    eventId: event.id!,
+    appointmentTime: new Date(event.start?.dateTime || event.start?.date!),
+    customerId: 'N/A',  // You can link it to your customers if you have mapping
+    chatbotId,
+    platform: 'google',
+  }));
+
+  await db.appointment.createMany({ data: appointments });
+}
+
+export async function handleBookAppointment(chatRoomId: string, chatbotId: string) {
+  const integration = await db.calendarIntegration.findFirst({
+    where: { chatbotId, isDefault: true },
+  });
+
+  if (!integration) throw new Error('No default calendar integration found');
+
+  const bookingLink = integration.integrationUrl;
+
+  await createMessageInChatRoom(chatRoomId, `You can book an appointment here: ${bookingLink}`, 'chatbot');
+}
+export async function initiateGoogleCalendarIntegration(chatbotId: string) {
+  // Call Google API to get auth URL, etc.
+  const googleAuthUrl = 'https://accounts.google.com/o/oauth2/auth?...'; // Google OAuth URL
+  return googleAuthUrl;
+}
+
+export async function initiateCalendlyIntegration(chatbotId: string) {
+  // Initiate Calendly integration flow
+  const calendlyAuthUrl = 'https://calendly.com/integrations/oauth?...'; // Calendly OAuth URL
+  return calendlyAuthUrl;
+}
+
+export async function saveGoogleIntegration(tokens: any, chatbotId: string) {
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials(tokens);
+
+  try {
+    // Fetch the list of calendars for the user
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const calendarList = await calendar.calendarList.list();
+
+    // Assuming we take the first calendar for simplicity
+    const primaryCalendar = calendarList.data.items?.find(cal => cal.primary) || calendarList.data.items?.[0];
+    if (!primaryCalendar) {
+      throw new Error('No calendars found for this user.');
+    }
+
+    const calendarId = primaryCalendar.id;
+
+    // Save the tokens and calendarId in the database
+    return await db.calendarIntegration.create({
+      data: {
+        platform: 'google',
+        accessToken: tokens.access_token!,
+        refreshToken: tokens.refresh_token,
+        chatbotId: chatbotId,
+        integrationUrl: `https://calendar.google.com/calendar/embed?src=${calendarId}`, // Embed the calendar URL using calendarId
+        isDefault: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error saving Google integration:', error);
+    throw new Error('Failed to save Google integration and fetch calendarId.');
+  }
+}
+// queries.ts
+
+export async function getDefaultIntegration(chatbotId: string) {
+  const integration = await db.calendarIntegration.findFirst({
+    where: {
+      chatbotId,
+      platform: 'google',
+    },
+  });
+
+  if (!integration) {
+    throw new Error('No calendar integration found');
+  }
+
+  return {
+    integrationUrl: integration.integrationUrl,
+    platform: integration.platform,
+    accessToken: integration.accessToken,  // Return accessToken
+  };
+}

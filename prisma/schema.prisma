@@ -13,6 +13,7 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
 enum Industry {
   TECHNOLOGY
   HEALTHCARE
@@ -30,6 +31,7 @@ enum ReferralSource {
   FRIEND
   OTHER
 }
+
 enum Role {
   ACCOUNT_OWNER
   ACCOUNT_ADMIN
@@ -70,170 +72,197 @@ enum Icon {
   clipboardIcon
 }
 
+model CalendarIntegration {
+  id             String   @id @default(uuid())
+  platform       String
+  accessToken    String
+  refreshToken   String?
+  chatbotId      String
+  integrationUrl String
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  Chatbot        Chatbot  @relation(fields: [chatbotId], references: [id])
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  chatbotId       String
+  customerId      String
+  eventId         String // Event ID from the calendar platform
+  platform        String // 'google', 'calendly', etc.
+  appointmentTime DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Chatbot         Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  Customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
 model User {
-  id           String         @id @default(uuid())
-  name         String
-  avatarUrl    String         @db.Text
-  email        String         @unique
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  role         Role           @default(CHATBOT_USER)
-  accountId    String?
-  Account      Account?       @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  Permissions  Permissions[]
-  Tickets      Ticket[]
-  Notifications Notification[]
+  id                String            @id @default(uuid())
+  name              String
+  avatarUrl         String            @db.Text
+  email             String            @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  role              Role              @default(CHATBOT_USER)
+  accountId         String?
+  Account           Account?          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  Permissions       Permissions[]
+  Tickets           Ticket[]
+  Notifications     Notification[]
   TrainingHistories TrainingHistory[]
-  ChatRooms    ChatRoom[]     @relation("AgentChatRooms") // Relation to chat rooms as an agent
+  ChatRooms         ChatRoom[]        @relation("AgentChatRooms") // Relation to chat rooms as an agent
 
   @@index([accountId])
 }
 
-
 model Permissions {
-  id           String     @id @default(uuid())
-  email        String
-  User         User       @relation(fields: [email], references: [email], onDelete: Cascade)
+  id        String  @id @default(uuid())
+  email     String
+  User      User    @relation(fields: [email], references: [email], onDelete: Cascade)
   chatbotId String
   Chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  access       Boolean
+  access    Boolean
 
   @@index([chatbotId])
   @@index([email])
 }
 
-
-
 model Account {
-  id               String                @id @default(uuid())
-  connectAccountId String?               @default("")
-  customerId       String                @default("")
-  name             String
-  companyEmail     String                @db.Text
-  industry         Industry              @default(OTHER)
-  otherIndustry    String?               // Optional, only populated if Industry is OTHER
-  referralSource   ReferralSource        @default(OTHER)
-  otherReferralSource String?            // Optional, only populated if ReferralSource is OTHER
-  users            User[]
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  Chatbot          Chatbot[]
-  Invitation       Invitation[]
-  Notification     Notification[]
-  Subscription     Subscription?
-  AddOns           AddOns[]
+  id                  String         @id @default(uuid())
+  connectAccountId    String?        @default("")
+  customerId          String         @default("")
+  name                String
+  companyEmail        String         @db.Text
+  industry            Industry       @default(OTHER)
+  otherIndustry       String? // Optional, only populated if Industry is OTHER
+  referralSource      ReferralSource @default(OTHER)
+  otherReferralSource String? // Optional, only populated if ReferralSource is OTHER
+  users               User[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  Chatbot             Chatbot[]
+  Invitation          Invitation[]
+  Notification        Notification[]
+  Subscription        Subscription?
+  AddOns              AddOns[]
 }
 
-model AIModel  {
-  id          String   @id @default(uuid())
-  name        String
-  provider    String
-  apiUrl      String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
-  ChatbotSettings   ChatbotSettings[]
+model AIModel {
+  id              String            @id @default(uuid())
+  name            String
+  provider        String
+  apiUrl          String
+  description     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+  ChatbotSettings ChatbotSettings[]
 }
-
 
 model ChatbotType {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  defaultPrompts String @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  ChatbotSettings   ChatbotSettings[]
+  id              String            @id @default(uuid())
+  name            String            @unique
+  description     String?
+  defaultPrompts  String            @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  ChatbotSettings ChatbotSettings[]
 }
-model ChatbotSettings {
-  id                  String   @id @default(uuid())
-  chatbotId           String   @unique
-  welcomeMessage      String?
-  aiModelId           String
-  chatbotTypeId       String
-  knowledgeSources    String   // 'training', 'generic', 'both'
-  creativityLevel     Float    // Value between 0 and 1
-  customPrompts       String?  @db.Text
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
 
-  Chatbot             Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  ChatbotType         ChatbotType @relation(fields: [chatbotTypeId], references: [id], onDelete: Cascade)
-  AIModel             AIModel  @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+model ChatbotSettings {
+  id               String   @id @default(uuid())
+  chatbotId        String   @unique
+  welcomeMessage   String?
+  aiModelId        String
+  chatbotTypeId    String
+  knowledgeSources String // 'training', 'generic', 'both'
+  creativityLevel  Float // Value between 0 and 1
+  customPrompts    String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  Chatbot     Chatbot     @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  ChatbotType ChatbotType @relation(fields: [chatbotTypeId], references: [id], onDelete: Cascade)
+  AIModel     AIModel     @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
 
   @@index([chatbotTypeId])
   @@index([aiModelId])
 }
+
 model Chatbot {
-  id                  String                    @id @default(uuid())
-  connectAccountId    String?                   @default("")
-  name                String
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
-  goal                Int                       @default(5)
-  accountId           String
-  Account             Account                    @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  Permissions         Permissions[]
-  Media               Media[]
-  Contact             Contact[]
-  Trigger             Trigger[]
-  Automation          Automation[]
-  Pipeline            Pipeline[]
-  Tags                Tag[]
-  Notification        Notification[]
-  Interface           Interface?
-  HelpDesk            HelpDesk[]
-  FilterQuestions     FilterQuestions[]
-  Product             Product[]
-  Customer            Customer[]
-  Campaign            Campaign[]
-  TrainingHistories   TrainingHistory[]
-  ChatbotSettings     ChatbotSettings?
-  ChatRooms ChatRoom[]
-  isPublic            Boolean                   @default(false)
+  id                   String                @id @default(uuid())
+  connectAccountId     String?               @default("")
+  name                 String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  goal                 Int                   @default(5)
+  accountId            String
+  Account              Account               @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  Permissions          Permissions[]
+  Media                Media[]
+  Contact              Contact[]
+  Trigger              Trigger[]
+  Automation           Automation[]
+  Pipeline             Pipeline[]
+  Tags                 Tag[]
+  Notification         Notification[]
+  Interface            Interface?
+  HelpDesk             HelpDesk[]
+  FilterQuestions      FilterQuestions[]
+  Product              Product[]
+  Customer             Customer[]
+  Campaign             Campaign[]
+  calendarIntegrations CalendarIntegration[]
+  appointments         Appointment[]
+  TrainingHistories    TrainingHistory[]
+  ChatbotSettings      ChatbotSettings?
+  ChatRooms            ChatRoom[]
+  isPublic             Boolean               @default(false)
+
   @@index([accountId])
 }
 
 model TrainingHistory {
-  id           String     @id @default(uuid())
-  chatbotId    String
-  userId       String
-  sourceType   String
-  content      String?
-  fileName     String?
-  websiteUrl   String?
-  question     String?
-  answer       String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  Chatbot      Chatbot    @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  User         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  chatbotId  String
+  userId     String
+  sourceType String
+  content    String?
+  fileName   String?
+  websiteUrl String?
+  question   String?
+  answer     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Chatbot    Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
   @@index([userId])
 }
 
 model Tag {
-  id           String   @id @default(uuid())
-  name         String
-  color        String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   chatbotId String
 
-  Chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  Ticket     Ticket[]
+  Chatbot Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  Ticket  Ticket[]
 
   @@index([chatbotId])
 }
 
 model Pipeline {
-  id           String     @id @default(uuid())
-  name         String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  Lane         Lane[]
-  Chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Lane      Lane[]
+  Chatbot   Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   chatbotId String
 
   @@index([chatbotId])
@@ -280,14 +309,14 @@ enum TriggerTypes {
 }
 
 model Trigger {
-  id           String       @id @default(uuid())
-  name         String
-  type         TriggerTypes
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  chatbotId String
-  Chatbot   Chatbot   @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  Automations  Automation[]
+  id          String       @id @default(uuid())
+  name        String
+  type        TriggerTypes
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  chatbotId   String
+  Chatbot     Chatbot      @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  Automations Automation[]
 
   @@index([chatbotId])
 }
@@ -300,8 +329,8 @@ model Automation {
   triggerId          String?
   published          Boolean              @default(false)
   Trigger            Trigger?             @relation(fields: [triggerId], references: [id], onDelete: Cascade)
-  chatbotId       String
-  Chatbot         Chatbot           @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbotId          String
+  Chatbot            Chatbot              @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   Action             Action[]
   AutomationInstance AutomationInstance[]
 
@@ -339,39 +368,38 @@ model Action {
 }
 
 model Contact {
-  id           String   @id @default(uuid())
-  name         String
-  email        String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   chatbotId String
 
-  Chatbot Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  Ticket     Ticket[]
+  Chatbot Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  Ticket  Ticket[]
 
   @@index([chatbotId])
 }
 
 model Media {
-  id           String     @id @default(uuid())
-  type         String?
-  name         String
-  link         String     @unique
+  id        String   @id @default(uuid())
+  type      String?
+  name      String
+  link      String   @unique
   chatbotId String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  Chatbot   Chatbot @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Chatbot   Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   @@index([chatbotId])
 }
-
 
 model AccountSidebarOption {
   id        String   @id @default(uuid())
   name      String
   link      String
   icon      Icon
-  parentId  String?  // Optional, for submenus
+  parentId  String? // Optional, for submenus
   isSubmenu Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -382,7 +410,7 @@ model ChatbotSidebarOption {
   name      String
   link      String
   icon      Icon
-  parentId  String?  // Optional, for submenus
+  parentId  String? // Optional, for submenus
   isSubmenu Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -395,12 +423,12 @@ enum InvitationStatus {
 }
 
 model Invitation {
-  id       String           @id @default(uuid())
-  email    String           @unique
+  id        String           @id @default(uuid())
+  email     String           @unique
   accountId String
-  Account   Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  status   InvitationStatus @default(PENDING)
-  role     Role             @default(CHATBOT_USER)
+  Account   Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  status    InvitationStatus @default(PENDING)
+  role      Role             @default(CHATBOT_USER)
 
   @@index([accountId])
 }
@@ -408,12 +436,12 @@ model Invitation {
 model Notification {
   id           String  @id @default(uuid())
   notification String
-  accountId     String
-  chatbotId String?
+  accountId    String
+  chatbotId    String?
   userId       String
 
-  User       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Account     Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Account Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   Chatbot Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
@@ -442,7 +470,7 @@ model Subscription {
   currentPeriodEndDate DateTime
   subscritiptionId     String   @unique
 
-  accountId String? @unique
+  accountId String?  @unique
   Account   Account? @relation(fields: [accountId], references: [id])
 
   @@index([customerId])
@@ -455,24 +483,25 @@ model AddOns {
   name      String
   active    Boolean  @default(false)
   priceId   String   @unique
-  accountId  String?
-  Account    Account?  @relation(fields: [accountId], references: [id])
+  accountId String?
+  Account   Account? @relation(fields: [accountId], references: [id])
 
   @@index([accountId])
 }
-model ChatRoom {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  live        Boolean       @default(false)
-  mailed      Boolean       @default(false)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  customerId  String        @db.Uuid
-  chatbotId   String        @db.Uuid
-  agentId     String?       
 
-  Customer    Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  Chatbot     Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  Agent       User?         @relation("AgentChatRooms", fields: [agentId], references: [id], onDelete: Cascade)
+model ChatRoom {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  live       Boolean  @default(false)
+  mailed     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customerId String   @db.Uuid
+  chatbotId  String   @db.Uuid
+  agentId    String?
+
+  Customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  Chatbot      Chatbot       @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  Agent        User?         @relation("AgentChatRooms", fields: [agentId], references: [id], onDelete: Cascade)
   ChatMessages ChatMessage[]
 
   @@index([chatbotId])
@@ -480,29 +509,16 @@ model ChatRoom {
   @@index([agentId])
 }
 
-
 model ChatMessage {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   message    String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  seen       Boolean   @default(false)
-  chatRoomId String    @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  seen       Boolean  @default(false)
+  chatRoomId String   @db.Uuid
 
-  ChatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  sender     String?   // e.g., "customer", "chatbot", "agent"
-}
-
-
-model Bookings {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  date       DateTime
-  slot       String
-  email      String
-  Customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  customerId String?   @db.Uuid
-  chatbotId   String?   @db.Uuid
-  createdAt  DateTime  @default(now())
+  ChatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender   String? // e.g., "customer", "chatbot", "agent"
 }
 
 model Campaign {
@@ -510,8 +526,8 @@ model Campaign {
   name      String
   customers String[]
   template  String?
-  Chatbot      Chatbot?    @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId    String?  @db.Uuid
+  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbotId String?  @db.Uuid
   createdAt DateTime @default(now())
 }
 
@@ -521,85 +537,81 @@ model Product {
   price     Int
   image     String
   createdAt DateTime @default(now())
-  Chatbot    Chatbot?  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId  String?  @db.Uuid
+  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbotId String?  @db.Uuid
 }
 
 enum ChatbotRole {
   user
   assistant
 }
+
 model HelpDesk {
   id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   question String
   answer   String
 
   Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId String? @db.Uuid
+  chatbotId String?  @db.Uuid
 }
 
 model FilterQuestions {
-  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   question  String
   createdAt DateTime @default(now())
 
-  Chatbot   Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  chatbotId String?  @db.Uuid
+  Chatbot           Chatbot?            @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  chatbotId         String?             @db.Uuid
   customerResponses CustomerResponses[] // Establish relationship with responses
 }
 
 model CustomerResponses {
-  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question        String
-  responseText    String?          // Nullable for optional text responses
-  answered        Boolean          @default(false)  // New field to track if answered
-  customerId      String           @db.Uuid
-  filterQuestionId String?         @db.Uuid  // Associate response with FilterQuestion
-  FilterQuestion  FilterQuestions? @relation(fields: [filterQuestionId], references: [id], onDelete: Cascade)
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question         String
+  responseText     String? // Nullable for optional text responses
+  answered         Boolean          @default(false) // New field to track if answered
+  customerId       String           @db.Uuid
+  filterQuestionId String?          @db.Uuid // Associate response with FilterQuestion
+  FilterQuestion   FilterQuestions? @relation(fields: [filterQuestionId], references: [id], onDelete: Cascade)
 
-  Customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  Customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
-
-
 
 model Customer {
-  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email     String?
-  name      String?
-  responses CustomerResponses[]
-  chatRooms ChatRoom[]
-  bookings  Bookings[]
-  chatbotId String?   @db.Uuid 
-  Chatbot   Chatbot?  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String?
+  name         String?
+  responses    CustomerResponses[]
+  chatRooms    ChatRoom[]
+  appointments Appointment[]
+  chatbotId    String?             @db.Uuid
+  Chatbot      Chatbot?            @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
 
-
-
 model Interface {
-  id                         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  icon                       String? @default("")
-  userAvatar                 String? @default("")
-  chatbotAvatar              String? @default("")
-  chatIcon                   String? @default("")
-  background                 String? @default("#ffffff")
-  userMsgBackgroundColour    String? @default("#ffffff")
-  chatbotMsgBackgroundColour String? @default("#f0f0f0")
-  userTextColor              String? @default("#000000")
-  chatbotTextColor           String? @default("#000000")
-  helpdesk                   Boolean @default(false)
-  copyRightMessage           String? @default("Powered By | Your Company | https://example.com")
-  footerText                 String? @default("By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy")
-  messagePlaceholder         String? @default("Type your message...")
-  suggestedMessage           String? @default("")
-  themeColor                 String? @default("#3b82f6")
-  botDisplayName             String? @default("Chatbot")
-  botDisplayNameColor        String? @default("#000000") // New field for bot display name color
-  chatBubbleButtonColor      String? @default("#3b82f6")
-  helpdeskLiveAgentColor     String? @default("#ff0000")
-  isLiveAgentEnabled         Boolean @default(false)
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  icon                       String?  @default("")
+  userAvatar                 String?  @default("")
+  chatbotAvatar              String?  @default("")
+  chatIcon                   String?  @default("")
+  background                 String?  @default("#ffffff")
+  userMsgBackgroundColour    String?  @default("#ffffff")
+  chatbotMsgBackgroundColour String?  @default("#f0f0f0")
+  userTextColor              String?  @default("#000000")
+  chatbotTextColor           String?  @default("#000000")
+  helpdesk                   Boolean  @default(false)
+  copyRightMessage           String?  @default("Powered By | Your Company | https://example.com")
+  footerText                 String?  @default("By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy")
+  messagePlaceholder         String?  @default("Type your message...")
+  suggestedMessage           String?  @default("")
+  themeColor                 String?  @default("#3b82f6")
+  botDisplayName             String?  @default("Chatbot")
+  botDisplayNameColor        String?  @default("#000000") // New field for bot display name color
+  chatBubbleButtonColor      String?  @default("#3b82f6")
+  helpdeskLiveAgentColor     String?  @default("#ff0000")
+  isLiveAgentEnabled         Boolean  @default(false)
   chatbot                    Chatbot? @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   chatbotId                  String   @unique @db.Uuid
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 }
-
