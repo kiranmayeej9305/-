@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { Switch } from '@/components/ui/switch'; // Adding Switch component for the toggle
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -48,6 +48,7 @@ const formSchema = z.object({
   knowledgeSources: z.enum(['training', 'generic', 'both']),
   creativityLevel: z.number().min(0).max(1),
   customPrompts: z.string().optional(),
+  scheduleAppointment: z.boolean().optional(),
 });
 
 interface ChatbotDetailsProps {
@@ -80,6 +81,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
       knowledgeSources: details?.ChatbotSettings?.knowledgeSources || 'both',
       creativityLevel: details?.ChatbotSettings?.creativityLevel || 0.5,
       customPrompts: details?.ChatbotSettings?.customPrompts || '',
+      scheduleAppointment: details?.ChatbotSettings?.scheduleAppointment || false, // Default value for the schedule picker toggle
     },
   });
 
@@ -133,6 +135,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      console.log('Form is being submitted with values:', values); // Debugging log
       const chatbotId = details.id;
 
       const fullChatbotData = await upsertAndFetchChatbotData(
@@ -152,6 +155,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
           knowledgeSources: values.knowledgeSources,
           creativityLevel: values.creativityLevel,
           customPrompts: values.customPrompts || defaultPrompt,
+          scheduleAppointment: values.scheduleAppointment,
           createdAt: details.createdAt,
           updatedAt: new Date(),
         },
@@ -174,7 +178,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
       setClose();
       router.refresh();
     } catch (error) {
-      console.log('🔴 Error in onSubmit:', error);
+      console.log('🔴 Error in onSubmit:', error); // Debugging log
       toast({
         variant: 'destructive',
         title: 'Oops!',
@@ -196,7 +200,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} noValidate  className="space-y-6">
                 <FormField
                   control={form.control}
                   name="welcomeMessage"
@@ -337,6 +341,19 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
                     Add Question
                   </Button>
                 </div>
+                <FormField
+                  control={form.control}
+                  name="scheduleAppointment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Enable Appointment Scheduler</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? <Loading /> : 'Save Chatbot Information'}
                 </Button>

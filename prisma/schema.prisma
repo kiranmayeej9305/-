@@ -77,6 +77,7 @@ model CalendarIntegration {
   platform       String
   accessToken    String
   refreshToken   String?
+  expiryDate     DateTime?  // Field to store token expiry date
   chatbotId      String
   integrationUrl String
   isDefault      Boolean  @default(false)
@@ -84,6 +85,7 @@ model CalendarIntegration {
   updatedAt      DateTime @updatedAt
   Chatbot        Chatbot  @relation(fields: [chatbotId], references: [id])
 }
+
 
 model Appointment {
   id              String   @id @default(uuid())
@@ -171,16 +173,17 @@ model ChatbotType {
 }
 
 model ChatbotSettings {
-  id               String   @id @default(uuid())
-  chatbotId        String   @unique
-  welcomeMessage   String?
-  aiModelId        String
-  chatbotTypeId    String
-  knowledgeSources String // 'training', 'generic', 'both'
-  creativityLevel  Float // Value between 0 and 1
-  customPrompts    String?  @db.Text
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  chatbotId            String   @unique
+  welcomeMessage       String?
+  aiModelId            String
+  chatbotTypeId        String
+  knowledgeSources     String   // 'training', 'generic', 'both'
+  creativityLevel      Float    // Value between 0 and 1
+  customPrompts        String?  @db.Text
+  scheduleAppointment  Boolean @default(false) // New field for schedule picker toggle
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   Chatbot     Chatbot     @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
   ChatbotType ChatbotType @relation(fields: [chatbotTypeId], references: [id], onDelete: Cascade)
@@ -189,6 +192,7 @@ model ChatbotSettings {
   @@index([chatbotTypeId])
   @@index([aiModelId])
 }
+
 
 model Chatbot {
   id                   String                @id @default(uuid())

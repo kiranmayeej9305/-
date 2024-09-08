@@ -20,6 +20,7 @@ import {
 } from '@prisma/client'
 import { v4 } from 'uuid'
 import { prepareChatResponse } from './openai'
+import { refreshAccessToken } from './refresh-access-token';
 export const getAuthUserDetails = async () => {
   const user = await currentUser();
   if (!user) {
@@ -2006,16 +2007,24 @@ export async function setDefaultCalendarIntegration(chatbotId: string, integrati
     throw new Error('Failed to set default calendar');
   }
 }
-export async function fetchGoogleAppointments(chatbotId: string) {
+export async function getCalendarIntegration(chatbotId: string) {
   const integration = await db.calendarIntegration.findFirst({
-    where: { chatbotId, platform: 'google', isDefault: true },
+    where: {
+      chatbotId,
+      platform: 'google',
+      isDefault: true,  // Ensure this is the default integration
+    },
   });
 
-  if (!integration) throw new Error('No Google Calendar integration found');
+  if (!integration) {
+    throw new Error('No Google Calendar integration found for this chatbot.');
+  }
 
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({ access_token: integration.accessToken });
-
+  return integration;
+}
+export async function fetchGoogleAppointments(chatbotId: string) {
+ 
+  await refreshAccessToken(chatbotId);
   const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const events = await calendar.events.list({
     calendarId: 'primary',
@@ -2036,29 +2045,35 @@ export async function fetchGoogleAppointments(chatbotId: string) {
   await db.appointment.createMany({ data: appointments });
 }
 
-export async function handleBookAppointment(chatRoomId: string, chatbotId: string) {
+// Function to get the Google Calendar embed URL and refresh tokens if necessary
+export async function getCalendarEmbedUrl(chatbotId: string) {
+  // Fetch the integration from the database
   const integration = await db.calendarIntegration.findFirst({
-    where: { chatbotId, isDefault: true },
+    where: {
+      chatbotId,
+      platform: 'google',
+    },
   });
+  if (!integration) {
+    throw new Error('No Google Calendar integration found for this chatbot.');
+  }
 
-  if (!integration) throw new Error('No default calendar integration found');
+  // Check if the access token is expired
+  const currentTime = new Date().getTime();
+  if (integration.expiryDate && new Date(integration.expiryDate).getTime() < currentTime) {
+    // Refresh the token if expired
+    await refreshAccessToken(chatbotId);
 
-  const bookingLink = integration.integrationUrl;
+  }
 
-  await createMessageInChatRoom(chatRoomId, `You can book an appointment here: ${bookingLink}`, 'chatbot');
+  // Return the existing embed URL if the access token is still valid
+  return {
+    integrationUrl: integration.integrationUrl,
+    platform: integration.platform
+  };
 }
-export async function initiateGoogleCalendarIntegration(chatbotId: string) {
-  // Call Google API to get auth URL, etc.
-  const googleAuthUrl = 'https://accounts.google.com/o/oauth2/auth?...'; // Google OAuth URL
-  return googleAuthUrl;
-}
 
-export async function initiateCalendlyIntegration(chatbotId: string) {
-  // Initiate Calendly integration flow
-  const calendlyAuthUrl = 'https://calendly.com/integrations/oauth?...'; // Calendly OAuth URL
-  return calendlyAuthUrl;
-}
-
+// Function to save Google integration data, including calendarId and tokens
 export async function saveGoogleIntegration(tokens: any, chatbotId: string) {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials(tokens);
@@ -2076,39 +2091,78 @@ export async function saveGoogleIntegration(tokens: any, chatbotId: string) {
 
     const calendarId = primaryCalendar.id;
 
-    // Save the tokens and calendarId in the database
-    return await db.calendarIntegration.create({
-      data: {
-        platform: 'google',
-        accessToken: tokens.access_token!,
-        refreshToken: tokens.refresh_token,
-        chatbotId: chatbotId,
-        integrationUrl: `https://calendar.google.com/calendar/embed?src=${calendarId}`, // Embed the calendar URL using calendarId
-        isDefault: true,
-      },
+    // Attempt to find an existing integration for the chatbot
+    const existingIntegration = await db.calendarIntegration.findFirst({
+      where: { chatbotId, platform: 'google' }, // Ensure to match chatbotId and platform
     });
+
+    // Prepare the integration data to be used for both update and create
+    const integrationData = {
+      platform: 'google',
+      accessToken: tokens.access_token!,
+      refreshToken: tokens.refresh_token || existingIntegration?.refreshToken, // Use new or existing refresh token
+      expiryDate: tokens.expiry_date ? new Date(tokens.expiry_date) : existingIntegration?.expiryDate, // Handle expiry date
+      chatbotId: chatbotId,
+      integrationUrl: `https://calendar.google.com/calendar/embed?src=${calendarId}`, // Embed the calendar URL using calendarId
+      isDefault: true,
+    };
+
+    if (existingIntegration) {
+      // Update the existing integration with new tokens and data
+      return await db.calendarIntegration.update({
+        where: { id: existingIntegration.id }, // Update using the unique ID of the existing integration
+        data: integrationData,
+      });
+    } else {
+      // Create a new integration if none exists
+      return await db.calendarIntegration.create({
+        data: integrationData,
+      });
+    }
   } catch (error) {
     console.error('Error saving Google integration:', error);
     throw new Error('Failed to save Google integration and fetch calendarId.');
   }
 }
-// queries.ts
 
-export async function getDefaultIntegration(chatbotId: string) {
-  const integration = await db.calendarIntegration.findFirst({
-    where: {
+
+export async function updateAccessTokenInDb(chatbotId: string, accessToken: string, expiryDate: number) {
+  try {
+    const existingIntegration = await db.calendarIntegration.findFirst({
+      where: { chatbotId, platform: 'google' }, // Ensure to match chatbotId and platform
+    });
+    await db.calendarIntegration.update({
+      where: { id: existingIntegration.id },      
+      data: {
+        accessToken,
+        expiryDate: new Date(expiryDate),
+      },
+    });
+  } catch (error) {
+    console.error('Failed to update access token in DB:', error);
+    throw new Error('Database operation failed.');
+  }
+}
+
+export const postAppointmentSchedulerLink = async (chatroomId, chatbotId, customerEmail) => {
+  try {
+    // Generate the booking link
+    const bookingUrl = `/api/calendar-integrations/google/available-slots?chatbotId=${chatbotId}&customerEmail=${customerEmail}`;
+
+    // Post the booking link in the chatroom
+    await createMessageInChatRoom(chatroomId, `Click here to schedule your appointment: ${bookingUrl}`, 'chatbot');
+  } catch (error) {
+    console.error('Failed to post scheduler link:', error);
+  }
+};
+export async function saveAppointment({ chatbotId, customerEmail, eventId, appointmentTime, platform }) {
+  return db.appointment.create({
+    data: {
       chatbotId,
-      platform: 'google',
+      customerId: customerEmail, // Assuming customerEmail maps to customer
+      eventId,
+      appointmentTime: new Date(appointmentTime),
+      platform,
     },
   });
-
-  if (!integration) {
-    throw new Error('No calendar integration found');
-  }
-
-  return {
-    integrationUrl: integration.integrationUrl,
-    platform: integration.platform,
-    accessToken: integration.accessToken,  // Return accessToken
-  };
 }
