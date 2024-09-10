@@ -806,12 +806,17 @@ export const getPipelines = async (chatbotId: string) => {
   return response
 }
 // Get Account Sidebar Options
-export const getAccountSidebarOptions = async () => {
+export const getAccountSidebarOptions = async (accountId: string) => {
   try {
     const sidebarOptions = await db.accountSidebarOption.findMany({
-      orderBy: { createdAt: 'asc' },
+      where: {
+        isVisible: true, // Fetch only visible options
+      },
+      orderBy: {
+        displayOrder: 'asc', // Order by displayOrder
+      },
     });
-    
+
     return sidebarOptions.map(option => ({
       ...option,
       link: option.link.replace('{accountId}', ':accountId'),
@@ -822,13 +827,19 @@ export const getAccountSidebarOptions = async () => {
   }
 };
 
+
 // Get Chatbot Sidebar Options
-export const getChatbotSidebarOptions = async () => {
+export const getChatbotSidebarOptions = async (chatbotId: string) => {
   try {
     const sidebarOptions = await db.chatbotSidebarOption.findMany({
-      orderBy: { createdAt: 'asc' },
+      where: {
+        isVisible: true, // Fetch only visible options
+      },
+      orderBy: {
+        displayOrder: 'asc', // Order by displayOrder
+      },
     });
-    
+
     return sidebarOptions.map(option => ({
       ...option,
       link: option.link.replace('{chatbotId}', ':chatbotId'),
@@ -838,6 +849,7 @@ export const getChatbotSidebarOptions = async () => {
     throw error;
   }
 };
+
 export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating: boolean) => {
   if (!chatbot.name) return null;
 
@@ -2165,4 +2177,44 @@ export async function saveAppointment({ chatbotId, customerEmail, eventId, appoi
       platform,
     },
   });
+}
+export const getLeads = async (limit: number, offset: number, search: string) => {
+  const leads = await prisma.customer.findMany({
+    where: {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ],
+    },
+    include: {
+      responses: true,
+    },
+    take: limit,
+    skip: offset,
+  })
+
+  const totalLeads = await prisma.customer.count({
+    where: {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ],
+    },
+  })
+
+  return { leads, totalLeads }
+}
+
+export const updateLeadDetails = async (id: string, { name, email, leadQuality }: { name: string; email: string; leadQuality: 'GOOD' | 'BAD' | 'EXCELLENT' }) => {
+  return await prisma.customer.update({
+    where: { id },
+    data: { name, email, leadQuality },
+  })
+}
+
+
+export const deleteLead = async (id: string) => {
+  return await prisma.customer.delete({
+    where: { id },
+  })
 }

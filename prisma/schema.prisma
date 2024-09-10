@@ -31,7 +31,11 @@ enum ReferralSource {
   FRIEND
   OTHER
 }
-
+enum LeadQuality {
+  GOOD
+  BAD
+  EXCELLENT
+}
 enum Role {
   ACCOUNT_OWNER
   ACCOUNT_ADMIN
@@ -399,26 +403,31 @@ model Media {
 }
 
 model AccountSidebarOption {
-  id        String   @id @default(uuid())
-  name      String
-  link      String
-  icon      Icon
-  parentId  String? // Optional, for submenus
-  isSubmenu Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  link       String
+  icon       Icon
+  parentId   String?  // Optional, for submenus
+  isSubmenu  Boolean  @default(false)
+  isVisible  Boolean  @default(true)  // New field to control visibility
+  displayOrder Int    @default(0)     // New field for ordering
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model ChatbotSidebarOption {
-  id        String   @id @default(uuid())
-  name      String
-  link      String
-  icon      Icon
-  parentId  String? // Optional, for submenus
-  isSubmenu Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  link       String
+  icon       Icon
+  parentId   String?  // Optional, for submenus
+  isSubmenu  Boolean  @default(false)
+  isVisible  Boolean  @default(true)  // New field to control visibility
+  displayOrder Int    @default(0)     // New field for ordering
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
+
 
 enum InvitationStatus {
   ACCEPTED
@@ -586,6 +595,7 @@ model Customer {
   email        String?
   name         String?
   responses    CustomerResponses[]
+  leadQuality    LeadQuality      @default(GOOD) // New field for lead quality
   chatRooms    ChatRoom[]
   appointments Appointment[]
   chatbotId    String?             @db.Uuid

@@ -1,6 +1,5 @@
 import { Configuration, OpenAIApi } from 'openai-edge';
 import { getContext } from '@/lib/context';
-import { createGoogleCalendarEvent } from '@/lib/create-google-calendar-event'; // Function to create a Google Calendar event based on chatbotId and customer details
 
 const config = new Configuration({
   apiKey: process.env.OPEN_AI_KEY,
@@ -23,11 +22,11 @@ export async function prepareChatResponse(
     );
 
     if (isAppointmentRequest) {
-      // Create a Google Calendar event and get the booking link
-      const { bookingUrl } = await createGoogleCalendarEvent(chatbotId, 'dipuoec@gmmail.com');
-
-      // Return the booking link message
-      const appointmentResponse = `It looks like you want to schedule a meeting. You can book an appointment here: ${bookingUrl}`;
+      // Provide the public-facing AvailableSlots component URL
+      const availableSlotsUrl = `${process.env.NEXT_PUBLIC_URL}public/available-slots?chatbotId=${chatbotId}`;
+      
+      // Respond with the available slots link
+      const appointmentResponse = `It looks like you want to schedule a meeting. You can view available slots and book an appointment here: ${availableSlotsUrl}`;
       return appointmentResponse;
     }
 

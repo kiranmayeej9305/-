@@ -17,7 +17,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { getAccountSidebarOptions, getChatbotSidebarOptions } from '@/lib/queries';
 import { icons } from '@/lib/constants';
-import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card } from '../ui/card';
 
 type Props = {
   defaultOpen?: boolean;
