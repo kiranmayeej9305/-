@@ -115,7 +115,7 @@ const InfoBar = ({ notifications, chatbotId, className, role }: Props) => {
               )}
             </SheetContent>
           </Sheet>
-          <ModeToggle />
+          {/* <ModeToggle /> */}
         </div>
       </div>
     </>

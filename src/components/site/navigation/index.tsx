@@ -63,7 +63,7 @@ const Navigation = ({ user }: Props) => {
           Try for Free
         </Link> */}
         {/* <UserButton /> */}
-        <ModeToggle />
+        {/* <ModeToggle /> */}
       </aside>
     </div>
   )
