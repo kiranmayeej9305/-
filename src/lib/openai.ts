@@ -13,7 +13,7 @@ export async function prepareChatResponse(
 ): Promise<string> {
   try {
     // Get the conversation context
-    const context = await getContext(message, chatbotId);
+    const context = await getContext(message, chatbotId); 
 
     // Check if the user is asking for booking an appointment
     const appointmentKeywords = ['book appointment', 'schedule meeting', 'meeting', 'appointment'];
@@ -42,11 +42,12 @@ export async function prepareChatResponse(
         You are a customer support assistant for a chatbot service. 
         Your task is to ask the customer any remaining questions from a pre-defined array of questions, one at a time. 
         If all questions are answered, continue assisting the customer naturally.
-        Always maintain character and stay respectful, and only answer questions related to sales and support. 
+           Always maintain character and stay respectfull and answer related to sales and support. 
+        please don't answer anything beyond sales and support.
         Current context: ${context}
         The next question to ask: ${questionToAsk}.
-        If the customer says something out of context or inappropriate, simply say: "This is beyond my scope, I will connect you with a real human." 
-        Add the keyword (realtime) at the end only when you cannot answer the question as it's out of context.
+         If the customer says something out of context or inapporpriate. Simply say this is beyond you and you will get a real human to continue the conversation. And add a keyword (realtime) at the end.
+        Please include (realtime) only when you cannot answer the question as its out of conext not for in context question.Its important.
       `,
     };
 
@@ -61,8 +62,6 @@ export async function prepareChatResponse(
 
     const completion = await response.json();
     const responseContent = completion.choices[0].message.content.trim();
-
-    console.log('AI Response:', responseContent);
     return responseContent;
   } catch (error) {
     console.error('Error generating AI chat response:', error);

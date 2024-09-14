@@ -40,6 +40,7 @@ export const pricingCards = [
       'Customer success manager'
     ],
     priceId: '',
+    price: '$0'
   },
   {
     title: 'Premium',
@@ -53,6 +54,8 @@ export const pricingCards = [
       'Customer success manager'
     ],
     priceId: 'price_1PIGjPCVtIA4fkI2I9z76rke',
+    price: '$19.99'
+
   },
   {
     title: 'Enterprise',
@@ -65,7 +68,9 @@ export const pricingCards = [
       'Taxonomy development',
       'Customer success manager'
     ],
-    priceId: 'price_1PGDJZCVtIA4fkI2V8ufr2Hd'
+    priceId: 'price_1PGDJZCVtIA4fkI2V8ufr2Hd',
+    price: '$29.99'
+
   }
 ]
 export const faqs = [

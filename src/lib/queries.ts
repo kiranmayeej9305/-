@@ -1903,7 +1903,6 @@ export const handleChatMessage = async (
 
     // Get the next unanswered question for the customer
     const nextQuestion = await getNextUnansweredQuestion(chatbotId, chatRoom.customerId);
-    console.log(nextQuestion);
     // Handle the next unanswered question
     if (nextQuestion) {
       // Generate AI response for the next question
@@ -2217,4 +2216,52 @@ export const deleteLead = async (id: string) => {
   return await prisma.customer.delete({
     where: { id },
   })
+}
+
+export async function getPlanDetailsForUser(userId: string) {
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      Account: {
+        users: {
+          some: { id: userId },
+        },
+      },
+    },
+    include: {
+      Plan: {
+        include: {
+          features: {
+            include: {
+              feature: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!subscription) {
+    return null;
+  }
+
+  const { Plan, priceId } = subscription;
+
+  let billingCycle = 'unknown';
+  if (Plan?.stripeMonthlyPriceId === priceId) {
+    billingCycle = 'monthly';
+  } else if (Plan?.stripeYearlyPriceId === priceId) {
+    billingCycle = 'yearly';
+  }
+
+  return {
+    ...subscription,
+    planName: Plan?.name,
+    planDescription: Plan?.description,
+    billingCycle,
+    features: Plan?.features.map(f => ({
+      name: f.feature.name,
+      description: f.feature.description,
+      value: f.value,
+    })),
+  };
 }

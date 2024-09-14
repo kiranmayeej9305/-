@@ -112,16 +112,16 @@ model User {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   role              Role              @default(CHATBOT_USER)
-  accountId         String?
-  Account           Account?          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId         String            // User is associated with an Account
+  Account           Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
   Permissions       Permissions[]
   Tickets           Ticket[]
   Notifications     Notification[]
   TrainingHistories TrainingHistory[]
-  ChatRooms         ChatRoom[]        @relation("AgentChatRooms") // Relation to chat rooms as an agent
-
+  ChatRooms         ChatRoom[]        @relation("AgentChatRooms")
   @@index([accountId])
 }
+
 
 model Permissions {
   id        String  @id @default(uuid())
@@ -465,29 +465,22 @@ model Notification {
   @@index([userId])
 }
 
-enum Plan {
-  price_1PGDJZCVtIA4fkI2V8ufr2Hd
-  price_1PIGjPCVtIA4fkI2I9z76rke
-}
-
 model Subscription {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  plan      Plan?
-  price     String?
-  active    Boolean  @default(false)
-
-  priceId              String
-  customerId           String
-  currentPeriodEndDate DateTime
-  subscritiptionId     String   @unique
-
-  accountId String?  @unique
-  Account   Account? @relation(fields: [accountId], references: [id])
-
+  id                    String      @id @default(uuid())
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  planId                String?     // Links to the Plan
+  Plan                  Plan?       @relation(fields: [planId], references: [id])
+  active                Boolean     @default(false) // Is the subscription active?
+  priceId               String      // Stripe priceId (can be monthly or yearly)
+  customerId            String      // Stripe customerId
+  currentPeriodEndDate  DateTime    // Subscription end date
+  subscriptionId        String      @unique // Stripe subscription ID
+  accountId             String      @unique // Linked Account
+  Account               Account     @relation(fields: [accountId], references: [id])
   @@index([customerId])
 }
+
 
 model AddOns {
   id        String   @id @default(uuid())
@@ -601,6 +594,46 @@ model Customer {
   chatbotId    String?             @db.Uuid
   Chatbot      Chatbot?            @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
 }
+model Plan {
+  id                   String         @id @default(cuid())
+  name                 String
+  description          String?
+  monthlyPrice         Int?           
+  yearlyPrice          Int?           
+  stripeMonthlyPriceId String?         
+  stripeYearlyPriceId  String?         
+  features             PlanFeature[]    
+  addOns               AddOn[]         
+  subscriptions        Subscription[]  // Add this line to establish the relationship
+}
+
+
+model PlanFeature {
+  id        Int      @id @default(autoincrement())           // Primary key with auto-incremented Int.
+  plan      Plan     @relation(fields: [planId], references: [id])  // Foreign key relation to Plan.
+  planId    String                                               // Referencing the `String` type `id` of Plan.
+  feature   Feature  @relation(fields: [featureId], references: [id]) // Foreign key relation to Feature.
+  featureId String                                               // Referencing the `String` type `id` of Feature.
+  value     Int?     // Nullable value for unlimited features
+  createdAt DateTime @default(now())                            // Timestamp for when the PlanFeature was created.
+}
+
+model Feature {
+  id            String         @id @default(cuid())   // Using `cuid()` to generate unique IDs as Strings.
+  name          String
+  description   String?                              // Nullable description field.
+  displayInUI   Boolean        @default(true)        // Boolean flag to display the feature in UI or not.
+  planFeatures  PlanFeature[]                        // Relation to PlanFeature.
+}
+
+model AddOn {
+  id         String   @id @default(cuid())           // Using `cuid()` to generate unique IDs as Strings.
+  name       String
+  price      Int                                    // Price of the AddOn stored in cents as an integer.
+  linkedPlan Plan?    @relation(fields: [planId], references: [id]) // Optional relation to Plan (nullable).
+  planId     String?                                // Nullable reference to Plan ID, if the AddOn is linked to a specific Plan.
+}
+
 
 model Interface {
   id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
