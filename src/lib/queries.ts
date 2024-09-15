@@ -2217,15 +2217,29 @@ export const deleteLead = async (id: string) => {
     where: { id },
   })
 }
-
 export async function getPlanDetailsForUser(userId: string) {
-  const subscription = await prisma.subscription.findFirst({
+  // Fetch the account and customer ID associated with the user
+  const account = await db.account.findFirst({
     where: {
-      Account: {
-        users: {
-          some: { id: userId },
-        },
+      users: {
+        some: { id: userId },
       },
+    },
+    select: {
+      id: true,
+      customerId: true, // Fetch customerId for Stripe billing
+    },
+  });
+
+  if (!account) {
+    return null;
+  }
+
+  // Fetch the user's active subscription (non-add-on plan)
+  const subscription = await db.subscription.findFirst({
+    where: {
+      accountId: account.id,
+      isAddOn: false, // Regular plans only
     },
     include: {
       Plan: {
@@ -2240,28 +2254,174 @@ export async function getPlanDetailsForUser(userId: string) {
     },
   });
 
+  // If no subscription is found, return the default Free Plan
   if (!subscription) {
-    return null;
+    return {
+      customerId: account.customerId,
+      plan: {
+        planName: 'Free Plan',
+        planDescription: 'Access to basic features.',
+        billingCycle: 'monthly', // Default cycle for free plan
+        price: 0, // Free plan has no cost
+        features: [
+          { name: 'Feature 1', description: 'Basic feature', value: 'Limited' },
+          { name: 'Feature 2', description: 'Basic feature', value: 'Limited' },
+        ],
+      },
+      addons: [], // No add-ons for free plan
+    };
   }
 
+  // Fetch all add-ons associated with the account
+  const addOns = await db.subscription.findMany({
+    where: {
+      accountId: subscription.accountId,
+      isAddOn: true, // Fetch only add-ons
+      active: true,
+    },
+    include: {
+      Plan: {
+        include: {
+          features: {
+            include: {
+              feature: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Get plan details and billing cycle
   const { Plan, priceId } = subscription;
+  const billingCycle = Plan?.stripeMonthlyPriceId === priceId ? 'monthly' : 'yearly';
+  const planPrice = billingCycle === 'monthly' ? Plan?.monthlyPrice : Plan?.yearlyPrice;
 
-  let billingCycle = 'unknown';
-  if (Plan?.stripeMonthlyPriceId === priceId) {
-    billingCycle = 'monthly';
-  } else if (Plan?.stripeYearlyPriceId === priceId) {
-    billingCycle = 'yearly';
+  // Prepare the add-ons with price and billing details
+  const addOnsDetails = addOns.map((addon) => {
+    const addOnPrice = addon.Plan.stripeMonthlyPriceId === addon.priceId
+      ? addon.Plan.monthlyPrice
+      : addon.Plan.yearlyPrice;
+
+    return {
+      name: addon.Plan.name,
+      description: addon.Plan.description,
+      price: addOnPrice,
+      billingCycle: addon.Plan.stripeMonthlyPriceId === addon.priceId ? 'monthly' : 'yearly',
+      features: addon.Plan.features.map((f) => ({
+        name: f.feature.name,
+        description: f.feature.description,
+        value: f.value !== null ? f.value : 'Unlimited',
+      })),
+    };
+  });
+
+  // Return the structured data with all plan and add-on details
+  return {
+    customerId: account.customerId,
+    plan: {
+      planName: Plan?.name,
+      planDescription: Plan?.description,
+      billingCycle,
+      price: planPrice || 0,
+      features: Plan?.features.map((f) => ({
+        name: f.feature.name,
+        description: f.feature.description,
+        value: f.value !== null ? f.value : 'Unlimited',
+      })),
+    },
+    addons: addOnsDetails,
+  };
+}
+
+
+
+export async function getPricingPlans() {
+  const pricingPlans = await db.plan.findMany({
+    where: {
+      isAddOn: false, // Only fetch regular plans, not add-ons
+    },
+    include: {
+      features: true,
+    },
+  });
+  return pricingPlans;
+}
+
+export async function getPlanAndAddOnDetails(accountId: string) {
+  // Ensure accountId is valid
+  if (!accountId) {
+    throw new Error('accountId is undefined');
   }
+
+  // Fetch the account and its subscriptions
+  const account = await db.account.findUnique({
+    where: { id: accountId },
+    include: {
+      subscriptions: {
+        include: {
+          Plan: {
+            include: {
+              features: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Check if the account exists
+  if (!account || !account.subscriptions) {
+    throw new Error(`No account found with ID: ${accountId}`);
+  }
+
+  // Ensure that subscriptions exist
+  const subscriptions = account.subscriptions ?? [];
+
+  // Separate regular plans and add-ons using the `isAddOn` flag in the Plan
+  const regularPlans = subscriptions.filter(
+    (sub) => sub.Plan && !sub.Plan.isAddOn
+  );
+  const addOns = subscriptions.filter((sub) => sub.Plan && sub.Plan.isAddOn);
 
   return {
-    ...subscription,
-    planName: Plan?.name,
-    planDescription: Plan?.description,
-    billingCycle,
-    features: Plan?.features.map(f => ({
-      name: f.feature.name,
-      description: f.feature.description,
-      value: f.value,
-    })),
+    regularPlans,
+    addOns,
   };
+}
+export async function getAddOns(accountId: string) {
+  return await db.subscription.findMany({
+    where: {
+      accountId,
+      isAddOn: true,
+      active: true,
+    },
+    include: {
+      Plan: true,
+    },
+  });
+}
+
+export async function getAccountSubscription(accountId: string) {
+  return await db.account.findUnique({
+    where: {
+      id: accountId,
+    },
+    select: {
+      customerId: true,
+      Subscription: {
+        include: {
+          Plan: {
+            include: {
+              features: {
+                include: {
+                  feature: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
 }

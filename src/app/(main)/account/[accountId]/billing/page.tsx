@@ -1,9 +1,8 @@
-import React from 'react'
-import { stripe } from '@/lib/stripe'
-import { addOnProducts, pricingCards } from '@/lib/constants'
-import { db } from '@/lib/db'
-import { Separator } from '@/components/ui/separator'
-import PricingCard from './_components/pricing-card'
+import React from 'react';
+import { stripe } from '@/lib/stripe';
+import { getPlanDetailsForUser } from '@/lib/queries';
+import { Separator } from '@/components/ui/separator';
+import PricingCard from './_components/pricing-card';
 import {
   Table,
   TableBody,
@@ -11,56 +10,55 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import clsx from 'clsx'
-import SubscriptionHelper from './_components/subscription-helper'
+} from '@/components/ui/table';
+import clsx from 'clsx';
+import SubscriptionHelper from './_components/subscription-helper';
 
 type Props = {
-  params: { accountId: string }
-}
+  params: { userId: string };
+};
 
 const page = async ({ params }: Props) => {
-  // Fetch Add-on products from Stripe
-  const addOns = await stripe.products.list({
-    ids: addOnProducts.map((product) => product.id),
-    expand: ['data.default_price'],
-  })
+  const userId = params.userId;
 
-  // Fetch Account subscription details
-  const accountSubscription = await db.account.findUnique({
-    where: {
-      id: params.accountId,
-    },
-    select: {
-      customerId: true,
-      Subscription: true,
-    },
-  })
+  // Function to fetch Stripe charges for a specific customer
+  async function getStripeCharges(customerId: string) {
+    if (!customerId) {
+      console.error('Error: No valid customer ID found.');
+      return [];
+    }
 
-  console.log('🔵 Account Subscription fetched:', accountSubscription)
+    try {
+      const charges = await stripe.charges.list({
+        limit: 50,
+        customer: customerId,
+      });
 
-  // Fetch prices for the current product
-  const prices = await stripe.prices.list({
-    product: process.env.NEXT_PLURA_PRODUCT_ID,
-    active: true,
-  })
+      return charges.data.map((charge) => ({
+        description: charge.description,
+        id: charge.id,
+        created: charge.created,
+        status: charge.status,
+        amount: charge.amount,
+      }));
+    } catch (error) {
+      console.error('Error fetching charges from Stripe:', error);
+      return [];
+    }
+  }
 
-  console.log('🔵 Prices fetched from Stripe:', prices.data)
+  // Fetch plan and add-on details for the user from the database
+  const planDetails = await getPlanDetailsForUser(userId);
 
-  // Find the current plan details
-  const currentPlanDetails = pricingCards.find(
-    (c) => c.priceId === accountSubscription?.Subscription?.priceId
-  )
-
-  console.log('🔵 Current Plan Details:', currentPlanDetails)
+  if (!planDetails?.customerId) {
+    console.error('Error: Unable to fetch customer details.');
+    return <div>Error: Unable to fetch customer details.</div>;
+  }
 
   // Fetch recent charges from Stripe
-  const charges = await stripe.charges.list({
-    limit: 50,
-    customer: accountSubscription?.customerId,
-  })
+  const charges = await getStripeCharges(planDetails?.customerId);
 
-  const allCharges = charges.data.map((charge) => ({
+  const allCharges = charges.map((charge) => ({
     description: charge.description,
     id: charge.id,
     date: `${new Date(charge.created * 1000).toLocaleTimeString()} ${new Date(
@@ -68,75 +66,43 @@ const page = async ({ params }: Props) => {
     ).toLocaleDateString()}`,
     status: 'Paid',
     amount: `$${charge.amount / 100}`,
-  }))
+  }));
 
   return (
     <>
       <SubscriptionHelper
-        prices={prices.data}
-        customerId={accountSubscription?.customerId || ''}
-        planExists={accountSubscription?.Subscription?.active === true}
+        prices={planDetails.plan.price} // Use price from the database
+        customerId={planDetails?.customerId || ''}
+        planExists={!!planDetails}
       />
       <h1 className="text-4xl p-4">Billing</h1>
       <Separator className="mb-6" />
       <h2 className="text-2xl p-4">Current Plan</h2>
       <div className="flex flex-col lg:!flex-row justify-between gap-8">
         <PricingCard
-          planExists={accountSubscription?.Subscription?.active === true}
-          prices={prices.data}
-          customerId={accountSubscription?.customerId || ''}
-          amt={
-            accountSubscription?.Subscription?.active === true
-              ? currentPlanDetails?.price || '$0'
-              : '$0'
-          }
-          buttonCta={
-            accountSubscription?.Subscription?.active === true
-              ? 'Change Plan'
-              : 'Get Started'
-          }
-          highlightDescription="Want to modify your plan? You can do this here. If you have further questions, contact support@insertbot.com."
-          highlightTitle="Plan Options"
-          description={
-            accountSubscription?.Subscription?.active === true
-              ? currentPlanDetails?.description || 'Let’s get started'
-              : 'Let’s get started! Pick a plan that works best for you.'
-          }
-          duration="/ month"
-          features={
-            accountSubscription?.Subscription?.active === true
-              ? currentPlanDetails?.features || []
-              : currentPlanDetails?.features ||
-                pricingCards.find((pricing) => pricing.title === 'Starter')
-                  ?.features || []
-          }
-          title={
-            accountSubscription?.Subscription?.active === true
-              ? currentPlanDetails?.title || 'Starter'
-              : 'Starter'
-          }
-        />
-        {addOns.data.map((addOn) => (
+          title={planDetails.plan.planName}
+          description={planDetails.plan.planDescription}
+          amt={`$${planDetails.plan.price / 100}`}
+          duration={` / ${planDetails.plan.billingCycle}`}
+          features={planDetails.plan.features}
+          buttonCta="Change Plan"
+          customerId={planDetails.customerId}
+          planExists={true} highlightTitle={''} highlightDescription={''} prices={[]}        />
+
+        {planDetails.addons.map((addOn) => (
           <PricingCard
-            planExists={accountSubscription?.Subscription?.active === true}
-            prices={prices.data}
-            customerId={accountSubscription?.customerId || ''}
-            key={addOn.id}
-            amt={
-              addOn.default_price?.unit_amount
-                ? `$${addOn.default_price.unit_amount / 100}`
-                : '$0'
-            }
-            buttonCta="Subscribe"
-            description="Dedicated support line & teams channel for support"
-            duration="/ month"
-            features={[]}
-            title={'24/7 priority support'}
-            highlightTitle="Get support now!"
-            highlightDescription="Get priority support and skip the line with the click of a button."
-          />
+            key={addOn.name}
+            title={addOn.name}
+            description={addOn.description}
+            amt={`$${addOn.price / 100}`}
+            duration={` / ${addOn.billingCycle}`}
+            features={addOn.features}
+            buttonCta="Manage Add-on"
+            customerId={planDetails.customerId}
+            planExists={true} highlightTitle={''} highlightDescription={''} prices={[]}          />
         ))}
       </div>
+
       <h2 className="text-2xl p-4">Payment History</h2>
       <Table className="bg-card border-[1px] border-border rounded-md">
         <TableHeader className="rounded-md">
@@ -171,7 +137,7 @@ const page = async ({ params }: Props) => {
         </TableBody>
       </Table>
     </>
-  )
-}
+  );
+};
 
-export default page
+export default page;

@@ -151,8 +151,7 @@ model Account {
   Chatbot             Chatbot[]
   Invitation          Invitation[]
   Notification        Notification[]
-  Subscription        Subscription?
-  AddOns              AddOns[]
+  Subscriptions       Subscription[] // Allow multiple subscriptions (regular plan + add-ons)
 }
 
 model AIModel {
@@ -476,24 +475,12 @@ model Subscription {
   customerId            String      // Stripe customerId
   currentPeriodEndDate  DateTime    // Subscription end date
   subscriptionId        String      @unique // Stripe subscription ID
+  isAddOn              Boolean         @default(false) // Flag to indicate if this plan is an add-on
   accountId             String      @unique // Linked Account
   Account               Account     @relation(fields: [accountId], references: [id])
   @@index([customerId])
 }
 
-
-model AddOns {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  active    Boolean  @default(false)
-  priceId   String   @unique
-  accountId String?
-  Account   Account? @relation(fields: [accountId], references: [id])
-
-  @@index([accountId])
-}
 
 model ChatRoom {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -598,15 +585,15 @@ model Plan {
   id                   String         @id @default(cuid())
   name                 String
   description          String?
-  monthlyPrice         Int?           
-  yearlyPrice          Int?           
-  stripeMonthlyPriceId String?         
-  stripeYearlyPriceId  String?         
-  features             PlanFeature[]    
-  addOns               AddOn[]         
-  subscriptions        Subscription[]  // Add this line to establish the relationship
+  monthlyPrice         Int?            // Monthly price for the plan in cents
+  yearlyPrice          Int?            // Yearly price for the plan in cents
+  stripeMonthlyPriceId String?         // Stripe price ID for monthly plan
+  stripeYearlyPriceId  String?         // Stripe price ID for yearly plan
+  features             PlanFeature[]   // Features associated with this plan
+  subscriptions        Subscription[]  // Subscriptions related to this plan
+  isAddOn              Boolean         @default(false) // Flag to indicate if this plan is an add-on
+  createdAt            DateTime        @default(now())
 }
-
 
 model PlanFeature {
   id        Int      @id @default(autoincrement())           // Primary key with auto-incremented Int.
@@ -624,14 +611,6 @@ model Feature {
   description   String?                              // Nullable description field.
   displayInUI   Boolean        @default(true)        // Boolean flag to display the feature in UI or not.
   planFeatures  PlanFeature[]                        // Relation to PlanFeature.
-}
-
-model AddOn {
-  id         String   @id @default(cuid())           // Using `cuid()` to generate unique IDs as Strings.
-  name       String
-  price      Int                                    // Price of the AddOn stored in cents as an integer.
-  linkedPlan Plan?    @relation(fields: [planId], references: [id]) // Optional relation to Plan (nullable).
-  planId     String?                                // Nullable reference to Plan ID, if the AddOn is linked to a specific Plan.
 }
 
 

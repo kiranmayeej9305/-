@@ -1,6 +1,6 @@
 // context/QuantitativeFeatureContext.tsx
 import React, { createContext, useContext } from 'react';
-import { usePlan } from './use-plan-context';
+import { usePlanAddOn } from './use-plan-addon-context';
 
 interface QuantitativeFeatureContextType {
   checkLimitExceeded: (featureName: string, usageCount: number) => boolean;
@@ -9,7 +9,7 @@ interface QuantitativeFeatureContextType {
 const QuantitativeFeatureContext = createContext<QuantitativeFeatureContextType | undefined>(undefined);
 
 export const QuantitativeFeatureProvider: React.FC = ({ children }) => {
-  const { plan } = usePlan();
+  const { plan } = usePlanAddOn();
 
   const checkLimitExceeded = (featureName: string, usageCount: number) => {
     const feature = plan?.features.find((f: any) => f.feature.name === featureName);

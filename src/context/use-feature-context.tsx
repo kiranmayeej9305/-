@@ -1,6 +1,6 @@
 // context/FeatureContext.tsx
 import React, { createContext, useContext } from 'react';
-import { usePlan } from './use-plan-context';
+import { usePlanAddOn } from './use-plan-addon-context';
 
 interface FeatureContextType {
   hasFeature: (featureName: string) => boolean;
@@ -9,7 +9,7 @@ interface FeatureContextType {
 const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
 
 export const FeatureProvider: React.FC = ({ children }) => {
-  const { plan } = usePlan();
+  const { plan } = usePlanAddOn();
 
   const hasFeature = (featureName: string) => {
     if (!plan) return false;
