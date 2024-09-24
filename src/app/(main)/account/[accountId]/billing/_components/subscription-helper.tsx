@@ -24,15 +24,14 @@ const SubscriptionHelper = ({ customerId, planExists }) => {
         async () => ({
           plans: {
             defaultPriceId: plan || '',
-            regularPlans: planData?.regularPlans || [], // Regular plans for upgrade
-            addOns: planData?.addOns || [],             // Add-ons for selection
+            regularPlans: planData?.plan || {}, // Regular plans for upgrade
+            addOns: planData?.addons || [],     // Add-ons for selection
+            frontendFeatures: planData?.frontendFeatures || [], // UI display frontend features
           },
         })
       );
     }
   }, [plan, planData, loading]);
-
-  return <div>SubscriptionHelper</div>;
 };
 
 export default SubscriptionHelper;

@@ -590,6 +590,7 @@ model Plan {
   stripeMonthlyPriceId String?         // Stripe price ID for monthly plan
   stripeYearlyPriceId  String?         // Stripe price ID for yearly plan
   features             PlanFeature[]   // Features associated with this plan
+  frontendFeatures     PlanFrontendFeature[] // Mapping to FrontendFeature
   subscriptions        Subscription[]  // Subscriptions related to this plan
   isAddOn              Boolean         @default(false) // Flag to indicate if this plan is an add-on
   createdAt            DateTime        @default(now())
@@ -609,9 +610,10 @@ model Feature {
   id            String         @id @default(cuid())   // Using `cuid()` to generate unique IDs as Strings.
   name          String
   description   String?                              // Nullable description field.
-  displayInUI   Boolean        @default(true)        // Boolean flag to display the feature in UI or not.
+  identifier    String         @unique               // Identifier field for programmatic usage.
   planFeatures  PlanFeature[]                        // Relation to PlanFeature.
 }
+
 
 
 model Interface {
@@ -640,4 +642,23 @@ model Interface {
   chatbotId                  String   @unique @db.Uuid
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
+}
+
+// New FrontendFeature model with relation to Plan
+model FrontendFeature {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  planFrontendFeatures PlanFrontendFeature [] // Many-to-many relationship with Plan through PlanFrontendFeature
+}
+
+model PlanFrontendFeature {
+  id        String           @id @default(uuid())
+  planId    String
+  featureId String
+  plan      Plan             @relation(fields: [planId], references: [id])
+  feature   FrontendFeature  @relation(fields: [featureId], references: [id])
+  createdAt DateTime         @default(now())
 }

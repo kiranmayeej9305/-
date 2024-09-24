@@ -221,8 +221,8 @@ export const deleteAccount = async (accountId: string) => {
 }
 
 export const initUser = async (newUser: Partial<User>) => {
-  const user = await currentUser()
-  if (!user) return
+  const user = await currentUser();
+  if (!user) return;
 
   const userData = await db.user.upsert({
     where: {
@@ -235,17 +235,19 @@ export const initUser = async (newUser: Partial<User>) => {
       email: user.emailAddresses[0].emailAddress,
       name: `${user.firstName} ${user.lastName}`,
       role: newUser.role || 'CHATBOT_USER',
+      accountId: newUser.accountId, // Account ID is provided when creating the user
     },
-  })
+  });
 
   await clerkClient.users.updateUserMetadata(user.id, {
     privateMetadata: {
       role: newUser.role || 'CHATBOT_USER',
     },
-  })
+  });
 
-  return userData
-}
+  return userData;
+};
+
 
 export const upsertAccount = async (account: Account, isCreating: boolean) => {
   if (!account.companyEmail) {
@@ -262,9 +264,6 @@ export const upsertAccount = async (account: Account, isCreating: boolean) => {
       },
       create: {
         ...account,
-        users: {
-          connect: { email: account.companyEmail },
-        },
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -274,28 +273,6 @@ export const upsertAccount = async (account: Account, isCreating: boolean) => {
 
     if (isCreating) {
       console.log(`Creating sidebar options for account ID: ${accountDetails.id}`);
-
-    //   const parentOptions = [
-    //     { name: 'Analytics & Usage', icon: 'category', link: `/account/${accountDetails.id}/analytics` },
-    //     { name: 'Chatbots', icon: 'person', link: `/account/${accountDetails.id}/all-chatbots` },
-    //     { name: 'Settings', icon: 'settings', link: `/account/${accountDetails.id}/settings` },
-    //     { name: 'Team', icon: 'shield', link: `/account/${accountDetails.id}/team` },
-    //     { name: 'Billing', icon: 'payment', link: `/account/${accountDetails.id}/billing` }
-    //   ];
-
-    //   const parentIds = [];
-    //   for (const option of parentOptions) {
-    //     const parentOption = await db.accountSidebarOption.create({
-    //       data: {
-    //         ...option,
-    //         accountId: accountDetails.id,
-    //       },
-    //     });
-    //     parentIds.push(parentOption.id);
-    //   }
-
-    //   console.log('Sidebar options created:', parentIds);
-    // }
     }
     return accountDetails;
   } catch (error) {
@@ -319,34 +296,6 @@ export const getNotificationAndUser = async (accountId: string) => {
     console.log(error)
   }
 }
-
-// export const upsertInterfaceSettings = async (interfaceSettings: any) => {
-//   if (!interfaceSettings.chatbotId) {
-//     throw new Error("chatbotId is required");
-//   }
-
-//   try {
-//     const existingSettings = await prisma.interface.findUnique({
-//       where: { chatbotId: interfaceSettings.chatbotId },
-//     });
-
-//     if (existingSettings) {
-//       const response = await prisma.interface.update({
-//         where: { id: existingSettings.id },
-//         data: interfaceSettings,
-//       });
-//       return response;
-//     } else {
-//       const response = await prisma.interface.create({
-//         data: interfaceSettings,
-//       });
-//       return response;
-//     }
-//   } catch (error) {
-//     console.error('Error upserting interface settings:', error);
-//     throw error;
-//   }
-// };
 
 export const getUserPermissions = async (userId: string) => {
   const response = await db.user.findUnique({
@@ -1694,7 +1643,6 @@ export const createTrainingHistory = async (chatbotId: string, data: any) => {
 };
 export const fetchChatbotsWithDetails = async (accountId: string) => {
   try {
-    console.log(accountId);
     const chatbots = await db.chatbot.findMany({
       where: {
         accountId: accountId,
@@ -2246,7 +2194,12 @@ export async function getPlanDetailsForUser(userId: string) {
         include: {
           features: {
             include: {
-              feature: true,
+              feature: true, // Join with the `Feature` model to fetch details
+            },
+          },
+          frontendFeatures: {
+            include: {
+              feature: true, // Join with the `FrontendFeature` model to fetch details
             },
           },
         },
@@ -2254,21 +2207,43 @@ export async function getPlanDetailsForUser(userId: string) {
     },
   });
 
-  // If no subscription is found, return the default Free Plan
+  // Fetch the "Free Plan" dynamically if no subscription is found
   if (!subscription) {
+    const freePlan = await db.plan.findFirst({
+      where: { name: 'Free', isAddOn: false },
+      include: {
+        features: {
+          include: {
+            feature: true, // Join with actual feature data
+          },
+        },
+        frontendFeatures: {
+          include: {
+            feature: true, // Join with actual frontend feature data
+          },
+        },
+      },
+    });
+
     return {
       customerId: account.customerId,
       plan: {
-        planName: 'Free Plan',
-        planDescription: 'Access to basic features.',
-        billingCycle: 'monthly', // Default cycle for free plan
-        price: 0, // Free plan has no cost
-        features: [
-          { name: 'Feature 1', description: 'Basic feature', value: 'Limited' },
-          { name: 'Feature 2', description: 'Basic feature', value: 'Limited' },
-        ],
+        planName: freePlan?.name || 'Free',
+        planDescription: freePlan?.description || 'Access to basic features.',
+        billingCycle: 'monthly',
+        price: freePlan?.monthlyPrice || 0, // Free plan has no cost
+        features: freePlan?.features.map((f) => ({
+          identifier: f.feature.identifier, // Include identifier from Feature
+          name: f.feature.name,
+          description: f.feature.description,
+          value: f.value !== null ? f.value : 'Unlimited', // Quantitative feature
+        })) || [],
+        frontendFeatures: freePlan?.frontendFeatures.map((f) => ({
+          name: f.feature.name,
+          description: f.feature.description,
+        })) || [],
       },
-      addons: [], // No add-ons for free plan
+      addons: [], // No add-ons for Free Plan
     };
   }
 
@@ -2284,7 +2259,12 @@ export async function getPlanDetailsForUser(userId: string) {
         include: {
           features: {
             include: {
-              feature: true,
+              feature: true, // Join with the `Feature` model to fetch details
+            },
+          },
+          frontendFeatures: {
+            include: {
+              feature: true, // Join with the `FrontendFeature` model to fetch details
             },
           },
         },
@@ -2297,7 +2277,7 @@ export async function getPlanDetailsForUser(userId: string) {
   const billingCycle = Plan?.stripeMonthlyPriceId === priceId ? 'monthly' : 'yearly';
   const planPrice = billingCycle === 'monthly' ? Plan?.monthlyPrice : Plan?.yearlyPrice;
 
-  // Prepare the add-ons with price and billing details
+  // Prepare the add-ons with both functional and frontend feature details
   const addOnsDetails = addOns.map((addon) => {
     const addOnPrice = addon.Plan.stripeMonthlyPriceId === addon.priceId
       ? addon.Plan.monthlyPrice
@@ -2309,9 +2289,14 @@ export async function getPlanDetailsForUser(userId: string) {
       price: addOnPrice,
       billingCycle: addon.Plan.stripeMonthlyPriceId === addon.priceId ? 'monthly' : 'yearly',
       features: addon.Plan.features.map((f) => ({
+        identifier: f.feature.identifier, // Include identifier from Feature
         name: f.feature.name,
         description: f.feature.description,
-        value: f.value !== null ? f.value : 'Unlimited',
+        value: f.value !== null ? f.value : 'Unlimited', // Quantitative value
+      })),
+      frontendFeatures: addon.Plan.frontendFeatures.map((f) => ({
+        name: f.feature.name,
+        description: f.feature.description,
       })),
     };
   });
@@ -2325,24 +2310,30 @@ export async function getPlanDetailsForUser(userId: string) {
       billingCycle,
       price: planPrice || 0,
       features: Plan?.features.map((f) => ({
+        identifier: f.feature.identifier, // Include identifier for functional features
         name: f.feature.name,
         description: f.feature.description,
-        value: f.value !== null ? f.value : 'Unlimited',
-      })),
+        value: f.value !== null ? f.value : 'Unlimited', // Quantitative feature
+      })) || [],
+      frontendFeatures: Plan?.frontendFeatures.map((f) => ({
+        name: f.feature.name,
+        description: f.feature.description,
+      })) || [],
     },
-    addons: addOnsDetails,
+    addons: addOnsDetails.length > 0 ? addOnsDetails : [], // Ensure addons are a list
   };
 }
 
 
 
+
+
 export async function getPricingPlans() {
   const pricingPlans = await db.plan.findMany({
-    where: {
-      isAddOn: false, // Only fetch regular plans, not add-ons
-    },
+    where: { isAddOn: false },
     include: {
-      features: true,
+      features: { include: { feature: true } },
+      frontendFeatures: true,
     },
   });
   return pricingPlans;

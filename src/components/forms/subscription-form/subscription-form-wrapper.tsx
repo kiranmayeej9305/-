@@ -30,7 +30,7 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
     clientSecret: string;
   }>({ subscriptionId: '', clientSecret: '' });
 
-  // Fetch all pricing plans directly using the database query
+  // Fetch all pricing plans
   useEffect(() => {
     const fetchAllPlans = async () => {
       try {
@@ -92,47 +92,39 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
   return (
     <div className="border-none transition-all">
       <div className="flex items-center justify-center mb-6">
-        <span className="mr-2">Monthly</span>
+        <span className="mr-2 text-sm font-medium">Monthly</span>
         <Switch
           checked={billingCycle === 'yearly'}
           onCheckedChange={(checked) => setBillingCycle(checked ? 'yearly' : 'monthly')}
         />
-        <span className="ml-2">Yearly</span>
+        <span className="ml-2 text-sm font-medium">Yearly</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 overflow-x-auto p-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-4">
         {allPlans.map((plan) => {
-          const isBestValue = plan.name === 'Standard'; // Mark the "Standard" plan as Best Value
+          const isBestValue = plan.name === 'Standard';
           const isCurrentPlan = plan.id === currentPlanId;
-          const planPrice =
-            billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-          const priceLabel =
-            billingCycle === 'monthly'
-              ? `$${(planPrice / 100).toFixed(0)}`
-              : `$${(planPrice / 100).toFixed(0)}`;
+          const planPrice = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+          const priceLabel = `$${(planPrice / 100).toFixed(0)}`;
           const billingSuffix = billingCycle === 'monthly' ? '/month' : '/year';
 
           return (
             <Card
               onClick={() => {
                 if (!isCurrentPlan) {
-                  setSelectedPriceId(
-                    billingCycle === 'monthly'
-                      ? plan.stripeMonthlyPriceId
-                      : plan.stripeYearlyPriceId
-                  );
+                  setSelectedPriceId(billingCycle === 'monthly' ? plan.stripeMonthlyPriceId : plan.stripeYearlyPriceId);
                 }
               }}
               key={plan.id}
               className={clsx(
-                'relative cursor-pointer transition-all p-4 shadow-md border rounded-lg hover:shadow-lg hover:border-primary',
+                'relative cursor-pointer transition-all p-6 shadow-md border rounded-lg hover:shadow-lg hover:border-primary',
                 {
-                  'border-primary': selectedPriceId === plan.stripeMonthlyPriceId || selectedPriceId === plan.stripeYearlyPriceId,
-                  'bg-green-100 border-green-500 shadow-xl cursor-not-allowed': isCurrentPlan, // Highlight the current plan
-                  'opacity-50 cursor-not-allowed': isCurrentPlan, // Disable current plan interaction
+                  'border-primary ring-2 ring-primary': selectedPriceId === plan.stripeMonthlyPriceId || selectedPriceId === plan.stripeYearlyPriceId,
+                  'bg-green-100 border-green-500 shadow-xl cursor-not-allowed': isCurrentPlan,
+                  'opacity-50 cursor-not-allowed': isCurrentPlan,
                 }
               )}
-              style={{ pointerEvents: isCurrentPlan ? 'none' : 'auto' }} // Disable interaction on current plan
+              style={{ pointerEvents: isCurrentPlan ? 'none' : 'auto' }}
             >
               {isBestValue && (
                 <span className="absolute top-2 right-2 bg-yellow-400 text-black font-bold px-2 py-1 rounded-lg text-xs">
@@ -144,12 +136,12 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
                   Current Plan
                 </span>
               )}
-              <CardHeader className="mb-2">
-                <CardTitle className="text-lg font-bold">
-                  <span className="text-3xl font-bold">{priceLabel}</span>
+              <CardHeader className="mb-4">
+                <CardTitle className="text-xl font-bold text-gray-900">
+                  <span className="text-3xl font-extrabold text-primary">{priceLabel}</span>
                   <span className="text-xs text-muted-foreground ml-1 align-top"> {billingSuffix}</span>
                 </CardTitle>
-                <p className="text-md font-bold mt-1">{plan.name}</p>
+                <p className="text-md font-bold mt-2">{plan.name}</p>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">{plan.description}</p>
@@ -162,16 +154,16 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
         })}
 
         {options.clientSecret && !planExists && (
-          <>
-            <h1 className="text-xl mt-4">Payment Method</h1>
+          <div className="col-span-full mt-6">
+            <h1 className="text-xl font-semibold mb-4">Payment Method</h1>
             <Elements stripe={getStripe()} options={options}>
               <SubscriptionForm selectedPriceId={selectedPriceId} />
             </Elements>
-          </>
+          </div>
         )}
 
         {!options.clientSecret && selectedPriceId && (
-          <div className="flex items-center justify-center w-full h-40">
+          <div className="flex items-center justify-center w-full h-40 col-span-full">
             <Loading />
           </div>
         )}
@@ -180,7 +172,6 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
   );
 };
 
-// Wrapper that includes the PlanAddOnProvider
 const SubscriptionFormWrapperWithProvider = ({ customerId, planExists }: Props) => {
   return (
     <PlanAddOnProvider userId={customerId}>

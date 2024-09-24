@@ -1,17 +1,11 @@
 'use client';
 
-import SubscriptionFormWrapperWithProvider from '@/components/forms/subscription-form/subscription-form-wrapper';
-import CustomModal from '@/components/global/custom-modal';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import SubscriptionFormWrapperWithProvider from '@/components/forms/subscription-form/subscription-form-wrapper';
 import { useModal } from '@/providers/modal-provider';
 import React from 'react';
+import CustomModal from '@/components/global/custom-modal';
 
 type PricingCardProps = {
   features: Array<{ name: string; description: string; value: string | number }>;
@@ -43,20 +37,19 @@ const PricingCard = ({
   const { setOpen } = useModal();
 
   const handleManagePlan = async () => {
-    // Open the modal with the SubscriptionFormWrapper for managing the plan or add-on
     setOpen(
       <CustomModal
         title="Manage Your Plan"
         subheading="You can change your plan at any time from the billing settings."
       >
         <SubscriptionFormWrapperWithProvider customerId={customerId} planExists={planExists} />
-      </CustomModal>,
-      async () => ({
-        plans: {
-          defaultPriceId: '', // You can pass the default price if necessary
-          plans: prices, // The plans data from the PricingCard props
-        },
-      })
+        </CustomModal>,
+        async () => ({
+          plans: {
+            defaultPriceId: '', // You can pass the default price if necessary
+            plans: prices, // The plans data from the PricingCard props
+          },
+        })
     );
   };
 
@@ -70,34 +63,23 @@ const PricingCard = ({
           </div>
           <p className="text-6xl font-bold">
             {amt}
-            <small className="text-xs font-light text-muted-foreground">
-              {duration}
-            </small>
+            <small className="text-xs font-light text-muted-foreground">{duration}</small>
           </p>
         </CardHeader>
         <CardContent>
           <ul>
             {features.map((feature) => (
               <li key={feature.name} className="list-disc ml-4 text-muted-foreground">
-                <strong>{feature.name}</strong>: {feature.description}
+                {feature.description}
               </li>
             ))}
           </ul>
         </CardContent>
       </div>
       <CardFooter>
-        <Card className="w-full">
-          <div className="flex flex-col md:!flex-row items-center justify-between rounded-lg border gap-4 p-4">
-            <div>
-              <p>{highlightTitle}</p>
-              <p className="text-sm text-muted-foreground">{highlightDescription}</p>
-            </div>
-
-            <Button className="md:w-fit w-full" onClick={handleManagePlan}>
-              {buttonCta}
-            </Button>
-          </div>
-        </Card>
+        <Button className="md:w-fit w-full" onClick={handleManagePlan}>
+          {buttonCta}
+        </Button>
       </CardFooter>
     </Card>
   );

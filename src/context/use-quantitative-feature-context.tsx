@@ -1,4 +1,5 @@
-// context/QuantitativeFeatureContext.tsx
+'use client';
+
 import React, { createContext, useContext } from 'react';
 import { usePlanAddOn } from './use-plan-addon-context';
 
@@ -12,9 +13,30 @@ export const QuantitativeFeatureProvider: React.FC = ({ children }) => {
   const { plan } = usePlanAddOn();
 
   const checkLimitExceeded = (featureName: string, usageCount: number) => {
-    const feature = plan?.features.find((f: any) => f.feature.name === featureName);
-    if (feature?.value === null) return false; // Unlimited
-    return feature?.value !== undefined && usageCount >= feature.value;
+    console.log(plan);
+
+    if (!plan || !plan.features) {
+      console.warn("Plan or features not available");
+      return false; // If the plan or features aren't available, assume no limit is exceeded
+    }
+
+    console.log("Plan features: ", plan.features); // Log features
+
+    // Find the feature based on the feature identifier (not nested under 'feature')
+    const feature = plan.features.find((f: any) => f.identifier === featureName);
+
+    if (!feature) {
+      console.warn(`Feature "${featureName}" not found`);
+      return false; // Feature not found
+    }
+
+    // Check if the feature allows unlimited usage
+    if (feature.value === null || feature.value === 'Unlimited') {
+      return false; // Unlimited usage allowed
+    }
+
+    // Return whether the usage count exceeds the feature's value
+    return feature.value !== undefined && usageCount >= feature.value;
   };
 
   return (

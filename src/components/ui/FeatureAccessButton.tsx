@@ -1,6 +1,6 @@
 // components/FeatureAccessButton.tsx
 import React from 'react';
-import { useFeature } from '../context/FeatureContext';
+import { FeatureProvider, useFeature } from './../../context/use-feature-context';
 
 const FeatureAccessButton: React.FC = () => {
   const { hasFeature } = useFeature();

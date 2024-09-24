@@ -3,153 +3,183 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
+  // Seed Features with identifier for programmatic usage
   const featuresData = [
     {
-      name: '20 message credits/month',
-      description: 'Receive 20 message credits every month.',
+      name: 'Message Credits',
+      description: 'Provides a limit for message credits.',
+      identifier: 'message_credits',
     },
     {
-      name: '1 chatbot',
-      description: 'Create and manage 1 chatbot.',
+      name: 'Chatbots',
+      description: 'Allows managing multiple chatbots.',
+      identifier: 'chatbots',
     },
     {
-      name: '400,000 characters/chatbot',
-      description: 'Each chatbot can have up to 400,000 characters.',
+      name: 'Characters Per Chatbot',
+      description: 'Defines characters limit per chatbot.',
+      identifier: 'characters_per_chatbot',
     },
     {
-      name: '1 team member',
-      description: 'Add 1 team member to your account.',
+      name: 'Team Members',
+      description: 'Allows adding team members.',
+      identifier: 'team_members',
     },
     {
-      name: 'Limit to 10 links to train on',
-      description: 'Train your chatbot with up to 10 links.',
+      name: 'Links for Training',
+      description: 'Limit for chatbot training links.',
+      identifier: 'links_for_training',
     },
     {
-      name: 'Unlimited links to train on',
-      description: 'Train your chatbot with unlimited links.',
+      name: 'Unlimited Embedding',
+      description: 'Ability to embed on multiple websites.',
+      identifier: 'unlimited_embedding',
     },
     {
-      name: 'Embed on unlimited websites',
-      description: 'You can embed your chatbot on any number of websites.',
+      name: 'Leads Capture',
+      description: 'Capture leads from users.',
+      identifier: 'leads_capture',
     },
     {
-      name: 'Capture leads',
-      description: 'Collect user information for lead generation.',
+      name: 'Chat History',
+      description: 'Access to chat history.',
+      identifier: 'chat_history',
     },
     {
-      name: 'View chat history',
-      description: 'Access the chat history between users and chatbots.',
+      name: 'API Access',
+      description: 'Access the chatbot via API.',
+      identifier: 'api_access',
     },
     {
-      name: 'GPT-4o',
-      description: 'Access to the GPT-4o model.',
+      name: 'Analytics',
+      description: 'Access to chatbot analytics.',
+      identifier: 'analytics',
     },
     {
-      name: '2,000 message credits/month',
-      description: 'Receive 2,000 message credits every month.',
+      name: 'Remove "Powered by Chatbase"',
+      description: 'Remove the "Powered by Chatbase" branding.',
+      identifier: 'remove_powered_by_chatbase',
     },
     {
-      name: '2 chatbots',
-      description: 'Create and manage 2 chatbots.',
+      name: 'Use Your Own Custom Domains',
+      description: 'Host chatbots on your own custom domains.',
+      identifier: 'custom_domains',
     },
     {
-      name: '11,000,000 characters/chatbot',
-      description: 'Each chatbot can have up to 11,000,000 characters.',
+      name: 'Advanced Analytics',
+      description: 'Access to advanced analytics features.',
+      identifier: 'advanced_analytics',
+    },
+  ];
+
+  // Insert Feature data
+  for (const feature of featuresData) {
+    await prisma.feature.create({
+      data: feature,
+    });
+  }
+
+  // Seed Frontend Features (no identifier here)
+  const frontendFeaturesData = [
+    {
+      name: 'Message Credits',
+      description: 'Provides a limit for message credits.',
     },
     {
-      name: 'API access',
+      name: 'Chatbots',
+      description: 'Allows managing multiple chatbots.',
+    },
+    {
+      name: 'Characters Per Chatbot',
+      description: 'Defines characters limit per chatbot.',
+    },
+    {
+      name: 'Team Members',
+      description: 'Allows adding team members.',
+    },
+    {
+      name: 'Links for Training',
+      description: 'Limit for chatbot training links.',
+    },
+    {
+      name: 'Unlimited Embedding',
+      description: 'Ability to embed on multiple websites.',
+    },
+    {
+      name: 'Leads Capture',
+      description: 'Capture leads from users.',
+    },
+    {
+      name: 'Chat History',
+      description: 'Access to chat history.',
+    },
+    {
+      name: 'API Access',
       description: 'Access the chatbot via API.',
     },
     {
-      name: 'Integrations',
-      description: 'Integrate with third-party services.',
+      name: 'Analytics',
+      description: 'Access to chatbot analytics.',
     },
     {
-      name: 'Basic Analytics',
-      description: 'Access to basic analytics features.',
+      name: 'Remove "Powered by Chatbase"',
+      description: 'Remove the "Powered by Chatbase" branding.',
     },
     {
-      name: '10,000 message credits/month',
-      description: 'Receive 10,000 message credits every month.',
-    },
-    {
-      name: '5 chatbots',
-      description: 'Create and manage 5 chatbots.',
-    },
-    {
-      name: '3 team members',
-      description: 'Add up to 3 team members to your account.',
-    },
-    {
-      name: 'Option to choose GPT-4 and GPT-4-Turbo',
-      description: 'Choose between GPT-4 and GPT-4-Turbo models.',
-    },
-    {
-      name: '40,000 message credits/month included',
-      description: 'Receive 40,000 message credits every month. Messages over the limit will use your OpenAI API Key.',
-    },
-    {
-      name: '10 chatbots',
-      description: 'Create and manage 10 chatbots.',
-    },
-    {
-      name: '5 team members',
-      description: 'Add up to 5 team members to your account.',
-    },
-    {
-      name: "Remove 'Powered by Chatbase'",
-      description: "Remove the 'Powered by Chatbase' branding.",
-    },
-    {
-      name: 'Use your own custom domains',
+      name: 'Use Your Own Custom Domains',
       description: 'Host chatbots on your own custom domains.',
     },
     {
       name: 'Advanced Analytics',
       description: 'Access to advanced analytics features.',
     },
-    {
-      name: 'Chatbots get deleted after 14 days of inactivity on the free plan.',
-      description: 'Inactive chatbots will be deleted after 14 days.',
-    },
   ];
 
-  // Create features in the database
-  for (const feature of featuresData) {
-    await prisma.feature.create({
-      data: {
-        name: feature.name,
-        description: feature.description,
-        displayInUI: true,
-      },
+  // Insert FrontendFeature data
+  for (const frontendFeature of frontendFeaturesData) {
+    await prisma.frontendFeature.create({
+      data: frontendFeature,
     });
   }
 
-  // Fetch all created features to get their IDs
+  // Fetch all created features and frontend features to get their IDs
   const allFeatures = await prisma.feature.findMany();
+  const allFrontendFeatures = await prisma.frontendFeature.findMany();
 
-  // Helper function to get feature IDs by name
-  const getFeatureIdByName = (name) =>
-    allFeatures.find((f) => f.name === name)?.id;
+  // Helper functions to get feature IDs by name
+  const getFeatureIdByName = (name) => allFeatures.find((f) => f.name === name)?.id;
+  const getFrontendFeatureIdByName = (name) => allFrontendFeatures.find((f) => f.name === name)?.id;
 
-  // Create Plans with all details and Stripe price IDs, with quantifiable and unlimited features
+  // Seed Plans with related features (Plan, PlanFeature, and PlanFrontendFeature)
   const freePlan = await prisma.plan.create({
     data: {
       name: 'Free',
-      description: 'Forever free plan with basic features.',
+      description: 'A basic plan for testing.',
       monthlyPrice: 0,
       yearlyPrice: 0,
-      stripeMonthlyPriceId: null, // Free plan doesn't require Stripe price IDs
+      stripeMonthlyPriceId: null,
       stripeYearlyPriceId: null,
+      isAddOn: false,
       features: {
         create: [
-          { featureId: getFeatureIdByName('20 message credits/month'), value: 20 },
-          { featureId: getFeatureIdByName('1 chatbot'), value: 1 },
-          { featureId: getFeatureIdByName('400,000 characters/chatbot'), value: 400000 },
-          { featureId: getFeatureIdByName('1 team member'), value: 1 },
-          { featureId: getFeatureIdByName('Limit to 10 links to train on'), value: 10 },
-          { featureId: getFeatureIdByName('Embed on unlimited websites'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Capture leads'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Message Credits'), value: 20 },
+          { featureId: getFeatureIdByName('Chatbots'), value: 1 },
+          { featureId: getFeatureIdByName('Characters Per Chatbot'), value: 400000 },
+          { featureId: getFeatureIdByName('Team Members'), value: 1 },
+          { featureId: getFeatureIdByName('Links for Training'), value: 10 },
+          { featureId: getFeatureIdByName('Unlimited Embedding'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Leads Capture'), value: null }, // Unlimited
+        ],
+      },
+      frontendFeatures: {
+        create: [
+          { featureId: getFrontendFeatureIdByName('Message Credits') },
+          { featureId: getFrontendFeatureIdByName('Chatbots') },
+          { featureId: getFrontendFeatureIdByName('Characters Per Chatbot') },
+          { featureId: getFrontendFeatureIdByName('Team Members') },
+          { featureId: getFrontendFeatureIdByName('Links for Training') },
+          { featureId: getFrontendFeatureIdByName('Unlimited Embedding') },
+          { featureId: getFrontendFeatureIdByName('Leads Capture') },
         ],
       },
     },
@@ -158,20 +188,28 @@ async function main() {
   const hobbyPlan = await prisma.plan.create({
     data: {
       name: 'Hobby',
-      description: 'For hobbyists who need more features.',
+      description: 'For hobbyists with more needs.',
       monthlyPrice: 1900, // $19.00 in cents
       yearlyPrice: 19900, // $199.00 in cents
       stripeMonthlyPriceId: 'price_1PGDITCVtIA4fkI2sApcxiYo',
       stripeYearlyPriceId: 'price_1PIGkNCVtIA4fkI2VrRj5qnH',
+      isAddOn: false,
       features: {
         create: [
-          { featureId: getFeatureIdByName('2,000 message credits/month'), value: 2000 },
-          { featureId: getFeatureIdByName('2 chatbots'), value: 2 },
-          { featureId: getFeatureIdByName('11,000,000 characters/chatbot'), value: 11000000 },
-          { featureId: getFeatureIdByName('Unlimited links to train on'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('API access'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Integrations'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Basic Analytics'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Message Credits'), value: 2000 },
+          { featureId: getFeatureIdByName('Chatbots'), value: 2 },
+          { featureId: getFeatureIdByName('Characters Per Chatbot'), value: 11000000 },
+          { featureId: getFeatureIdByName('API Access'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Analytics'), value: null }, // Unlimited
+        ],
+      },
+      frontendFeatures: {
+        create: [
+          { featureId: getFrontendFeatureIdByName('Message Credits') },
+          { featureId: getFrontendFeatureIdByName('Chatbots') },
+          { featureId: getFrontendFeatureIdByName('Characters Per Chatbot') },
+          { featureId: getFrontendFeatureIdByName('API Access') },
+          { featureId: getFrontendFeatureIdByName('Analytics') },
         ],
       },
     },
@@ -180,17 +218,26 @@ async function main() {
   const standardPlan = await prisma.plan.create({
     data: {
       name: 'Standard',
-      description: 'For small businesses needing advanced features.',
+      description: 'For small businesses needing more power.',
       monthlyPrice: 9900, // $99.00 in cents
       yearlyPrice: 99900, // $999.00 in cents
       stripeMonthlyPriceId: 'price_1PIGjrCVtIA4fkI2LyvHLMx0',
       stripeYearlyPriceId: 'price_1PIGjrCVtIA4fkI2LyvHLMx0',
+      isAddOn: false,
       features: {
         create: [
-          { featureId: getFeatureIdByName('10,000 message credits/month'), value: 10000 },
-          { featureId: getFeatureIdByName('5 chatbots'), value: 5 },
-          { featureId: getFeatureIdByName('3 team members'), value: 3 },
-          { featureId: getFeatureIdByName('Option to choose GPT-4 and GPT-4-Turbo'), value: null },
+          { featureId: getFeatureIdByName('Message Credits'), value: 10000 },
+          { featureId: getFeatureIdByName('Chatbots'), value: 5 },
+          { featureId: getFeatureIdByName('Team Members'), value: 3 },
+          { featureId: getFeatureIdByName('API Access'), value: null }, // Unlimited
+        ],
+      },
+      frontendFeatures: {
+        create: [
+          { featureId: getFrontendFeatureIdByName('Message Credits') },
+          { featureId: getFrontendFeatureIdByName('Chatbots') },
+          { featureId: getFrontendFeatureIdByName('Characters Per Chatbot') },
+          { featureId: getFrontendFeatureIdByName('API Access') },
         ],
       },
     },
@@ -199,23 +246,35 @@ async function main() {
   const unlimitedPlan = await prisma.plan.create({
     data: {
       name: 'Unlimited',
-      description: 'For enterprises needing unlimited access.',
+      description: 'For enterprises needing everything.',
       monthlyPrice: 39900, // $399.00 in cents
-      yearlyPrice: 399900, // $3,999.00 in cents
+      yearlyPrice: 399900, // $3999.00 in cents
       stripeMonthlyPriceId: 'price_1PGDJZCVtIA4fkI2V8ufr2Hd',
       stripeYearlyPriceId: 'price_1PIGjPCVtIA4fkI2I9z76rke',
+      isAddOn: false,
       features: {
         create: [
-          { featureId: getFeatureIdByName('40,000 message credits/month included'), value: 40000 },
-          { featureId: getFeatureIdByName('10 chatbots'), value: 10 },
-          { featureId: getFeatureIdByName('5 team members'), value: 5 },
-          { featureId: getFeatureIdByName("Remove 'Powered by Chatbase'"), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Use your own custom domains'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Message Credits'), value: 40000 },
+          { featureId: getFeatureIdByName('Chatbots'), value: 10 },
+          { featureId: getFeatureIdByName('Team Members'), value: 5 },
+          { featureId: getFeatureIdByName('Remove "Powered by Chatbase"'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Use Your Own Custom Domains'), value: null }, // Unlimited
           { featureId: getFeatureIdByName('Advanced Analytics'), value: null }, // Unlimited
+        ],
+      },
+      frontendFeatures: {
+        create: [
+          { featureId: getFrontendFeatureIdByName('Message Credits') },
+          { featureId: getFrontendFeatureIdByName('Chatbots') },
+          { featureId: getFrontendFeatureIdByName('Team Members') },
+          { featureId: getFrontendFeatureIdByName('Remove "Powered by Chatbase"') },
+          { featureId: getFrontendFeatureIdByName('Use Your Own Custom Domains') },
+          { featureId: getFrontendFeatureIdByName('Advanced Analytics') },
         ],
       },
     },
   });
+
 
   await prisma.accountSidebarOption.createMany({
     data: [

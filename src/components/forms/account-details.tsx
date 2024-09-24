@@ -36,11 +36,7 @@ import { useToast } from '../ui/use-toast'
 import * as z from 'zod'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import {
-  deleteAccount,
-  initUser,
-  upsertAccount,
-} from '@/lib/queries'
+import { deleteAccount, initUser, upsertAccount } from '@/lib/queries'
 import { Button } from '../ui/button'
 import Loading from '../global/loading'
 import { useUser } from '@clerk/nextjs'
@@ -77,6 +73,7 @@ const AccountDetails = ({ data, isCreating }: Props) => {
       referralSource: ReferralSource.GOOGLE,
     },
   })
+
   const isLoading = form.formState.isSubmitting
 
   useEffect(() => {
@@ -104,9 +101,10 @@ const AccountDetails = ({ data, isCreating }: Props) => {
 
   const handleSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
-      let newUserData;
       let custId;
+  
       if (isCreating) {
+        // Create the customer in Stripe
         const bodyData = {
           email: values.companyEmail,
           name: values.name,
@@ -126,16 +124,15 @@ const AccountDetails = ({ data, isCreating }: Props) => {
   
         const customerData: { customerId: string } = await customerResponse.json();
         custId = customerData.customerId;
-        newUserData = await initUser({ role: 'ACCOUNT_OWNER' })
-
       }
-
-      const response = await upsertAccount(
-      {
+  
+      // Upsert the account in the database
+      const accountResponse = await upsertAccount(
+        {
           id: data?.id || uuidv4(),
           customerId: data?.customerId || custId || '',
           name: values.name,
-          companyEmail: values.companyEmail, // Ensure companyEmail is passed
+          companyEmail: values.companyEmail,
           industry: values.industry,
           otherIndustry: values.otherIndustry || null,
           referralSource: values.referralSource,
@@ -146,13 +143,17 @@ const AccountDetails = ({ data, isCreating }: Props) => {
         isCreating
       );
   
-      if (!response) {
+      if (!accountResponse) {
         throw new Error('Failed to upsert account');
       }
+  
+      // Once the account is created, initialize the user and associate it with the new account
+      await initUser({ role: 'ACCOUNT_OWNER', accountId: accountResponse.id });
   
       toast({
         title: isCreating ? 'Created Account' : 'Updated Account',
       });
+  
       router.refresh();
     } catch (error) {
       console.error('Error during form submission:', error);
@@ -232,95 +233,91 @@ const AccountDetails = ({ data, isCreating }: Props) => {
                       </FormItem>
                     )}
                   />
-                  {isCreating && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="industry"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Industry</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={handleIndustryChange}
-                                defaultValue={field.value}
-                              >
-                                <SelectTrigger className="border-gray-300">
-                                  <SelectValue placeholder="Select an industry" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={Industry.TECHNOLOGY}>Technology</SelectItem>
-                                  <SelectItem value={Industry.HEALTHCARE}>Healthcare</SelectItem>
-                                  <SelectItem value={Industry.FINANCE}>Finance</SelectItem>
-                                  <SelectItem value={Industry.EDUCATION}>Education</SelectItem>
-                                  <SelectItem value={Industry.RETAIL}>Retail</SelectItem>
-                                  <SelectItem value={Industry.OTHER}>Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {showOtherIndustry && (
-                        <FormField
-                          control={form.control}
-                          name="otherIndustry"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Other Industry</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Specify your industry" {...field} className="border-gray-300" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Industry</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={handleIndustryChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="border-gray-300">
+                              <SelectValue placeholder="Select an industry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={Industry.TECHNOLOGY}>Technology</SelectItem>
+                              <SelectItem value={Industry.HEALTHCARE}>Healthcare</SelectItem>
+                              <SelectItem value={Industry.FINANCE}>Finance</SelectItem>
+                              <SelectItem value={Industry.EDUCATION}>Education</SelectItem>
+                              <SelectItem value={Industry.RETAIL}>Retail</SelectItem>
+                              <SelectItem value={Industry.OTHER}>Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {showOtherIndustry && (
+                    <FormField
+                      control={form.control}
+                      name="otherIndustry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Other Industry</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Specify your industry" {...field} className="border-gray-300" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                      <FormField
-                        control={form.control}
-                        name="referralSource"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>How did you hear about us?</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={handleReferralSourceChange}
-                                defaultValue={field.value}
-                              >
-                                <SelectTrigger className="border-gray-300">
-                                  <SelectValue placeholder="Select a referral source" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={ReferralSource.GOOGLE}>Google</SelectItem>
-                                  <SelectItem value={ReferralSource.FACEBOOK}>Facebook</SelectItem>
-                                  <SelectItem value={ReferralSource.LINKEDIN}>LinkedIn</SelectItem>
-                                  <SelectItem value={ReferralSource.TWITTER}>Twitter</SelectItem>
-                                  <SelectItem value={ReferralSource.FRIEND}>Friend</SelectItem>
-                                  <SelectItem value={ReferralSource.OTHER}>Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {showOtherReferral && (
-                        <FormField
-                          control={form.control}
-                          name="otherReferralSource"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Other Referral Source</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Specify your referral source" {...field} className="border-gray-300" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    />
+                  )}
+                  <FormField
+                    control={form.control}
+                    name="referralSource"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>How did you hear about us?</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={handleReferralSourceChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="border-gray-300">
+                              <SelectValue placeholder="Select a referral source" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={ReferralSource.GOOGLE}>Google</SelectItem>
+                              <SelectItem value={ReferralSource.FACEBOOK}>Facebook</SelectItem>
+                              <SelectItem value={ReferralSource.LINKEDIN}>LinkedIn</SelectItem>
+                              <SelectItem value={ReferralSource.TWITTER}>Twitter</SelectItem>
+                              <SelectItem value={ReferralSource.FRIEND}>Friend</SelectItem>
+                              <SelectItem value={ReferralSource.OTHER}>Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {showOtherReferral && (
+                    <FormField
+                      control={form.control}
+                      name="otherReferralSource"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Other Referral Source</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Specify your referral source" {...field} className="border-gray-300" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </>
+                    />
                   )}
                 </div>
                 <div className="flex justify-end">

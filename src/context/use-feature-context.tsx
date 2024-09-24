@@ -3,7 +3,7 @@ import React, { createContext, useContext } from 'react';
 import { usePlanAddOn } from './use-plan-addon-context';
 
 interface FeatureContextType {
-  hasFeature: (featureName: string) => boolean;
+  hasFeature: (featureIdentifier: string) => boolean;
 }
 
 const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
@@ -11,9 +11,14 @@ const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
 export const FeatureProvider: React.FC = ({ children }) => {
   const { plan } = usePlanAddOn();
 
-  const hasFeature = (featureName: string) => {
-    if (!plan) return false;
-    return plan.features.some((f: any) => f.feature.name === featureName);
+  const hasFeature = (featureIdentifier: string) => {
+    if (!plan || !plan.features) {
+      console.warn("Plan or features not available");
+      return false;
+    }
+
+    // Check if the feature with the given identifier exists
+    return plan.features.some((f: any) => f.identifier === featureIdentifier);
   };
 
   return (

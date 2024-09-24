@@ -6,8 +6,6 @@ import { getNotificationAndUser, verifyAndAcceptInvitation } from '@/lib/queries
 import { currentUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import React from 'react';
-import { PlanAddOnProvider } from '@/context/use-plan-addon-context'; // Import PlanProvider
-
 type Props = {
   children: React.ReactNode;
   params: { accountId: string };
@@ -37,7 +35,6 @@ const layout = async ({ children, params }: Props) => {
   if (notifications) allNoti = notifications;
 
   return (
-    <PlanAddOnProvider userId={user.id}> {/* Wrap the components with PlanProvider */}
       <div className="h-screen overflow-hidden">
         <Sidebar id={params.accountId} type="account" />
         <div className="md:pl-[300px]">
@@ -47,7 +44,6 @@ const layout = async ({ children, params }: Props) => {
           </div>
         </div>
       </div>
-    </PlanAddOnProvider>
   );
 };
 
