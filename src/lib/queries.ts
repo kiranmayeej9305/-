@@ -256,25 +256,45 @@ export const upsertAccount = async (account: Account, isCreating: boolean) => {
   }
 
   try {
-    const accountDetails = await db.account.upsert({
-      where: { id: account.id || '' },
-      update: {
-        ...account,
-        updatedAt: new Date(),
-      },
-      create: {
-        ...account,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+    return await db.$transaction(async (transaction) => {
+      // Upsert account details
+      const accountDetails = await transaction.account.upsert({
+        where: { id: account.id || '' },
+        update: { ...account },
+        create: { ...account, createdAt: new Date() },
+      });
+
+      console.log('Account upserted successfully:', accountDetails);
+
+      if (isCreating) {
+        console.log(`Creating sidebar options for account ID: ${accountDetails.id}`);
+
+        // Fetch the free plan features in one query
+        const freePlanFeatures = await transaction.planFeature.findMany({
+          where: {
+            plan: {
+              name: 'Free',
+            },
+          },
+        });
+
+        const usageRecords = freePlanFeatures.map((feature) => ({
+          accountId: accountDetails.id,
+          planFeatureId: feature.id,
+          usageCount: 0,
+          lastReset: new Date(),
+        }));
+
+        await transaction.accountUsage.createMany({
+          data: usageRecords,
+          skipDuplicates: true,
+        });
+
+        console.log('Account usage records upserted successfully');
+      }
+
+      return accountDetails;
     });
-
-    console.log('Account upserted successfully:', accountDetails);
-
-    if (isCreating) {
-      console.log(`Creating sidebar options for account ID: ${accountDetails.id}`);
-    }
-    return accountDetails;
   } catch (error) {
     console.error('Error during account upsert:', error);
     throw new Error('Account upsert failed');
@@ -799,6 +819,7 @@ export const getChatbotSidebarOptions = async (chatbotId: string) => {
   }
 };
 
+
 export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating: boolean) => {
   if (!chatbot.name) return null;
 
@@ -847,7 +868,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
       // Create sidebar options only if creating a new chatbot
       if (isCreating) {
         await transaction.interface.upsert({
-          where: { chatbotId: chatbotId },
+          where: { chatbotId },
           update: {
             icon: "",
             userAvatar: "",
@@ -858,7 +879,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
             chatbotMsgBackgroundColour: "#f0f0f0",
             userTextColor: "#000000",
             chatbotTextColor: "#000000",
-            botDisplayNameColor: "#000000", // New field for bot display name color
+            botDisplayNameColor: "#000000",
             helpdesk: false,
             copyRightMessage: "Powered By | Your Company | https://example.com",
             footerText: "By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy",
@@ -872,7 +893,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
           },
           create: {
             id: v4(),
-            chatbotId: chatbotId,
+            chatbotId,
             icon: "",
             userAvatar: "/images/user.png",
             chatbotAvatar: "/images/chatbot.png",
@@ -882,7 +903,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
             chatbotMsgBackgroundColour: "#f0f0f0",
             userTextColor: "#000000",
             chatbotTextColor: "#000000",
-            botDisplayNameColor: "#000000", // New field for bot display name color
+            botDisplayNameColor: "#000000",
             helpdesk: false,
             copyRightMessage: "Powered By | Your Company | https://example.com",
             footerText: "By chatting, you agree to our | Privacy Policy | https://example.com/privacy-policy",
@@ -895,10 +916,33 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
             isLiveAgentEnabled: false,
           },
         });
+        
         await transaction.chatbotSettings.upsert({
           where: { chatbotId },
           update: settings,
           create: { ...settings, chatbotId },
+        });
+
+        // Insert only chatbot-level free plan features into the chatbot usage table
+        const freePlanFeatures = await transaction.planFeature.findMany({
+          where: {
+            feature: {
+              type: 'chatbot',
+            },
+            plan: {
+              name: 'Free',
+            },
+          },
+        });
+
+        await transaction.chatbotUsage.createMany({
+          data: freePlanFeatures.map((feature) => ({
+            chatbotId,
+            planFeatureId: feature.id,
+            usageCount: 0,
+            lastReset: new Date(),
+          })),
+          skipDuplicates: true,
         });
       }
       return response;
@@ -2166,7 +2210,6 @@ export const deleteLead = async (id: string) => {
   })
 }
 export async function getPlanDetailsForUser(userId: string) {
-  // Fetch the account and customer ID associated with the user
   const account = await db.account.findFirst({
     where: {
       users: {
@@ -2175,7 +2218,7 @@ export async function getPlanDetailsForUser(userId: string) {
     },
     select: {
       id: true,
-      customerId: true, // Fetch customerId for Stripe billing
+      customerId: true,
     },
   });
 
@@ -2183,23 +2226,22 @@ export async function getPlanDetailsForUser(userId: string) {
     return null;
   }
 
-  // Fetch the user's active subscription (non-add-on plan)
   const subscription = await db.subscription.findFirst({
     where: {
       accountId: account.id,
-      isAddOn: false, // Regular plans only
+      isAddOn: false,
     },
     include: {
       Plan: {
         include: {
           features: {
             include: {
-              feature: true, // Join with the `Feature` model to fetch details
+              feature: true,
             },
           },
           frontendFeatures: {
             include: {
-              feature: true, // Join with the `FrontendFeature` model to fetch details
+              feature: true,
             },
           },
         },
@@ -2207,19 +2249,18 @@ export async function getPlanDetailsForUser(userId: string) {
     },
   });
 
-  // Fetch the "Free Plan" dynamically if no subscription is found
   if (!subscription) {
     const freePlan = await db.plan.findFirst({
       where: { name: 'Free', isAddOn: false },
       include: {
         features: {
           include: {
-            feature: true, // Join with actual feature data
+            feature: true,
           },
         },
         frontendFeatures: {
           include: {
-            feature: true, // Join with actual frontend feature data
+            feature: true,
           },
         },
       },
@@ -2229,29 +2270,29 @@ export async function getPlanDetailsForUser(userId: string) {
       customerId: account.customerId,
       plan: {
         planName: freePlan?.name || 'Free',
-        planDescription: freePlan?.description || 'Access to basic features.',
+        planDescription: freePlan?.description || 'Basic access features.',
         billingCycle: 'monthly',
-        price: freePlan?.monthlyPrice || 0, // Free plan has no cost
+        price: freePlan?.monthlyPrice || 0,
         features: freePlan?.features.map((f) => ({
-          identifier: f.feature.identifier, // Include identifier from Feature
+          identifier: f.feature.identifier,
           name: f.feature.name,
           description: f.feature.description,
-          value: f.value !== null ? f.value : 'Unlimited', // Quantitative feature
+          planFeatureId: f.id, // Include the planFeatureId
+          value: f.value !== null ? f.value : 'Unlimited',
         })) || [],
         frontendFeatures: freePlan?.frontendFeatures.map((f) => ({
           name: f.feature.name,
           description: f.feature.description,
         })) || [],
       },
-      addons: [], // No add-ons for Free Plan
+      addons: [],
     };
   }
 
-  // Fetch all add-ons associated with the account
   const addOns = await db.subscription.findMany({
     where: {
       accountId: subscription.accountId,
-      isAddOn: true, // Fetch only add-ons
+      isAddOn: true,
       active: true,
     },
     include: {
@@ -2259,12 +2300,12 @@ export async function getPlanDetailsForUser(userId: string) {
         include: {
           features: {
             include: {
-              feature: true, // Join with the `Feature` model to fetch details
+              feature: true,
             },
           },
           frontendFeatures: {
             include: {
-              feature: true, // Join with the `FrontendFeature` model to fetch details
+              feature: true,
             },
           },
         },
@@ -2272,16 +2313,12 @@ export async function getPlanDetailsForUser(userId: string) {
     },
   });
 
-  // Get plan details and billing cycle
   const { Plan, priceId } = subscription;
   const billingCycle = Plan?.stripeMonthlyPriceId === priceId ? 'monthly' : 'yearly';
   const planPrice = billingCycle === 'monthly' ? Plan?.monthlyPrice : Plan?.yearlyPrice;
 
-  // Prepare the add-ons with both functional and frontend feature details
   const addOnsDetails = addOns.map((addon) => {
-    const addOnPrice = addon.Plan.stripeMonthlyPriceId === addon.priceId
-      ? addon.Plan.monthlyPrice
-      : addon.Plan.yearlyPrice;
+    const addOnPrice = addon.Plan.stripeMonthlyPriceId === addon.priceId ? addon.Plan.monthlyPrice : addon.Plan.yearlyPrice;
 
     return {
       name: addon.Plan.name,
@@ -2289,10 +2326,11 @@ export async function getPlanDetailsForUser(userId: string) {
       price: addOnPrice,
       billingCycle: addon.Plan.stripeMonthlyPriceId === addon.priceId ? 'monthly' : 'yearly',
       features: addon.Plan.features.map((f) => ({
-        identifier: f.feature.identifier, // Include identifier from Feature
+        identifier: f.feature.identifier,
         name: f.feature.name,
         description: f.feature.description,
-        value: f.value !== null ? f.value : 'Unlimited', // Quantitative value
+        planFeatureId: f.id, // Include planFeatureId for addons
+        value: f.value !== null ? f.value : 'Unlimited',
       })),
       frontendFeatures: addon.Plan.frontendFeatures.map((f) => ({
         name: f.feature.name,
@@ -2301,7 +2339,6 @@ export async function getPlanDetailsForUser(userId: string) {
     };
   });
 
-  // Return the structured data with all plan and add-on details
   return {
     customerId: account.customerId,
     plan: {
@@ -2310,17 +2347,18 @@ export async function getPlanDetailsForUser(userId: string) {
       billingCycle,
       price: planPrice || 0,
       features: Plan?.features.map((f) => ({
-        identifier: f.feature.identifier, // Include identifier for functional features
+        identifier: f.feature.identifier,
         name: f.feature.name,
         description: f.feature.description,
-        value: f.value !== null ? f.value : 'Unlimited', // Quantitative feature
+        planFeatureId: f.id, // Include the planFeatureId
+        value: f.value !== null ? f.value : 'Unlimited',
       })) || [],
       frontendFeatures: Plan?.frontendFeatures.map((f) => ({
         name: f.feature.name,
         description: f.feature.description,
       })) || [],
     },
-    addons: addOnsDetails.length > 0 ? addOnsDetails : [], // Ensure addons are a list
+    addons: addOnsDetails.length > 0 ? addOnsDetails : [],
   };
 }
 
@@ -2416,3 +2454,164 @@ export async function getAccountSubscription(accountId: string) {
     },
   });
 }
+export const checkFeatureUsageLimit = async (
+  planFeatureId: string,
+  type: 'account' | 'chatbot',
+  id: string
+) => {
+  const usageRecord = await (type === 'account'
+    ? db.accountUsage.findFirst({
+        where: {
+          accountId: id,
+          planFeatureId: planFeatureId, // Ensure it's checking by planFeatureId
+        },
+      })
+    : db.chatbotUsage.findFirst({
+        where: {
+          chatbotId: id,
+          planFeatureId: planFeatureId, // Ensure it's checking by planFeatureId
+        },
+      }));
+
+  const currentUsage = usageRecord ? usageRecord.usageCount : 0;
+
+  // Fetch the limit for this plan feature from the planFeatureId
+  const planFeature = await db.planFeature.findFirst({
+    where: { id: planFeatureId },
+  });
+
+  if (!planFeature) {
+    throw new Error(`PlanFeature with ID ${planFeatureId} not found.`);
+  }
+
+  const limit = planFeature.value !== null ? planFeature.value : Infinity; // Handle 'Unlimited' features
+  return currentUsage >= limit; // Return true if usage exceeds or meets the limit
+};
+
+
+export const incrementUsage = async (
+  planFeatureId: string,
+  type: 'account' | 'chatbot',
+  id: string
+) => {
+  const now = new Date();
+
+  if (type === 'account') {
+    // Upsert usage record for the account-level feature
+    await db.accountUsage.upsert({
+      where: {
+        accountId_planFeatureId: {
+          accountId: id,
+          planFeatureId, // Ensure it's using planFeatureId
+        },
+      },
+      update: {
+        usageCount: { increment: 1 },
+        lastReset: now, // Update reset time if needed
+      },
+      create: {
+        accountId: id,
+        planFeatureId,
+        usageCount: 1, // Start at 1 if this is a new record
+        lastReset: now,
+      },
+    });
+  } else if (type === 'chatbot') {
+    // Upsert usage record for the chatbot-level feature
+    await db.chatbotUsage.upsert({
+      where: {
+        chatbotId_planFeatureId: {
+          chatbotId: id,
+          planFeatureId, // Ensure it's using planFeatureId
+        },
+      },
+      update: {
+        usageCount: { increment: 1 },
+        lastReset: now, // Update reset time if needed
+      },
+      create: {
+        chatbotId: id,
+        planFeatureId,
+        usageCount: 1, // Start at 1 if this is a new record
+        lastReset: now,
+      },
+    });
+  }
+};
+
+export const resetUsageForAccountAndChatbots = async (accountId: string, featureIdentifiers: string[]) => {
+  try {
+    const now = new Date();
+
+    // Get the PlanFeature IDs for the specified features
+    const planFeatures = await db.planFeature.findMany({
+      where: {
+        feature: {
+          identifier: { in: featureIdentifiers },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const planFeatureIds = planFeatures.map((pf) => pf.id);
+
+    // Reset usage for the account only for the specified features
+    await db.accountUsage.updateMany({
+      where: {
+        accountId,
+        planFeatureId: { in: planFeatureIds },
+      },
+      data: {
+        usageCount: 0,
+        lastReset: now,
+      },
+    });
+
+    // Get all chatbots under this account
+    const chatbots = await db.chatbot.findMany({
+      where: { accountId },
+      select: { id: true },
+    });
+
+    // Reset usage for each chatbot under the account only for the specified features
+    for (const chatbot of chatbots) {
+      await db.chatbotUsage.updateMany({
+        where: {
+          chatbotId: chatbot.id,
+          planFeatureId: { in: planFeatureIds },
+        },
+        data: {
+          usageCount: 0,
+          lastReset: now,
+        },
+      });
+    }
+
+    console.log(`🟢 Successfully reset usage for account ${accountId} and its chatbots for features: ${featureIdentifiers.join(', ')}`);
+  } catch (error) {
+    console.error(`🔴 Error resetting usage for account ${accountId}: ${error.message}`);
+  }
+};
+
+export const resetUsageForAllAccounts = async (featureIdentifiers: string[]) => {
+  try {
+    const now = new Date();
+
+    // Get all accounts
+    const accounts = await db.account.findMany({
+      select: { id: true },
+    });
+
+    for (const account of accounts) {
+      // Reset usage for the account and its chatbots for specific features
+      await resetUsageForAccountAndChatbots(account.id, featureIdentifiers);
+    }
+
+    console.log(`🟢 Successfully reset usage for all accounts and their chatbots for features: ${featureIdentifiers.join(', ')}`);
+  } catch (error) {
+    console.error(`🔴 Error resetting usage for all accounts: ${error.message}`);
+  }
+};
+

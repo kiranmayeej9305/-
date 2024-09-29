@@ -9,68 +9,81 @@ async function main() {
       name: 'Message Credits',
       description: 'Provides a limit for message credits.',
       identifier: 'message_credits',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Chatbots',
       description: 'Allows managing multiple chatbots.',
       identifier: 'chatbots',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Characters Per Chatbot',
       description: 'Defines characters limit per chatbot.',
       identifier: 'characters_per_chatbot',
+      type: 'chatbot', // Chatbot-level feature
     },
     {
       name: 'Team Members',
       description: 'Allows adding team members.',
       identifier: 'team_members',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Links for Training',
       description: 'Limit for chatbot training links.',
       identifier: 'links_for_training',
+      type: 'chatbot', // Chatbot-level feature
     },
     {
       name: 'Unlimited Embedding',
       description: 'Ability to embed on multiple websites.',
       identifier: 'unlimited_embedding',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Leads Capture',
       description: 'Capture leads from users.',
       identifier: 'leads_capture',
+      type: 'chatbot', // Chatbot-level feature
     },
     {
       name: 'Chat History',
       description: 'Access to chat history.',
       identifier: 'chat_history',
+      type: 'chatbot', // Chatbot-level feature
     },
     {
       name: 'API Access',
       description: 'Access the chatbot via API.',
       identifier: 'api_access',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Analytics',
       description: 'Access to chatbot analytics.',
       identifier: 'analytics',
+      type: 'chatbot', // Chatbot-level feature
     },
     {
       name: 'Remove "Powered by Chatbase"',
       description: 'Remove the "Powered by Chatbase" branding.',
       identifier: 'remove_powered_by_chatbase',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Use Your Own Custom Domains',
       description: 'Host chatbots on your own custom domains.',
       identifier: 'custom_domains',
+      type: 'account', // Account-level feature
     },
     {
       name: 'Advanced Analytics',
       description: 'Access to advanced analytics features.',
       identifier: 'advanced_analytics',
+      type: 'chatbot', // Chatbot-level feature
     },
-  ];
+  ];  
 
   // Insert Feature data
   for (const feature of featuresData) {

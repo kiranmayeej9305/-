@@ -1,10 +1,13 @@
+// context/QuantitativeFeatureContext.tsx
 'use client';
 
 import React, { createContext, useContext } from 'react';
 import { usePlanAddOn } from './use-plan-addon-context';
+import { checkFeatureUsageLimit, incrementUsage } from '@/lib/queries'; // Your DB queries
 
 interface QuantitativeFeatureContextType {
-  checkLimitExceeded: (featureName: string, usageCount: number) => boolean;
+  checkLimitExceeded: (planFeatureId: string, type: 'account' | 'chatbot', id: string) => Promise<boolean>;
+  incrementFeatureUsage: (planFeatureId: string, type: 'account' | 'chatbot', id: string) => Promise<void>;
 }
 
 const QuantitativeFeatureContext = createContext<QuantitativeFeatureContextType | undefined>(undefined);
@@ -12,35 +15,45 @@ const QuantitativeFeatureContext = createContext<QuantitativeFeatureContextType 
 export const QuantitativeFeatureProvider: React.FC = ({ children }) => {
   const { plan } = usePlanAddOn();
 
-  const checkLimitExceeded = (featureName: string, usageCount: number) => {
-    console.log(plan);
-
+  const findFeatureInPlan = (planFeatureId: string) => {
     if (!plan || !plan.features) {
-      console.warn("Plan or features not available");
-      return false; // If the plan or features aren't available, assume no limit is exceeded
+      console.warn('Plan or features not available');
+      return null;
     }
 
-    console.log("Plan features: ", plan.features); // Log features
+    // Find the plan feature by its ID in the current plan
+    return plan.features.find((f: any) => f.planFeatureId === planFeatureId);
+  };
 
-    // Find the feature based on the feature identifier (not nested under 'feature')
-    const feature = plan.features.find((f: any) => f.identifier === featureName);
-
+  const checkLimitExceeded = async (planFeatureId: string, type: 'account' | 'chatbot', id: string) => {
+    const feature = findFeatureInPlan(planFeatureId);
+    
     if (!feature) {
-      console.warn(`Feature "${featureName}" not found`);
-      return false; // Feature not found
+      console.warn(`Feature with planFeatureId "${planFeatureId}" not found in the current plan`);
+      return false;
     }
 
-    // Check if the feature allows unlimited usage
     if (feature.value === null || feature.value === 'Unlimited') {
       return false; // Unlimited usage allowed
     }
 
-    // Return whether the usage count exceeds the feature's value
-    return feature.value !== undefined && usageCount >= feature.value;
+    // Check usage limit via database
+    const usageExceeded = await checkFeatureUsageLimit(planFeatureId, type, id);
+    return usageExceeded >= feature.value;
+  };
+
+  const incrementFeatureUsage = async (planFeatureId: string, type: 'account' | 'chatbot', id: string) => {
+    const feature = findFeatureInPlan(planFeatureId);
+
+    if (!feature) {
+      throw new Error(`Cannot increment usage for unsupported feature planFeatureId: ${planFeatureId}`);
+    }
+
+    await incrementUsage(planFeatureId, type, id); // Proceed to increment usage in DB
   };
 
   return (
-    <QuantitativeFeatureContext.Provider value={{ checkLimitExceeded }}>
+    <QuantitativeFeatureContext.Provider value={{ checkLimitExceeded, incrementFeatureUsage }}>
       {children}
     </QuantitativeFeatureContext.Provider>
   );

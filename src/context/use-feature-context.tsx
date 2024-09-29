@@ -1,4 +1,5 @@
-// context/FeatureContext.tsx
+'use client';
+
 import React, { createContext, useContext } from 'react';
 import { usePlanAddOn } from './use-plan-addon-context';
 
@@ -13,11 +14,11 @@ export const FeatureProvider: React.FC = ({ children }) => {
 
   const hasFeature = (featureIdentifier: string) => {
     if (!plan || !plan.features) {
-      console.warn("Plan or features not available");
+      console.warn('Plan or features not available');
       return false;
     }
 
-    // Check if the feature with the given identifier exists
+    // Check if the feature with the given identifier exists in the plan
     return plan.features.some((f: any) => f.identifier === featureIdentifier);
   };
 

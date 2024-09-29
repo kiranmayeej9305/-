@@ -1,10 +1,10 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { getChatbotTypes, getDefaultPromptByChatbotTypeId, upsertAndFetchChatbotData } from '@/lib/queries';
 import Loading from '@/components/global/loading';
 import { useModal } from '@/providers/modal-provider';
+import { useQuantitativeFeature } from '@/context/use-quantitative-feature-context'; // Importing the quantitative feature context for usage tracking
+import { usePlanAddOn } from '@/context/use-plan-addon-context'; // Importing plan context
 
 const formSchema = z.object({
   name: z.string().nonempty(),
@@ -49,6 +51,8 @@ const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userNa
   const [defaultPrompt, setDefaultPrompt] = useState('');
   const [showCustomPrompts, setShowCustomPrompts] = useState(false);
   const router = useRouter();
+  const { plan } = usePlanAddOn(); // Get the current plan details
+  const { incrementFeatureUsage, checkLimitExceeded } = useQuantitativeFeature(); // Import context
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,7 +66,6 @@ const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userNa
   useEffect(() => {
     const fetchData = async () => {
       const chatbotTypeData = await getChatbotTypes();
-      // Add the "Custom" option manually
       setChatbotTypes(chatbotTypeData);
     };
     fetchData();
@@ -87,6 +90,24 @@ const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userNa
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const chatbotId = uuidv4(); // Generate a new ID for the chatbot
+      console.log(plan);
+      // Find the planFeatureId for 'chatbots' from the current plan
+      const chatbotPlanFeature = plan.features.find((feature: any) => feature.identifier === 'chatbots');
+
+      if (!chatbotPlanFeature) {
+        throw new Error('Chatbot feature not found in the current plan');
+      }
+
+      // Check if the limit is exceeded
+      const limitExceeded = await checkLimitExceeded(chatbotPlanFeature.planFeatureId, 'account', accountId);
+      if (limitExceeded) {
+        toast({
+          variant: 'destructive',
+          title: 'Chatbot Limit Reached',
+          description: 'You have reached the maximum number of chatbots allowed under your current plan. To create more chatbots, please consider upgrading your plan for additional features and capabilities.',
+        });        
+        return;
+      }
 
       const fullChatbotData = await upsertAndFetchChatbotData(
         {
@@ -111,6 +132,9 @@ const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userNa
         true // Flag indicating creation
       );
 
+      // Increment chatbot usage after successful creation
+      await incrementFeatureUsage(chatbotPlanFeature.planFeatureId, 'account', accountId);
+
       toast({
         title: 'Chatbot created',
         description: 'Successfully created your Chatbot.',
@@ -119,6 +143,7 @@ const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userNa
       setClose();
       router.refresh();
     } catch (error) {
+      console.error('Error creating chatbot:', error);
       toast({
         variant: 'destructive',
         title: 'Oops!',

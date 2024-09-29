@@ -152,6 +152,8 @@ model Account {
   Invitation          Invitation[]
   Notification        Notification[]
   Subscriptions       Subscription[] // Allow multiple subscriptions (regular plan + add-ons)
+  accountUsage AccountUsage[]  // Relation back to AccountUsage
+
 }
 
 model AIModel {
@@ -226,7 +228,7 @@ model Chatbot {
   ChatbotSettings      ChatbotSettings?
   ChatRooms            ChatRoom[]
   isPublic             Boolean               @default(false)
-
+  chatbotUsage ChatbotUsage[]  // Relation back to ChatbotUsage
   @@index([accountId])
 }
 
@@ -597,21 +599,25 @@ model Plan {
 }
 
 model PlanFeature {
-  id        Int      @id @default(autoincrement())           // Primary key with auto-incremented Int.
+  id         String   @id @default(uuid()) // Change to GUID
   plan      Plan     @relation(fields: [planId], references: [id])  // Foreign key relation to Plan.
   planId    String                                               // Referencing the `String` type `id` of Plan.
   feature   Feature  @relation(fields: [featureId], references: [id]) // Foreign key relation to Feature.
   featureId String                                               // Referencing the `String` type `id` of Feature.
   value     Int?     // Nullable value for unlimited features
+  accountUsage  AccountUsage[]
+  chatbotUsage  ChatbotUsage[]
   createdAt DateTime @default(now())                            // Timestamp for when the PlanFeature was created.
 }
 
 model Feature {
-  id            String         @id @default(cuid())   // Using `cuid()` to generate unique IDs as Strings.
-  name          String
-  description   String?                              // Nullable description field.
-  identifier    String         @unique               // Identifier field for programmatic usage.
-  planFeatures  PlanFeature[]                        // Relation to PlanFeature.
+  id             String   @id @default(cuid())
+  name           String
+  identifier     String   @unique
+  description    String?
+  type           String?
+  // Relations
+  planFeatures  PlanFeature[]
 }
 
 
@@ -661,4 +667,28 @@ model PlanFrontendFeature {
   plan      Plan             @relation(fields: [planId], references: [id])
   feature   FrontendFeature  @relation(fields: [featureId], references: [id])
   createdAt DateTime         @default(now())
+}
+
+model AccountUsage {
+  id          String   @id @default(cuid())
+  accountId   String
+  planFeatureId String     // Changed to planFeatureId instead of featureId
+  usageCount  Int      @default(0)
+  lastReset   DateTime @default(now())  // Track when the usage was last reset
+  planFeature PlanFeature @relation(fields: [planFeatureId], references: [id]) // Change to planFeature
+  account     Account  @relation(fields: [accountId], references: [id])
+  @@unique([accountId, planFeatureId]) // Compound unique constraint
+
+}
+
+model ChatbotUsage {
+  id          String   @id @default(cuid())
+  chatbotId   String
+  planFeatureId String     // Changed to planFeatureId instead of featureId
+  usageCount  Int      @default(0)
+  lastReset   DateTime @default(now())  // Track when the usage was last reset
+  planFeature PlanFeature @relation(fields: [planFeatureId], references: [id]) // Change to planFeature
+  chatbot     Chatbot  @relation(fields: [chatbotId], references: [id])
+  @@unique([chatbotId, planFeatureId]) // Compound unique constraint
+
 }
