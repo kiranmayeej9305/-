@@ -28,8 +28,6 @@ const PricingCard = ({
   description,
   duration,
   features,
-  highlightDescription,
-  highlightTitle,
   planExists,
   title,
   prices,

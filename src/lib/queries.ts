@@ -9,11 +9,9 @@ import { google } from 'googleapis';
 import {
   Account,
   Lane,
-  Plan,
   Prisma,
   Role,
   Chatbot,
-  Interface,
   Tag,
   Ticket,
   User,
@@ -2361,6 +2359,76 @@ export async function getPlanDetailsForUser(userId: string) {
     addons: addOnsDetails.length > 0 ? addOnsDetails : [],
   };
 }
+export async function getAllPlans() {
+  try {
+
+    // Fetch regular plans with frontend features
+    const plans = await db.plan.findMany({
+      where: { isAddOn: false }, // Fetching only non-add-ons, regular plans
+      include: {
+        frontendFeatures: {
+          include: {
+            feature: true, // Include the actual FrontendFeature data
+          },
+        },
+      },
+    });
+
+    // Fetch add-ons with frontend features
+    const addOns = await db.plan.findMany({
+      where: { isAddOn: true }, // Fetching only add-ons
+      include: {
+        frontendFeatures: {
+          include: {
+            feature: true, // Include the actual FrontendFeature data
+          },
+        },
+      },
+    });
+
+    // Map regular plans and their frontend features
+    const mappedPlans = plans.map((plan) => {
+      return {
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        monthlyPrice: plan.monthlyPrice,
+        yearlyPrice: plan.yearlyPrice,
+        frontendFeatures: plan.frontendFeatures.map((f) => ({
+          name: f.feature.name, // Accessing the name from the feature object
+          description: f.feature.description, // Accessing the description from the feature object
+        })),
+      };
+    });
+
+    // Map add-ons and their frontend features
+    const mappedAddOns = addOns.map((addon) => {
+      return {
+        id: addon.id,
+        name: addon.name,
+        description: addon.description,
+        monthlyPrice: addon.monthlyPrice,
+        yearlyPrice: addon.yearlyPrice,
+        frontendFeatures: addon.frontendFeatures.map((f) => ({
+          name: f.feature.name,
+          description: f.feature.description,
+        })),
+      };
+    });
+
+    return {
+      plans: mappedPlans,
+      addOns: mappedAddOns,
+    };
+
+  } catch (error) {
+    console.error("Error fetching plans or add-ons:", error);
+    throw error;
+  }
+}
+
+
+
 
 
 
@@ -2615,3 +2683,253 @@ export const resetUsageForAllAccounts = async (featureIdentifiers: string[]) => 
   }
 };
 
+// Fetch all blogs
+export const getBlogs = async () => {
+  try {
+    const blogs = await db.blog.findMany({
+      include: {
+        blogTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+    return blogs;
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    throw new Error("Failed to fetch blogs");
+  }
+};
+
+// Fetch a single blog by ID
+export const getBlogById = async (id: string) => {
+  try {
+    const blog = await db.blog.findUnique({
+      where: { id },
+      include: {
+        blogTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+    return blog;
+  } catch (error) {
+    console.error(`Error fetching blog with ID ${id}:`, error);
+    throw new Error("Failed to fetch blog");
+  }
+};
+
+// Fetch tags for a blog by ID
+export const getBlogTagsById = async (id: string) => {
+  try {
+    const tags = await db.blogTag.findMany({
+      where: { blogId: id },
+      include: {
+        tag: true,
+      },
+    });
+    return tags;
+  } catch (error) {
+    console.error(`Error fetching tags for blog with ID ${id}:`, error);
+    throw new Error("Failed to fetch tags");
+  }
+};
+
+// Fetch all available topics
+export const getTopics = async () => {
+  try {
+    const topics = await db.topic.findMany();
+    return topics;
+  } catch (error) {
+    console.error("Error fetching topics:", error);
+    throw new Error("Failed to fetch topics");
+  }
+};
+
+// Fetch all available tags
+export const getTags = async () => {
+  try {
+    const tags = await db.tag.findMany();
+    return tags;
+  } catch (error) {
+    console.error("Error fetching tags:", error);
+    throw new Error("Failed to fetch tags");
+  }
+};
+
+// Create a new blog
+export const createBlog = async (blogData: any, tags: any[], image: string) => {
+  try {
+    const newBlog = await db.blog.create({
+      data: {
+        ...blogData,
+        imageUrl: image,
+        blogTags: {
+          create: tags.map((tag) => ({
+            tag: {
+              connectOrCreate: {
+                where: { name: tag.tag.name },
+                create: { name: tag.tag.name },
+              },
+            },
+          })),
+        },
+      },
+    });
+    return newBlog;
+  } catch (error) {
+    console.error("Error creating blog:", error);
+    throw new Error("Failed to create blog");
+  }
+};
+
+// Update a blog
+export const updateBlog = async (id: string, blogData: any, tags: any[], image: string) => {
+  try {
+    const updatedBlog = await db.blog.update({
+      where: { id },
+      data: {
+        ...blogData,
+        imageUrl: image,
+        blogTags: {
+          deleteMany: { blogId: id }, // Remove existing tags
+          create: tags.map((tag) => ({
+            tag: {
+              connectOrCreate: {
+                where: { name: tag.tag.name },
+                create: { name: tag.tag.name },
+              },
+            },
+          })),
+        },
+      },
+    });
+    return updatedBlog;
+  } catch (error) {
+    console.error(`Error updating blog with ID ${id}:`, error);
+    throw new Error("Failed to update blog");
+  }
+};
+
+// Delete a blog
+export const deleteBlog = async (id: string) => {
+  try {
+    const deletedBlog = await db.blog.delete({
+      where: { id },
+    });
+    return deletedBlog;
+  } catch (error) {
+    console.error(`Error deleting blog with ID ${id}:`, error);
+    throw new Error("Failed to delete blog");
+  }
+};
+
+// Create a new tag
+export const createTag = async (name: string) => {
+  try {
+    const newTag = await db.tag.create({
+      data: { name },
+    });
+    return newTag;
+  } catch (error) {
+    console.error("Error creating tag:", error);
+    throw new Error("Failed to create tag");
+  }
+};
+
+// Create a new topic
+export const createTopic = async (name: string) => {
+  try {
+    const newTopic = await db.topic.create({
+      data: { name },
+    });
+    return newTopic;
+  } catch (error) {
+    console.error("Error creating topic:", error);
+    throw new Error("Failed to create topic");
+  }
+};
+
+// Update settings
+export const updateSettings = async (settingsData: any) => {
+  try {
+    const updatedSettings = await db.settings.update({
+      where: { id: 'settings-id' }, // Assuming you have a settings ID
+      data: settingsData,
+    });
+    return updatedSettings;
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    throw new Error("Failed to update settings");
+  }
+};
+
+// Fetch settings
+export const getSettings = async () => {
+  try {
+    const settings = await db.settings.findUnique({
+      where: { id: 'settings-id' },
+    });
+    return settings;
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+    throw new Error("Failed to fetch settings");
+  }
+};
+
+export const upsertBlog = async (blogData) => {
+  const { id, title, content, author, publishedAt, blogTags, ...otherFields } = blogData;
+
+  // Ensure the `publishedAt` is in a valid ISO format
+  const formattedPublishedAt = new Date(publishedAt).toISOString();
+
+  // Format the blogTags to only include `tagId`, as `blogId` is automatically handled by Prisma
+  const blogTagData = blogTags.map(tag => ({
+    tagId: tag.tagId, // Only pass tagId here, not blogId
+  }));
+
+  if (!id || id === 0) {
+    // Create new blog post
+    return await prisma.blog.create({
+      data: {
+        title,
+        content,
+        author,
+        publishedAt: formattedPublishedAt, // Ensure the date is correctly formatted
+        blogTags: {
+          create: blogTagData, // Create the blog-tag relations using `tagId` only
+        },
+        ...otherFields, // Pass other fields like subTitle, status, etc.
+      },
+    });
+  } else {
+    // Update existing blog post
+    return await prisma.blog.upsert({
+      where: { id },  // Use `id` to find the blog post
+      update: {
+        title,
+        content,
+        author,
+        publishedAt: formattedPublishedAt, // Ensure the date is correctly formatted
+        blogTags: {
+          deleteMany: {},  // Clear existing blogTags
+          create: blogTagData,  // Add new blogTags using `tagId` only
+        },
+        ...otherFields, // Pass other fields like subTitle, status, etc.
+      },
+      create: {
+        title,
+        content,
+        author,
+        publishedAt: formattedPublishedAt, // Ensure the date is correctly formatted
+        blogTags: {
+          create: blogTagData, // Create the blog-tag relations using `tagId` only
+        },
+        ...otherFields, // Pass other fields like subTitle, status, etc.
+      },
+    });
+  }
+};

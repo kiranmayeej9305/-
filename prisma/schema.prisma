@@ -90,6 +90,46 @@ model CalendarIntegration {
   Chatbot        Chatbot  @relation(fields: [chatbotId], references: [id])
 }
 
+model Blog {
+  id          Int       @id @default(autoincrement())
+  title       String
+  subTitle    String?
+  content     String
+  author      String
+  publishedAt DateTime
+  status      String  // Draft, Published
+  path        String
+  excerpt     String?   // Nullable to match the C# model
+  imageUrl    String?
+  topicId     Int
+  topic       Topic     @relation(fields: [topicId], references: [id])
+  blogTags    BlogTag[] @relation("BlogToBlogTag")
+
+  // Other necessary fields
+}
+
+
+model Tag {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  blogTags BlogTag[] @relation("TagToBlogTag")  // Correct relation name
+}
+
+model BlogTag {
+  blogId Int
+  tagId  Int
+
+  blog   Blog @relation("BlogToBlogTag", fields: [blogId], references: [id], onDelete: Cascade)  // Named relation to Blog
+  tag    Tag  @relation("TagToBlogTag", fields: [tagId], references: [id], onDelete: Cascade)    // Named relation to Tag
+
+  @@id([blogId, tagId])  // Composite primary key to ensure uniqueness for blog-tag pair
+}
+
+model Topic {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  blogs Blog[]
+}
 
 model Appointment {
   id              String   @id @default(uuid())
@@ -214,7 +254,6 @@ model Chatbot {
   Trigger              Trigger[]
   Automation           Automation[]
   Pipeline             Pipeline[]
-  Tags                 Tag[]
   Notification         Notification[]
   Interface            Interface?
   HelpDesk             HelpDesk[]
@@ -251,19 +290,7 @@ model TrainingHistory {
   @@index([userId])
 }
 
-model Tag {
-  id        String   @id @default(uuid())
-  name      String
-  color     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chatbotId String
 
-  Chatbot Chatbot  @relation(fields: [chatbotId], references: [id], onDelete: Cascade)
-  Ticket  Ticket[]
-
-  @@index([chatbotId])
-}
 
 model Pipeline {
   id        String   @id @default(uuid())
@@ -300,7 +327,6 @@ model Ticket {
   Lane        Lane     @relation(fields: [laneId], references: [id], onDelete: Cascade)
   value       Decimal?
   description String?
-  Tags        Tag[]
 
   customerId String?
   Customer   Contact? @relation(fields: [customerId], references: [id], onDelete: SetNull)

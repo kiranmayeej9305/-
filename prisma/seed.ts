@@ -3,87 +3,86 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  // Seed Features with identifier for programmatic usage
   const featuresData = [
     {
       name: 'Message Credits',
       description: 'Provides a limit for message credits.',
       identifier: 'message_credits',
-      type: 'account', // Account-level feature
+      type: 'account',
     },
     {
       name: 'Chatbots',
       description: 'Allows managing multiple chatbots.',
       identifier: 'chatbots',
-      type: 'account', // Account-level feature
+      type: 'account',
     },
     {
       name: 'Characters Per Chatbot',
       description: 'Defines characters limit per chatbot.',
       identifier: 'characters_per_chatbot',
-      type: 'chatbot', // Chatbot-level feature
+      type: 'chatbot',
     },
     {
       name: 'Team Members',
       description: 'Allows adding team members.',
       identifier: 'team_members',
-      type: 'account', // Account-level feature
+      type: 'account',
     },
     {
       name: 'Links for Training',
       description: 'Limit for chatbot training links.',
       identifier: 'links_for_training',
-      type: 'chatbot', // Chatbot-level feature
+      type: 'chatbot',
     },
     {
       name: 'Unlimited Embedding',
       description: 'Ability to embed on multiple websites.',
       identifier: 'unlimited_embedding',
-      type: 'account', // Account-level feature
+      type: 'account',
     },
     {
       name: 'Leads Capture',
       description: 'Capture leads from users.',
       identifier: 'leads_capture',
-      type: 'chatbot', // Chatbot-level feature
+      type: 'chatbot',
     },
     {
       name: 'Chat History',
       description: 'Access to chat history.',
       identifier: 'chat_history',
-      type: 'chatbot', // Chatbot-level feature
+      type: 'chatbot',
     },
     {
       name: 'API Access',
       description: 'Access the chatbot via API.',
       identifier: 'api_access',
-      type: 'account', // Account-level feature
+      type: 'account',
     },
     {
       name: 'Analytics',
       description: 'Access to chatbot analytics.',
       identifier: 'analytics',
-      type: 'chatbot', // Chatbot-level feature
+      type: 'chatbot',
     },
     {
-      name: 'Remove "Powered by Chatbase"',
-      description: 'Remove the "Powered by Chatbase" branding.',
-      identifier: 'remove_powered_by_chatbase',
-      type: 'account', // Account-level feature
+      name: 'Remove "Powered by InsertBot"',
+      description: 'Remove the "Powered by InsertBot" branding.',
+      identifier: 'remove_powered_by_InsertBot',
+      type: 'account',
     },
     {
       name: 'Use Your Own Custom Domains',
       description: 'Host chatbots on your own custom domains.',
       identifier: 'custom_domains',
-      type: 'account', // Account-level feature
+      type: 'account',
     },
     {
       name: 'Advanced Analytics',
       description: 'Access to advanced analytics features.',
       identifier: 'advanced_analytics',
-      type: 'chatbot', // Chatbot-level feature
+      type: 'chatbot',
     },
-  ];  
+  ];
 
   // Insert Feature data
   for (const feature of featuresData) {
@@ -92,59 +91,59 @@ async function main() {
     });
   }
 
-  // Seed Frontend Features (no identifier here)
+  // Seed Frontend Features with quantity in description
   const frontendFeaturesData = [
     {
       name: 'Message Credits',
-      description: 'Provides a limit for message credits.',
+      description: 'Provides a limit for 20 message credits per month.',
     },
     {
       name: 'Chatbots',
-      description: 'Allows managing multiple chatbots.',
+      description: 'Allows managing up to 1 chatbot.',
     },
     {
       name: 'Characters Per Chatbot',
-      description: 'Defines characters limit per chatbot.',
+      description: 'Defines a limit of 400,000 characters per chatbot.',
     },
     {
       name: 'Team Members',
-      description: 'Allows adding team members.',
+      description: 'Allows adding up to 1 team member.',
     },
     {
       name: 'Links for Training',
-      description: 'Limit for chatbot training links.',
+      description: 'Limit for up to 10 chatbot training links.',
     },
     {
       name: 'Unlimited Embedding',
-      description: 'Ability to embed on multiple websites.',
+      description: 'Ability to embed on an unlimited number of websites.',
     },
     {
       name: 'Leads Capture',
-      description: 'Capture leads from users.',
+      description: 'Capture an unlimited number of leads from users.',
     },
     {
       name: 'Chat History',
-      description: 'Access to chat history.',
+      description: 'Access to an unlimited chat history.',
     },
     {
       name: 'API Access',
-      description: 'Access the chatbot via API.',
+      description: 'Unlimited API access to the chatbot.',
     },
     {
       name: 'Analytics',
-      description: 'Access to chatbot analytics.',
+      description: 'Access to unlimited chatbot analytics.',
     },
     {
-      name: 'Remove "Powered by Chatbase"',
-      description: 'Remove the "Powered by Chatbase" branding.',
+      name: 'Remove "Powered by InsertBot"',
+      description: 'Remove the "Powered by InsertBot" branding.',
     },
     {
       name: 'Use Your Own Custom Domains',
-      description: 'Host chatbots on your own custom domains.',
+      description: 'Host chatbots on your own custom domains (unlimited).',
     },
     {
       name: 'Advanced Analytics',
-      description: 'Access to advanced analytics features.',
+      description: 'Access to unlimited advanced analytics features.',
     },
   ];
 
@@ -180,8 +179,7 @@ async function main() {
           { featureId: getFeatureIdByName('Characters Per Chatbot'), value: 400000 },
           { featureId: getFeatureIdByName('Team Members'), value: 1 },
           { featureId: getFeatureIdByName('Links for Training'), value: 10 },
-          { featureId: getFeatureIdByName('Unlimited Embedding'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Leads Capture'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Unlimited Embedding'), value: null },
         ],
       },
       frontendFeatures: {
@@ -192,7 +190,6 @@ async function main() {
           { featureId: getFrontendFeatureIdByName('Team Members') },
           { featureId: getFrontendFeatureIdByName('Links for Training') },
           { featureId: getFrontendFeatureIdByName('Unlimited Embedding') },
-          { featureId: getFrontendFeatureIdByName('Leads Capture') },
         ],
       },
     },
@@ -212,8 +209,8 @@ async function main() {
           { featureId: getFeatureIdByName('Message Credits'), value: 2000 },
           { featureId: getFeatureIdByName('Chatbots'), value: 2 },
           { featureId: getFeatureIdByName('Characters Per Chatbot'), value: 11000000 },
-          { featureId: getFeatureIdByName('API Access'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Analytics'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('API Access'), value: null },
+          { featureId: getFeatureIdByName('Analytics'), value: null },
         ],
       },
       frontendFeatures: {
@@ -242,14 +239,14 @@ async function main() {
           { featureId: getFeatureIdByName('Message Credits'), value: 10000 },
           { featureId: getFeatureIdByName('Chatbots'), value: 5 },
           { featureId: getFeatureIdByName('Team Members'), value: 3 },
-          { featureId: getFeatureIdByName('API Access'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('API Access'), value: null },
         ],
       },
       frontendFeatures: {
         create: [
           { featureId: getFrontendFeatureIdByName('Message Credits') },
           { featureId: getFrontendFeatureIdByName('Chatbots') },
-          { featureId: getFrontendFeatureIdByName('Characters Per Chatbot') },
+          { featureId: getFrontendFeatureIdByName('Team Members') },
           { featureId: getFrontendFeatureIdByName('API Access') },
         ],
       },
@@ -270,9 +267,9 @@ async function main() {
           { featureId: getFeatureIdByName('Message Credits'), value: 40000 },
           { featureId: getFeatureIdByName('Chatbots'), value: 10 },
           { featureId: getFeatureIdByName('Team Members'), value: 5 },
-          { featureId: getFeatureIdByName('Remove "Powered by Chatbase"'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Use Your Own Custom Domains'), value: null }, // Unlimited
-          { featureId: getFeatureIdByName('Advanced Analytics'), value: null }, // Unlimited
+          { featureId: getFeatureIdByName('Remove "Powered by InsertBot"'), value: null },
+          { featureId: getFeatureIdByName('Use Your Own Custom Domains'), value: null },
+          { featureId: getFeatureIdByName('Advanced Analytics'), value: null },
         ],
       },
       frontendFeatures: {
@@ -280,7 +277,7 @@ async function main() {
           { featureId: getFrontendFeatureIdByName('Message Credits') },
           { featureId: getFrontendFeatureIdByName('Chatbots') },
           { featureId: getFrontendFeatureIdByName('Team Members') },
-          { featureId: getFrontendFeatureIdByName('Remove "Powered by Chatbase"') },
+          { featureId: getFrontendFeatureIdByName('Remove "Powered by InsertBot"') },
           { featureId: getFrontendFeatureIdByName('Use Your Own Custom Domains') },
           { featureId: getFrontendFeatureIdByName('Advanced Analytics') },
         ],

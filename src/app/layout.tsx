@@ -9,7 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnarToaster } from '@/components/ui/sonner';
 import { QuantitativeFeatureProvider } from '@/context/use-quantitative-feature-context';
 import { PlanAddOnProvider } from '@/context/use-plan-addon-context';
-import { FeatureProvider } from '@/context/use-feature-context'; // Import FeatureProvider
+import { FeatureProvider } from '@/context/use-feature-context'; 
 
 const font = DM_Sans({ subsets: ['latin'] });
 
