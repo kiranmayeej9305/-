@@ -25,7 +25,7 @@ const Topics = ({ maxTopics = 5 }: { maxTopics?: number }) => {
   }, [maxTopics]);
 
   const handleTopicClick = (topicName: string) => {
-    router.push(`/blog/topics/${topicName}`);
+    router.push(`/blogs/topics/${topicName}`);
   };
 
   return (

@@ -39,17 +39,21 @@ export default authMiddleware({
       )
     }
 
-    if (url.pathname === '/sign-in' || url.pathname === '/sign-up') {
+    if (url.pathname === '/sign-in') {
       return NextResponse.redirect(new URL(`/account/sign-in`, req.url))
     }
-
-    if (
-      url.pathname === '/' ||
-      (url.pathname === '/site' && url.host === process.env.NEXT_PUBLIC_DOMAIN)
-    ) {
-      return NextResponse.rewrite(new URL('/site', req.url))
+    if (url.pathname === '/sign-up') {
+      return NextResponse.redirect(new URL(`/account/sign-up`, req.url))
     }
-
+    if (url.pathname === '/' ||
+      (url.pathname === '/site' && url.host === process.env.NEXT_PUBLIC_DOMAIN)
+  ) {
+    return NextResponse.rewrite(new URL('/site', req.url));
+  }
+  // Rewrite /blogs to /site/blogs
+  if (url.pathname.startsWith('/blogs') || url.pathname.startsWith('/guide') || url.pathname.startsWith('/demo')) {
+    return NextResponse.rewrite(new URL(`/site${pathWithSearchParams}`, req.url));
+  }
     if (
       url.pathname.startsWith('/account') ||
       url.pathname.startsWith('/chatbot')

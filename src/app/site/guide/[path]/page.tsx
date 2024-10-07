@@ -1,10 +1,10 @@
-'use client';
+'use client'; // This directive must be at the top
 
 import React, { useEffect, useState } from 'react';
-import BlogPreview from '@/components/blog-preview';
-import Header from '@/components/ui/header';
+import BlogPreview from '../blog-preview' 
 import Footer from '@/components/ui/footer';
 import Head from 'next/head';
+import { getBlogByPath } from '@/lib/queries';
 
 interface Blog {
   id: number;
@@ -22,20 +22,10 @@ interface Blog {
   imageUrl: string;
 }
 
-interface Topic {
-  id: number;
-  name: string;
-}
-
-interface Tag {
-  id: number;
-  name: string;
-}
-
 interface BlogTag {
   blogId: number;
   tagId: number;
-  tag: Tag;
+  tag: { id: number; name: string };
 }
 
 interface BlogPostProps {
@@ -51,16 +41,10 @@ const BlogPost = ({ params }: BlogPostProps) => {
   useEffect(() => {
     const fetchBlogData = async () => {
       try {
-        const response = await fetch(`https://localhost:49153/api/blogs/path/${path}`);
-        if (!response.ok) {
-          console.error('Failed to fetch blog:', response.statusText);
-          return;
-        }
-
-        const blogData = await response.json();
+        const blogData = await getBlogByPath(path);
         setBlog(blogData);
 
-        // Dynamically import the serialize function
+        // Dynamically import the serialize function for MDX
         const { serialize } = await import('next-mdx-remote/serialize');
         const mdxSource = await serialize(blogData.content);
         setMdxSource(mdxSource);
@@ -77,14 +61,8 @@ const BlogPost = ({ params }: BlogPostProps) => {
   }
 
   const frontMatter = {
-    title: blog.title,
-    subTitle: blog.subTitle,
-    publishedAt: blog.publishedAt,
-    image: blog.imageUrl,
-    summary: blog.excerpt,
-    author: blog.author,
-    authorImg: blog.authorImg,
-    tags: blog.blogTags?.map((bt: { tag: { id: number; name: string } }) => bt.tag),
+    ...blog,
+    tags: blog.blogTags.map((bt) => bt.tag),
     topic: blog.topic,
   };
 
@@ -92,13 +70,12 @@ const BlogPost = ({ params }: BlogPostProps) => {
     <>
       <Head>
         <title>{frontMatter.title}</title>
-        <meta name="description" content={frontMatter.summary} />
+        <meta name="description" content={frontMatter.excerpt} />
         <meta name="author" content={frontMatter.author} />
         <meta property="og:title" content={frontMatter.title} />
-        <meta property="og:description" content={frontMatter.summary} />
-        <meta property="og:image" content={frontMatter.image} />
+        <meta property="og:description" content={frontMatter.excerpt} />
+        <meta property="og:image" content={frontMatter.imageUrl} />
       </Head>
-      <Header />
       <BlogPreview source={mdxSource} frontMatter={frontMatter} />
       <Footer />
     </>

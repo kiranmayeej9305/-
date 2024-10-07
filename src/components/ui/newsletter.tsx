@@ -1,47 +1,76 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { subscribeToNewsletter } from '@/lib/queries'; // Import the server-side query
 
 export default function Newsletter() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    // Handle form submission logic here
-    console.log(`Subscribed with email: ${email}`)
-  }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      await subscribeToNewsletter(email); // Call the server-side query
+      setSuccess(true);
+      setEmail(''); // Reset email after success
+    } catch (error) {
+      setError('Subscription failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <section className="w-full py-12">
+    <section className="w-full py-12 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <Card className="relative p-8 shadow-lg rounded-lg">
+        <Card className="relative bg-white text-gray-900 shadow-md rounded-lg p-6">
           <div className="flex flex-col lg:flex-row justify-between items-center">
-            <CardHeader className="mb-4 lg:mr-8 lg:mb-0 text-center lg:text-left lg:w-1/2">
-              <CardTitle className="text-gray-900 dark:text-gray-100 mb-2 text-xl md:text-2xl font-bold">
-              Stay updated with our latest features.
+            <CardHeader className="mb-6 lg:mr-8 lg:mb-0 text-center lg:text-left lg:w-1/2">
+              <CardTitle className="text-gray-900 dark:text-gray-100 mb-4 text-2xl font-semibold">
+                Stay in the Loop!
               </CardTitle>
+              <p className="text-md text-gray-600">
+                Subscribe now to gain <span className="font-semibold">early access</span> and receive a <span className="font-semibold">special discount</span> once our product is live.
+              </p>
             </CardHeader>
             <CardContent className="w-full lg:w-1/2">
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row justify-center max-w-xs mx-auto sm:max-w-md lg:max-w-none">
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row justify-center max-w-md mx-auto sm:max-w-lg lg:max-w-full space-y-4 sm:space-y-0">
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:border-gray-400 rounded-full px-4 py-2 mb-2 sm:mb-0 sm:mr-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-                  placeholder="Your best email…"
-                  aria-label="Your best email…"
+                  className="w-full bg-gray-200 border-gray-300 focus:border-purple-600 focus:ring-purple-600 rounded-full px-6 py-3 text-gray-900 placeholder-gray-400"
+                  placeholder="Enter your email..."
+                  aria-label="Your email address"
+                  required
                 />
-                <Button className="w-full sm:w-auto text-white bg-gray-900 dark:bg-gray-200 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out" type="submit">
-                  Subscribe
+                <Button
+                  className="btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? 'Subscribing...' : 'Subscribe'}
                 </Button>
               </form>
+              {success && (
+                <p className="text-green-500 mt-4 text-center">
+                  Thank you for subscribing! You’ll be the first to know when we launch and will receive exclusive early access and discounts.
+                </p>
+              )}
+              {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
             </CardContent>
           </div>
         </Card>
       </div>
     </section>
-  )
+  );
 }

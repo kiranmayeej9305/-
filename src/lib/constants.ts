@@ -75,36 +75,67 @@ export const pricingCards = [
 ]
 export const faqs = [
   {
-    title: 'Can I use the product for free?',
-    text: 'Absolutely! Grey allows you to create as many commercial graphics/images as you like, for yourself or your clients.',
-    active: false,
-  },
-  {
-    title: 'What payment methods can I use?',
-    text: 'Absolutely! Grey allows you to create as many commercial graphics/images as you like, for yourself or your clients.',
-    active: false,
-  },
-  {
-    title: 'Can I change from monthly to yearly billing?',
-    text: 'Absolutely! Grey allows you to create as many commercial graphics/images as you like, for yourself or your clients.',
-    active: false,
-  },
-  {
-    title: 'Can I use the tool for personal, client, and commercial projects?',
-    text: 'Absolutely! Grey allows you to create as many commercial graphics/images as you like, for yourself or your clients.',
+    title: 'Can I try the chatbot platform for free?',
+    text: 'Yes, you can start using our platform with a free plan. Test the capabilities, explore features, and create basic chatbots without any upfront costs. Upgrade when you are ready to unlock advanced functionalities.',
     active: true,
   },
   {
-    title: 'How can I ask other questions about pricing?',
-    text: 'Absolutely! Grey allows you to create as many commercial graphics/images as you like, for yourself or your clients.',
+    title: 'Which payment methods are accepted?',
+    text: 'We accept various payment methods including major credit cards, PayPal, and other secure options to ensure seamless transactions.',
     active: false,
   },
   {
-    title: 'Do you offer discount for students and non-profit companies?',
-    text: 'Absolutely! Grey allows you to create as many commercial graphics/images as you like, for yourself or your clients.',
+    title: 'Can I switch between monthly and yearly billing?',
+    text: 'Yes, you have the flexibility to change your billing cycle anytime. Switch between monthly and yearly plans depending on what suits your business best, and enjoy discounts with annual subscriptions.',
     active: false,
   },
-]
+  {
+    title: 'Can I use the chatbot platform for personal, client, or commercial projects?',
+    text: 'Absolutely! Our chatbot platform is designed to be versatile, whether you’re creating chatbots for personal use, working on client projects, or deploying chatbots for large-scale commercial endeavors.',
+    active: false,
+  },
+  {
+    title: 'Where can I find support or assistance?',
+    text: 'You can access our support portal at any time, or get in touch with our 24/7 customer service team through chat or email. We’re here to help you maximize your chatbot experience.',
+    active: false,
+  },
+  {
+    title: 'How does the credit system work?',
+    text: 'Our platform operates on a flexible credit system, where each chatbot interaction consumes a certain amount of credits based on its complexity. You can easily purchase additional credits or upgrade your plan as needed.',
+    active: false,
+  },
+  {
+    title: 'Can I accumulate my unused credits?',
+    text: 'Yes, unused credits roll over to the next billing cycle, so you never lose the credits you’ve paid for. You can accumulate them and use them whenever you need.',
+    active: false,
+  },
+  {
+    title: 'What happens if I exceed the limits of my plan?',
+    text: 'If you exceed the usage limits of your current plan, you can either upgrade to a higher plan or purchase additional credits to continue uninterrupted service.',
+    active: false,
+  },
+  {
+    title: 'Is it possible to train the chatbot on documents, websites, or text files?',
+    text: 'Yes, our platform supports training chatbots using various data sources including documents, websites, and text files. This allows you to customize the chatbot’s knowledge and responses to suit your specific needs.',
+    active: false,
+  },
+  {
+    title: 'What languages does the chatbot support?',
+    text: 'Our AI chatbots currently support only english.',
+    active: false,
+  },
+  {
+    title: 'What is the refund policy for my subscription?',
+    text: 'We offer a no-refund policy. Once the subscription is purchased, it is non-refundable. However, you can cancel future billing at any time, and your subscription will remain active until the end of the current billing cycle.',
+    active: false,
+  },
+  {
+    title: 'What are the supported AI models for chatbots?',
+    text: 'We support a diverse range of cutting-edge AI models including GPT-4, Claude 3, Llama 3, Mistral, Perplexity. Each model is optimized for different tasks, ensuring top performance for any use case.',
+    active: false,
+  },
+];
+
 export const addOnProducts = [
   { title: 'Priority Support', id: 'prod_PNjJAE2EpP16pn' },
 ]

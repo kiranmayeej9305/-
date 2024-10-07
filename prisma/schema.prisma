@@ -718,3 +718,8 @@ model ChatbotUsage {
   @@unique([chatbotId, planFeatureId]) // Compound unique constraint
 
 }
+model NewsletterSubscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

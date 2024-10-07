@@ -10,14 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus } from 'lucide-react';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationLink,
-  PaginationEllipsis,
-} from '@/components/ui/pagination'; // Import your pagination component
+import Pagination from '@/components/pagination';
 
 export default function BlogsTable() {
   const { accountId } = useParams(); // Fetch the accountId from the route
@@ -145,28 +138,12 @@ export default function BlogsTable() {
         </Table>
       </div>
 
-      <Pagination className="mt-6">
-        <PaginationContent>
-          <PaginationPrevious
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          />
-          {Array.from({ length: totalPages }, (_, i) => (
-            <PaginationLink
-              key={i + 1}
-              isActive={currentPage === i + 1}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </PaginationLink>
-          ))}
-          {totalPages > 5 && <PaginationEllipsis />}
-          <PaginationNext
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          />
-        </PaginationContent>
-      </Pagination>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+        className="mt-6"
+      />
 
       <ModalBlank isOpen={dangerModalOpen} setIsOpen={setDangerModalOpen}>
         <div className="p-5">

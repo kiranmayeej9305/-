@@ -2722,21 +2722,7 @@ export const getBlogById = async (id: string) => {
   }
 };
 
-// Fetch tags for a blog by ID
-export const getBlogTagsById = async (id: string) => {
-  try {
-    const tags = await db.blogTag.findMany({
-      where: { blogId: id },
-      include: {
-        tag: true,
-      },
-    });
-    return tags;
-  } catch (error) {
-    console.error(`Error fetching tags for blog with ID ${id}:`, error);
-    throw new Error("Failed to fetch tags");
-  }
-};
+
 
 // Fetch all available topics
 export const getTopics = async () => {
@@ -2931,5 +2917,187 @@ export const upsertBlog = async (blogData) => {
         ...otherFields, // Pass other fields like subTitle, status, etc.
       },
     });
+  }
+};
+export const getPaginatedBlogs = async (page: number, pageSize: number) => {
+  try {
+    // Calculate the offset based on the current page and page size
+    const offset = (page - 1) * pageSize;
+
+    // Fetch blog posts with pagination, excluding those with "Wiki" tag
+    const posts = await db.blog.findMany({
+      skip: offset,
+      take: pageSize,
+      where: {
+        blogTags: {
+          none: {
+            tag: {
+              name: 'Wiki',
+            },
+          },
+        },
+      },
+      orderBy: {
+        publishedAt: 'desc', // Order by most recent posts
+      },
+      include: {
+        topic: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        blogTags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Count the total number of blog posts excluding those with "Wiki" tag
+    const totalPosts = await db.blog.count({
+      where: {
+        blogTags: {
+          none: {
+            tag: {
+              name: 'Wiki',
+            },
+          },
+        },
+      },
+    });
+    const totalPages = Math.ceil(totalPosts / pageSize);
+
+    return {
+      posts,
+      totalPages,
+    };
+  } catch (error) {
+    console.error('Error fetching paginated blogs:', error);
+    throw new Error('Failed to fetch paginated blogs');
+  }
+};
+
+export async function getBlogByPath(path) {
+  try {
+    const blog = await db.blog.findFirst({
+      where: { path },
+      include: {
+        topic: true,
+        blogTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+    return blog;
+  } catch (error) {
+    console.error('Error fetching blog by path:', error);
+    throw new Error('Unable to fetch blog');
+  }
+}
+export async function getBlogTagsById(blogId) {
+  try {
+    const blogTags = await db.blogTag.findMany({
+      where: { blogId },
+      include: {
+        tag: true,
+      },
+    });
+    return blogTags;
+  } catch (error) {
+    console.error('Error fetching blog tags by ID:', error);
+    throw new Error('Unable to fetch blog tags');
+  }
+}
+export async function getBlogsByTopicName(topicName: string) {
+  try {
+    const blogs = await prisma.blog.findMany({
+      where: {
+        topic: {
+          name: topicName,
+        },
+      },
+      include: {
+        topic: true,
+        blogTags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+
+    return blogs;
+  } catch (error) {
+    console.error('Error fetching blogs by topic name:', error);
+    throw error;
+  }
+}
+export const getTopicsWithBlogs = async () => {
+  try {
+    // Use Prisma to fetch topics and related blogs, including tags
+    const topics = await db.topic.findMany({
+      include: {
+        blogs: {
+          where: {
+            blogTags: {
+              some: {
+                tag: {
+                  name: 'Wiki', // Filter for blogs with the "Wiki" tag
+                },
+              },
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            path: true,
+            publishedAt: true,
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            blogTags: {
+              include: {
+                tag: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            publishedAt: 'asc', // Sort blogs by published date in ascending order
+          },
+        },
+      },
+    });
+
+    return topics;
+  } catch (error) {
+    console.error('Error fetching topics with blogs:', error);
+    throw new Error('Failed to fetch topics with blogs');
+  }
+};
+export const subscribeToNewsletter = async (email: string) => {
+  try {
+    const subscriber = await db.newsletterSubscriber.create({
+      data: { email },
+    });
+    return subscriber;
+  } catch (error) {
+    throw new Error('Failed to subscribe to newsletter');
   }
 };

@@ -1,18 +1,18 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { getLeads, deleteLead } from '@/lib/queries'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useModal } from '@/providers/modal-provider'
-import { useToast } from '@/components/ui/use-toast'
-import { CSVLink } from 'react-csv'
-import { ChevronDown, ChevronUp, Edit, Trash, UserCircle } from 'lucide-react'
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination'
-import CustomModal from '@/components/global/custom-modal'
-import EditLeadForm from './edit-lead-form'
-import BlurPage from '@/components/global/blur-page'
+import React, { useState, useEffect } from 'react';
+import { getLeads, deleteLead } from '@/lib/queries';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useModal } from '@/providers/modal-provider';
+import { useToast } from '@/components/ui/use-toast';
+import { CSVLink } from 'react-csv';
+import { ChevronDown, ChevronUp, Edit, Trash, UserCircle } from 'lucide-react';
+import Pagination from '@/components/pagination';
+import CustomModal from '@/components/global/custom-modal';
+import EditLeadForm from './edit-lead-form';
+import BlurPage from '@/components/global/blur-page';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,56 +20,48 @@ import {
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+} from '@/components/ui/alert-dialog';
+
 const LeadsPage = () => {
-  const [leads, setLeads] = useState([])
-  const [totalLeads, setTotalLeads] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [rowsPerPage] = useState(10)
-  const [expandedRows, setExpandedRows] = useState<string[]>([]) // Define expandedRows state
-  const { setOpen } = useModal()
-  const { toast } = useToast()
+  const [leads, setLeads] = useState([]);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rowsPerPage] = useState(10);
+  const [expandedRows, setExpandedRows] = useState<string[]>([]); // Define expandedRows state
+  const { setOpen } = useModal();
+  const { toast } = useToast();
 
   useEffect(() => {
-    fetchLeads()
-  }, [currentPage, searchQuery])
+    fetchLeads();
+  }, [currentPage, searchQuery]);
 
   const fetchLeads = async () => {
-    const { leads, totalLeads } = await getLeads(rowsPerPage, (currentPage - 1) * rowsPerPage, searchQuery)
-    setLeads(leads)
-    setTotalLeads(totalLeads)
-  }
+    const { leads, totalLeads } = await getLeads(rowsPerPage, (currentPage - 1) * rowsPerPage, searchQuery);
+    setLeads(leads);
+    setTotalLeads(totalLeads);
+  };
 
   const handleDelete = async (id: string) => {
-    await deleteLead(id)
-    toast({ title: 'Lead deleted successfully!' })
-    fetchLeads()
-  }
+    await deleteLead(id);
+    toast({ title: 'Lead deleted successfully!' });
+    fetchLeads();
+  };
 
   const handleEdit = (lead) => {
     setOpen(
-      <CustomModal subheading="You can update lead information, including their quality rating."
-        title="Edit Lead Details"
-      >
+      <CustomModal subheading="You can update lead information, including their quality rating." title="Edit Lead Details">
         <EditLeadForm lead={lead} onClose={() => setOpen(null)} />
       </CustomModal>
-    )
-  }
+    );
+  };
 
   const toggleRowExpansion = (id: string) => {
-    setExpandedRows((prev) => 
-      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
-    )
-  }
+    setExpandedRows((prev) => (prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]));
+  };
 
-  const totalPages = Math.ceil(totalLeads / rowsPerPage)
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
+  const totalPages = Math.ceil(totalLeads / rowsPerPage);
 
   return (
     <BlurPage>
@@ -188,31 +180,15 @@ const LeadsPage = () => {
         </div>
 
         {/* Pagination */}
-        <Pagination className="mt-6">
-          <PaginationContent>
-            <PaginationPrevious
-              onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
-              disabled={currentPage === 1}
-            />
-            {[...Array(totalPages)].map((_, pageIndex) => (
-              <PaginationItem key={pageIndex}>
-                <PaginationLink
-                  onClick={() => handlePageChange(pageIndex + 1)}
-                  isActive={currentPage === pageIndex + 1}
-                >
-                  {pageIndex + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationNext
-              onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            />
-          </PaginationContent>
-        </Pagination>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          className="mt-6"
+        />
       </div>
     </BlurPage>
-  )
-}
+  );
+};
 
-export default LeadsPage
+export default LeadsPage;

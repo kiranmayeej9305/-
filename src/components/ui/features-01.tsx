@@ -1,10 +1,14 @@
-'use client'
+'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { Transition } from '@headlessui/react';
 import Image from 'next/image';
-import FeatureIllustration from '../../../public/images/feature-illustration.png';
-import FeatureImage01 from '../../../public/images/feature-01.png';
+
+// Import unique images for each tab
+import FeatureImage01 from '../../../public/images/feature-step-01.png';
+import FeatureImage02 from '../../../public/images/feature-step-02.png';
+import FeatureImage03 from '../../../public/images/feature-step-03.png';
+import FeatureImage04 from '../../../public/images/feature-step-04.png';
 
 export default function Features01() {
   const [tab, setTab] = useState<number>(1);
@@ -18,63 +22,92 @@ export default function Features01() {
 
   useEffect(() => {
     heightFix();
-  }, []);
+  }, [tab]);
+
+  // Images corresponding to each tab
+  const tabImages = {
+    1: FeatureImage01,
+    2: FeatureImage02,
+    3: FeatureImage03,
+    4: FeatureImage04,
+  };
+
+  // Sticky note colors for each tab
+  const tabColors = {
+    1: 'bg-yellow-200 dark:bg-yellow-400',
+    2: 'bg-green-200 dark:bg-green-400',
+    3: 'bg-pink-200 dark:bg-pink-400',
+    4: 'bg-blue-200 dark:bg-blue-400',
+  };
+
+  const featuresData = [
+    {
+      id: 1,
+      title: 'Seamlessly Import Your Data',
+      description: 'Easily connect your data sources, upload files, or add websites for automated crawling. Chatbase will use your data to train a custom chatbot tailored to your business.',
+    },
+    {
+      id: 2,
+      title: 'Tailor Chatbot Behavior & Design',
+      description: 'Personalize your chatbot’s appearance and behavior to reflect your brand’s identity with custom colors, logos, and voice instructions.',
+    },
+    {
+      id: 3,
+      title: 'Effortlessly Embed on Your Website',
+      description: 'Integrate your chatbot onto your website with just a simple embed code. Let it handle customer interactions directly on your platform with ease.',
+    },
+    {
+      id: 4,
+      title: 'Connect With Your Favorite Tools',
+      description: 'Expand your chatbot’s capabilities by integrating it with tools like Slack, WhatsApp, Zapier, and more for enhanced communication and automation.',
+    },
+  ];
 
   return (
     <section className="relative bg-zinc-50 dark:bg-zinc-900">
       <div className="py-12 md:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center pb-12">
-            <h2 className="font-inter-tight text-3xl md:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-              Go further than the speed of thought
+            <h2 className="font-inter-tight text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
+              Unlock the Full Power of AI-Powered Chatbots
             </h2>
-            <p className="text-lg text-zinc-500 dark:text-zinc-300">
-              AI reads and understands your designs, and with nothing more than a single line of feedback, perform complex actions autonomously.
+            <p className="text-lg text-black dark:text-white">
+              Leverage cutting-edge AI to engage your customers, streamline support, and drive meaningful results—tailored to your business, no coding required.
             </p>
           </div>
+
           <div>
             {/* Tabs buttons */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {[
-                { id: 1, title: 'AI Effects', description: 'Visually structure your designs and structure them easily.' },
-                { id: 2, title: 'Creative Mode', description: 'Visually structure your designs and structure them easily.' },
-                { id: 3, title: 'Realistic Images', description: 'Visually structure your designs and structure them easily.' },
-                { id: 4, title: 'Powerful Plugins', description: 'Visually structure your designs and structure them easily.' },
-              ].map((tabData) => (
+              {featuresData.map((feature) => (
                 <button
-                  key={tabData.id}
-                  className={`text-left px-4 py-5 border border-transparent rounded ${
-                    tab !== tabData.id
-                      ? 'bg-zinc-100 dark:bg-zinc-800 opacity-60 hover:opacity-100 transition'
-                      : '[background:linear-gradient(theme(colors.white),theme(colors.white))_padding-box,linear-gradient(120deg,theme(colors.zinc.300),theme(colors.zinc.100),theme(colors.zinc.300))_border-box] dark:[background:linear-gradient(theme(colors.zinc.800),theme(colors.zinc.800))_padding-box,linear-gradient(120deg,theme(colors.zinc.500),theme(colors.zinc.700),theme(colors.zinc.500))_border-box] shadow-sm rotate-1'
+                  key={feature.id}
+                  className={`relative text-left px-4 py-5 rounded transform shadow-md ${tabColors[feature.id]} ${
+                    tab !== feature.id
+                      ? 'opacity-60 hover:opacity-100 transition'
+                      : 'rotate-1 shadow-lg scale-105'
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
-                    setTab(tabData.id);
+                    setTab(feature.id);
                   }}
                 >
+                  {/* Pin icon */}
                   <div className="flex items-center justify-between mb-1">
-                    <div className="font-inter-tight font-semibold text-zinc-900 dark:text-zinc-100">{tabData.title}</div>
-                    <svg
-                      className={`fill-zinc-400 dark:fill-zinc-600 shrink-0 ml-2 ${tab !== tabData.id ? 'hidden' : ''}`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="10"
-                      height="10"
-                    >
-                      <path d="M8.667.186H2.675a.999.999 0 0 0 0 1.998h3.581L.971 7.469a.999.999 0 1 0 1.412 1.412l5.285-5.285v3.58a.999.999 0 1 0 1.998 0V1.186a.999.999 0 0 0-.999-.999Z" />
-                    </svg>
+                    <div className="font-inter-tight font-semibold text-black dark:text-white">{feature.title}</div>
                   </div>
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400">{tabData.description}</div>
+                  <div className="text-sm text-black dark:text-white">{feature.description}</div>
                 </button>
               ))}
             </div>
+
             {/* Tabs items */}
             <div className="relative lg:max-w-none [mask-image:linear-gradient(white_0%,white_calc(100%-40px),_transparent_calc(100%-1px))] -mx-6">
               <div className="relative flex flex-col pt-12 md:pt-20 mx-6" ref={tabs}>
-                {[1, 2, 3, 4].map((tabId) => (
+                {featuresData.map((feature) => (
                   <Transition
-                    key={tabId}
-                    show={tab === tabId}
+                    key={feature.id}
+                    show={tab === feature.id}
                     className="w-full text-center"
                     enter="transition ease-in-out duration-700 transform order-first"
                     enterFrom="opacity-0 -translate-y-4"
@@ -86,23 +119,19 @@ export default function Features01() {
                     unmount={false}
                   >
                     <div className="inline-flex relative align-top">
-                      <div className="[background:linear-gradient(theme(colors.white),theme(colors.zinc.50))_padding-box,linear-gradient(120deg,theme(colors.zinc.300),theme(colors.zinc.100),theme(colors.zinc.300))_border-box] dark:[background:linear-gradient(theme(colors.zinc.800),theme(colors.zinc.800))_padding-box,linear-gradient(120deg,theme(colors.zinc.500),theme(colors.zinc.700),theme(colors.zinc.500))_border-box] rounded-lg overflow-hidden">
+                      <div className={`rounded-lg overflow-hidden ${tabColors[feature.id]} p-8 shadow-lg`}>
                         <Image
                           className="object-cover object-center mx-auto"
-                          src={FeatureImage01}
-                          width={600}
-                          height={360}
-                          alt={`Feature 0${tabId}`}
+                          src={tabImages[feature.id]}
+                          width={1200} // Increased width
+                          height={800} // Increased height
+                          alt={`Feature ${feature.id}`}
+                          style={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                          }}
                         />
                       </div>
-                      <Image
-                        className="absolute top-0 left-full -translate-x-[70%] -mr-20 max-md:w-[45%]"
-                        src={FeatureIllustration}
-                        width={273}
-                        height={288}
-                        alt="Illustration"
-                        aria-hidden="true"
-                      />
                     </div>
                   </Transition>
                 ))}

@@ -50,7 +50,8 @@ export default function PricingTabs() {
               Start your journey today
             </h2>
             <p className="text-lg text-zinc-500 dark:text-zinc-300">
-              Start creating real-time design experiences for free. Upgrade for extra features and collaboration with your team.
+              Start creating real-time design experiences for free. Upgrade for extra features and collaboration with your team. Our tailored pricing plans fit your business needs.
+
             </p>
           </div>
 
@@ -95,12 +96,10 @@ function BillingToggle({ billingCycle, setBillingCycle }: { billingCycle: string
 
 function PlansSection({ displayedPlans }: { displayedPlans: any[] }) {
   return (
-    <section className="flex justify-center items-center flex-col gap-3 md:flex-row flex-wrap md:gap-4 mt-6">
-      <h2 className="text-4xl text-center w-full">Choose what fits you right</h2>
-      <p className="text-muted-foreground text-center w-full">
-        Our straightforward pricing plans are tailored to meet your needs. If you're not ready to commit, you can get started for free.
-      </p>
-      <div className="flex justify-center flex-wrap gap-3 w-full">
+    <section className="flex justify-center items-center flex-col gap-4 md:flex-row flex-wrap md:gap-6 mt-6">
+      {/* Consistent font and text color */}
+      <div className="flex justify-center flex-wrap gap-4 w-full">
+        {/* Display each plan */}
         {displayedPlans.map((plan, index) => (
           <PlanCard key={plan.id} plan={plan} isMostPopular={index === Math.floor(displayedPlans.length / 2)} />
         ))}
@@ -108,6 +107,7 @@ function PlansSection({ displayedPlans }: { displayedPlans: any[] }) {
     </section>
   );
 }
+
 
 function PlanCard({ plan, isMostPopular }: { plan: any; isMostPopular: boolean }) {
   return (
@@ -157,14 +157,27 @@ function FeatureCheckmark() {
 
 function FAQSection({ faqs }: { faqs: any[] }) {
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="space-y-2">
+    <div className="max-w-1xl mx-auto py-6">
+      <div className="space-y-1">
         {faqs.map((faq, index) => (
-          <Accordion key={index} title={faq.title} id={`faqs-${index}`} active={faq.active}>
-            {faq.text}
+          <Accordion 
+            key={index} 
+            title={
+              <span className="text-1xl font-bold text-black dark:text-white">
+                {faq.title}
+              </span>
+            } 
+            id={`faqs-${index}`} 
+            active={faq.active}
+          >
+            {/* FAQ content styled with slightly smaller bold text */}
+            <div className="text-md font-bold text-zinc-500 dark:text-zinc-200 leading-relaxed">
+              {faq.text}
+            </div>
           </Accordion>
         ))}
       </div>
     </div>
   );
 }
+

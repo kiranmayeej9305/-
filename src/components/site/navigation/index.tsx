@@ -1,72 +1,99 @@
-import { ModeToggle } from '@/components/global/mode-toggle'
-import Logo from '@/components/ui/logo'
-import { UserButton } from '@clerk/nextjs'
-import { User } from '@clerk/nextjs/server'
-import Link from 'next/link'
-import React from 'react'
+'use client';
 
-type Props = {
-  user?: null | User
-}
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useEffect } from 'react';
+import Logo from '@/components/ui/logo';
 
-const Navigation = ({ user }: Props) => {
+const Navigation = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleScrollToPricing = (e) => {
+    e.preventDefault();
+    if (pathname !== '/') {
+      router.push('/?scrollTo=pricing');
+    } else {
+      scrollToSection('pricing');
+    }
+  };
+
+  const handleScrollToFeatures = (e) => {
+    e.preventDefault();
+    if (pathname !== '/') {
+      router.push('/?scrollTo=features');
+    } else {
+      scrollToSection('features');
+    }
+  };
+
+  const scrollToSection = (sectionId) => {
+    setTimeout(() => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
+  useEffect(() => {
+    if (pathname === '/' && window.location.search.includes('scrollTo=pricing')) {
+      scrollToSection('pricing');
+    }
+    if (pathname === '/' && window.location.search.includes('scrollTo=features')) {
+      scrollToSection('features');
+    }
+  }, [pathname]);
+
   return (
-    <div className="fixed top-0 right-0 left-0 p-4 flex items-center justify-between z-10">
-      <aside className="flex items-center gap-2">
-      <Logo />
-      </aside>
-      <nav className="hidden md:block absolute left-[50%] top-[50%] transform translate-x-[-50%] translate-y-[-50%]">
-        <ul className="flex items-center justify-center gap-8">
-        <li>
-                <Link href="/features">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/blogs">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/demo">
-                  Demo
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/help/frequently-asked-questions">
-                  FAQ
-                </Link>
-              </li>
-        </ul>
-      </nav>
-      <aside className="flex gap-2 items-center">
-      <Link href="/account/signin" className="text-black font-bold">
-              Login
-            </Link>
-      <Link href="/account/signup" className="btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out">
-              Try for Free
-      </Link>
-        {/* <Link
-          href={'/account'}
-          className="bg-primary text-white p-2 px-4 rounded-md hover:bg-primary/80"
-        >
-          Try for Free
-        </Link> */}
-        {/* <UserButton /> */}
-        {/* <ModeToggle /> */}
-      </aside>
-    </div>
-  )
-}
+    <div className="fixed top-0 right-0 left-0 z-10 bg-white dark:bg-gray-900 shadow-sm">
+      {/* This container ensures alignment with the rest of the page content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between py-4">
+        {/* Align Logo to the left */}
+        <div className="flex items-center">
+          <Logo />
+        </div>
 
-export default Navigation
+        {/* Navigation menu */}
+        <nav className="hidden md:flex items-center justify-center gap-8">
+          <ul className="flex items-center justify-center gap-8">
+            <li>
+              <a href="#features" onClick={handleScrollToFeatures}>
+                Features
+              </a>
+            </li>
+            <li>
+              <a href="#pricing" onClick={handleScrollToPricing}>
+                Pricing
+              </a>
+            </li>
+            <li>
+              <Link href="/blogs">Blog</Link>
+            </li>
+            <li>
+              <Link href="/demo">Demo</Link>
+            </li>
+            <li>
+              <Link href="/guide">Guide</Link>
+            </li>
+          </ul>
+        </nav>
+
+        {/* Authentication buttons */}
+        <aside className="flex gap-2 items-center">
+          <Link href="/account/sign-in" className="text-black dark:text-white font-bold">
+            Login
+          </Link>
+          <Link
+            href="/account/sign-up"
+            className="btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out"
+          >
+            Try for Free
+          </Link>
+        </aside>
+      </div>
+    </div>
+  );
+};
+
+export default Navigation;

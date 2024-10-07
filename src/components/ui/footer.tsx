@@ -15,7 +15,7 @@ export default function Footer() {
               {/* Logo */}
               <Logo />
             </div>
-            <div className="grow text-sm text-zinc-500 dark:text-zinc-400">&copy; InsertBot.com. All rights reserved.</div>
+            <div className="grow text-sm text-zinc-500 dark:text-zinc-400">&copy; insertbot. All rights reserved.</div>
             {/* Social links */}
             <ul className="flex space-x-4 mt-4 mb-1">
               <li>
