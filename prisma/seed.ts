@@ -95,57 +95,58 @@ async function main() {
   const frontendFeaturesData = [
     {
       name: 'Message Credits',
-      description: 'Provides a limit for 20 message credits per month.',
+      description: 'Receive 20 message credits per month for chatbot conversations.',
     },
     {
       name: 'Chatbots',
-      description: 'Allows managing up to 1 chatbot.',
+      description: 'Manage up to 1 chatbot with full access to configuration and settings.',
     },
     {
       name: 'Characters Per Chatbot',
-      description: 'Defines a limit of 400,000 characters per chatbot.',
+      description: 'Set a limit of 600,000 characters per chatbot to handle various interactions.',
     },
     {
       name: 'Team Members',
-      description: 'Allows adding up to 1 team member.',
+      description: 'Add up to 1 team member to collaborate on chatbot management.',
     },
     {
       name: 'Links for Training',
-      description: 'Limit for up to 10 chatbot training links.',
+      description: 'Allow up to 10 links for chatbot training to optimize performance.',
     },
     {
       name: 'Unlimited Embedding',
-      description: 'Ability to embed on an unlimited number of websites.',
+      description: 'Embed the chatbot across unlimited websites for broader reach.',
     },
     {
       name: 'Leads Capture',
-      description: 'Capture an unlimited number of leads from users.',
+      description: 'Capture an unlimited number of leads directly through your chatbot.',
     },
     {
       name: 'Chat History',
-      description: 'Access to an unlimited chat history.',
+      description: 'Enjoy unlimited access to your chatbot’s complete chat history.',
     },
     {
       name: 'API Access',
-      description: 'Unlimited API access to the chatbot.',
+      description: 'Gain unlimited access to the chatbot API for seamless integrations.',
     },
     {
       name: 'Analytics',
-      description: 'Access to unlimited chatbot analytics.',
+      description: 'Access unlimited data and insights from chatbot analytics to track performance.',
     },
     {
       name: 'Remove "Powered by InsertBot"',
-      description: 'Remove the "Powered by InsertBot" branding.',
+      description: 'Remove the "Powered by InsertBot" branding to personalize your chatbot.',
     },
     {
       name: 'Use Your Own Custom Domains',
-      description: 'Host chatbots on your own custom domains (unlimited).',
+      description: 'Host chatbots on your own custom domains with no limitations.',
     },
     {
       name: 'Advanced Analytics',
-      description: 'Access to unlimited advanced analytics features.',
+      description: 'Get advanced analytics features for in-depth insights on chatbot usage.',
     },
   ];
+  
 
   // Insert FrontendFeature data
   for (const frontendFeature of frontendFeaturesData) {

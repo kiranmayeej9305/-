@@ -79,6 +79,11 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
     return options
       .filter(option => option.parentId === parentId)
       .map(option => {
+        // Conditionally hide "Manage Blogs" if the user's email doesn't contain "dipuoec"
+        if (option.name === 'Manage Blogs' && !user.email.includes('dipuoec')) {
+          return null; // Skip rendering this option
+        }
+
         const hasSubmenu = options.some(childOption => childOption.parentId === option.id);
         const IconComponent = icons.find(icon => icon.value === option.icon)?.path;
 
@@ -120,7 +125,7 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
           </div>
         );
       });
-  }, [expandedMenu, selectedMenu, handleMenuClick]);
+  }, [expandedMenu, selectedMenu, handleMenuClick, user.email]);
 
   const filteredChatbots = useMemo(() => {
     return chatbots.filter(chatbot => chatbot.name.toLowerCase().includes(searchQuery.toLowerCase()));
