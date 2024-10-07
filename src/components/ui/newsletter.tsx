@@ -30,12 +30,12 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="w-full py-12 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white">
+    <section className="w-full py-8 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <Card className="relative bg-white text-gray-900 shadow-md rounded-lg p-6">
+        <Card className="relative bg-white text-gray-400 shadow-md rounded-lg p-8 lg:p-2">
           <div className="flex flex-col lg:flex-row justify-between items-center">
-            <CardHeader className="mb-6 lg:mr-8 lg:mb-0 text-center lg:text-left lg:w-1/2">
-              <CardTitle className="text-gray-900 dark:text-gray-100 mb-4 text-2xl font-semibold">
+            <CardHeader className="mb-8 lg:mr-8 lg:mb-0 text-center lg:text-left lg:w-1/2">
+              <CardTitle className="text-gray-900 dark:text-gray-100 mb-4 text-3xl font-semibold">
                 Stay in the Loop!
               </CardTitle>
               <p className="text-md text-gray-600">
@@ -43,7 +43,7 @@ export default function Newsletter() {
               </p>
             </CardHeader>
             <CardContent className="w-full lg:w-1/2">
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row justify-center max-w-md mx-auto sm:max-w-lg lg:max-w-full space-y-4 sm:space-y-0">
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row justify-center max-w-md mx-auto sm:max-w-lg lg:max-w-full gap-4">
                 <Input
                   type="email"
                   value={email}
@@ -54,7 +54,7 @@ export default function Newsletter() {
                   required
                 />
                 <Button
-                  className="btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-4 py-2 rounded-full transition duration-150 ease-in-out"
+                  className="w-full sm:w-auto btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-6 py-3 rounded-full transition duration-150 ease-in-out"
                   type="submit"
                   disabled={loading}
                 >

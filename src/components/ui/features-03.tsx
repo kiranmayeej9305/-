@@ -1,4 +1,6 @@
-import { Code, Phone, ShieldCheck, User, Settings, Database, Languages, Network, ChevronRight, Calendar, MessageSquare, Users, Clock, Monitor } from 'lucide-react';
+import {
+  Code, Phone, ShieldCheck, User, Settings, Database, Languages, Network, ChevronRight, Calendar, MessageSquare, Users, Clock, Monitor
+} from 'lucide-react';
 
 export default function Features03() {
   const features = [
@@ -65,10 +67,12 @@ export default function Features03() {
   ];
 
   return (
-    <section className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-zinc-800 dark:to-zinc-900 py-12 md:py-20">
+    <section className="py-12 md:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="text-center pb-12 md:pb-16">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-zinc-900 dark:text-white">Cutting-Edge Features for Smart AI Chatbots</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-zinc-900 dark:text-white">
+            Cutting-Edge Features for Smart AI Chatbots
+          </h2>
           <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-300">
             Elevate your business with our custom AI chatbot platform packed with features designed to boost efficiency, drive sales, and delight users.
           </p>
@@ -78,15 +82,15 @@ export default function Features03() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="relative p-6 bg-white dark:bg-zinc-800 rounded-lg shadow-lg transition-transform transform hover:scale-105"
+              className="relative p-6 bg-white dark:bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105"
             >
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-blue-50 dark:bg-blue-900">
+                <div className="p-3 rounded-full bg-zinc-50">
                   {feature.icon}
                 </div>
-                <div className="text-lg font-semibold text-zinc-900 dark:text-white">{feature.title}</div>
+                <div className="text-lg font-semibold text-zinc-900">{feature.title}</div>
               </div>
-              <p className="mt-3 text-zinc-600 dark:text-zinc-300">{feature.description}</p>
+              <p className="mt-3 text-zinc-600">{feature.description}</p>
             </div>
           ))}
         </div>

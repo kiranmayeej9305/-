@@ -17,7 +17,8 @@ import Testimonials from '@/components/ui/testimonials';
 
 export default async function Home() {
   return (
-    <>
+    <div className="bg-gradient-to-b from-white via-blue-100 to-blue-500 dark:from-zinc-900 dark:via-blue-800 dark:to-blue-900">
+      {/* The gradient background */}
       <Hero />
       <Newsletter />
       <div id="features">
@@ -30,6 +31,6 @@ export default async function Home() {
       </div>
       <Testimonials />
       <Footer />
-    </>
+    </div>
   );
 }

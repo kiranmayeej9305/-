@@ -44,30 +44,34 @@ export default function Features01() {
     {
       id: 1,
       title: 'Seamlessly Import Your Data',
-      description: 'Easily connect your data sources, upload files, or add websites for automated crawling. Chatbase will use your data to train a custom chatbot tailored to your business.',
+      description:
+        'Easily connect your data sources, upload files, or add websites for automated crawling. Chatbase will use your data to train a custom chatbot tailored to your business.',
     },
     {
       id: 2,
       title: 'Tailor Chatbot Behavior & Design',
-      description: 'Personalize your chatbot’s appearance and behavior to reflect your brand’s identity with custom colors, logos, and voice instructions.',
+      description:
+        'Personalize your chatbot’s appearance and behavior to reflect your brand’s identity with custom colors, logos, and voice instructions.',
     },
     {
       id: 3,
       title: 'Effortlessly Embed on Your Website',
-      description: 'Integrate your chatbot onto your website with just a simple embed code. Let it handle customer interactions directly on your platform with ease.',
+      description:
+        'Integrate your chatbot onto your website with just a simple embed code. Let it handle customer interactions directly on your platform with ease.',
     },
     {
       id: 4,
       title: 'Connect With Your Favorite Tools',
-      description: 'Expand your chatbot’s capabilities by integrating it with tools like Slack, WhatsApp, Zapier, and more for enhanced communication and automation.',
+      description:
+        'Expand your chatbot’s capabilities by integrating it with tools like Slack, WhatsApp, Zapier, and more for enhanced communication and automation.',
     },
   ];
 
   return (
-    <section className="relative bg-zinc-50 dark:bg-zinc-900">
-      <div className="py-12 md:py-20">
+    <section className="relative">
+      <div className="py-8 md:py-12"> {/* Reduced padding here */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto text-center pb-12">
+          <div className="max-w-3xl mx-auto text-center pb-8"> {/* Reduced padding */}
             <h2 className="font-inter-tight text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
               Unlock the Full Power of AI-Powered Chatbots
             </h2>
@@ -94,16 +98,20 @@ export default function Features01() {
                 >
                   {/* Pin icon */}
                   <div className="flex items-center justify-between mb-1">
-                    <div className="font-inter-tight font-semibold text-black dark:text-white">{feature.title}</div>
+                    <div className="font-inter-tight font-semibold text-black dark:text-white">
+                      {feature.title}
+                    </div>
                   </div>
-                  <div className="text-sm text-black dark:text-white">{feature.description}</div>
+                  <div className="text-sm text-black dark:text-white">
+                    {feature.description}
+                  </div>
                 </button>
               ))}
             </div>
 
             {/* Tabs items */}
             <div className="relative lg:max-w-none [mask-image:linear-gradient(white_0%,white_calc(100%-40px),_transparent_calc(100%-1px))] -mx-6">
-              <div className="relative flex flex-col pt-12 md:pt-20 mx-6" ref={tabs}>
+              <div className="relative flex flex-col pt-8 md:pt-12 mx-6" ref={tabs}>
                 {featuresData.map((feature) => (
                   <Transition
                     key={feature.id}
@@ -123,8 +131,8 @@ export default function Features01() {
                         <Image
                           className="object-cover object-center mx-auto"
                           src={tabImages[feature.id]}
-                          width={1200} // Increased width
-                          height={800} // Increased height
+                          width={1200}
+                          height={800}
                           alt={`Feature ${feature.id}`}
                           style={{
                             maxWidth: '100%',

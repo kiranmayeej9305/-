@@ -63,43 +63,41 @@ export default function Features02() {
   ];
 
   return (
-    <section className="relative bg-gradient-to-r from-blue-100 to-blue-300 dark:from-blue-800 dark:to-blue-900">
-      <div className="py-12 md:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="relative max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="font-inter-tight text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
-              Unlock Game-Changing Use Cases with AI-Powered Custom Chatbots
-            </h2>
-            <p className="text-lg text-black dark:text-white">
-              From boosting customer engagement to automating key processes, AI chatbots transform the way you do business. Here are 12 compelling use cases to inspire your chatbot strategy.
-            </p>
-          </div>
+    <section className="relative py-12 md:py-20 bg-gradient-to-b from-white to-blue-100 dark:from-zinc-800 dark:to-zinc-900">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="relative max-w-3xl mx-auto text-center pb-12 md:pb-20">
+          <h2 className="font-inter-tight text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
+            Unlock Game-Changing Use Cases with AI-Powered Custom Chatbots
+          </h2>
+          <p className="text-lg text-black dark:text-white">
+            From boosting customer engagement to automating key processes, AI chatbots transform the way you do business. Here are 12 compelling use cases to inspire your chatbot strategy.
+          </p>
+        </div>
 
-          <div className="max-w-xs mx-auto sm:max-w-none grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-4 lg:gap-8">
-            {useCases.map((useCase, index) => (
-              <article
-                key={index}
-                className="flex flex-col border border-transparent bg-gradient-to-b from-white to-gray-50 dark:from-zinc-800 dark:to-zinc-700 rounded-lg p-5 shadow-md transition-transform transform hover:scale-105 hover:shadow-lg"
-              >
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="bg-gradient-to-r from-purple-400 to-pink-500 p-2 rounded-full">
-                    <svg
-                      className="inline-flex text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                    >
-                      <path d="M10 0a10 10 0 110 20 10 10 0 010-20zm0 18.75c4.83 0 8.75-3.92 8.75-8.75S14.83 1.25 10 1.25 1.25 5.17 1.25 10 5.17 18.75 10 18.75z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-inter-tight font-semibold text-black dark:text-white">{useCase.title}</h3>
+        <div className="max-w-xs mx-auto sm:max-w-none grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-4 lg:gap-8">
+          {useCases.map((useCase, index) => (
+            <article
+              key={index}
+              className="flex flex-col border border-transparent bg-white dark:bg-zinc-800 rounded-lg p-5 shadow-md transition-transform transform hover:scale-105 hover:shadow-lg"
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="bg-gradient-to-r from-purple-400 to-pink-500 p-2 rounded-full">
+                  <svg
+                    className="inline-flex text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                  >
+                    <path d="M10 0a10 10 0 110 20 10 10 0 010-20zm0 18.75c4.83 0 8.75-3.92 8.75-8.75S14.83 1.25 10 1.25 1.25 5.17 1.25 10 5.17 18.75 10 18.75z" />
+                  </svg>
                 </div>
-                <p className="grow max-w-md text-sm text-black dark:text-white">
-                  {useCase.description}
-                </p>
-              </article>
-            ))}
-          </div>
+                <h3 className="font-inter-tight font-semibold text-black dark:text-white">{useCase.title}</h3>
+              </div>
+              <p className="grow max-w-md text-sm text-black dark:text-white">
+                {useCase.description}
+              </p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
