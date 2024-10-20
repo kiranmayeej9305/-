@@ -1,151 +1,104 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Transition } from '@headlessui/react';
+import { useState } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
-// Import unique images for each tab
-import FeatureImage01 from '../../../public/images/feature-step-01.png';
-import FeatureImage02 from '../../../public/images/feature-step-02.png';
-import FeatureImage03 from '../../../public/images/feature-step-03.png';
-import FeatureImage04 from '../../../public/images/feature-step-04.png';
+// Import unique images for each step
+import StepImage01 from '../../../public/images/feature-step-01.png';
+import StepImage02 from '../../../public/images/feature-step-02.png';
+import StepImage03 from '../../../public/images/feature-step-03.png';
+import StepImage04 from '../../../public/images/feature-step-04.png';
 
 export default function Features01() {
-  const [tab, setTab] = useState<number>(1);
-  const tabs = useRef<HTMLDivElement>(null);
+  const [activeStep, setActiveStep] = useState<number>(1);
 
-  const heightFix = () => {
-    if (tabs.current && tabs.current.parentElement) {
-      tabs.current.parentElement.style.height = `${tabs.current.clientHeight}px`;
-    }
-  };
-
-  useEffect(() => {
-    heightFix();
-  }, [tab]);
-
-  // Images corresponding to each tab
-  const tabImages = {
-    1: FeatureImage01,
-    2: FeatureImage02,
-    3: FeatureImage03,
-    4: FeatureImage04,
-  };
-
-  // Sticky note colors for each tab
-  const tabColors = {
-    1: 'bg-yellow-200 dark:bg-yellow-400',
-    2: 'bg-green-200 dark:bg-green-400',
-    3: 'bg-pink-200 dark:bg-pink-400',
-    4: 'bg-blue-200 dark:bg-blue-400',
-  };
-
-  const featuresData = [
+  const stepsData = [
     {
       id: 1,
-      title: 'Seamlessly Import Your Data',
-      description:
-        'Easily connect your data sources, upload files, or add websites for automated crawling. InsertBot  will use your data to train a custom chatbot tailored to your business.',
+      title: 'Import Data',
+      description: 'Seamlessly connect your data sources for a tailored chatbot experience.',
+      image: StepImage01,
     },
     {
       id: 2,
-      title: 'Tailor Chatbot Behavior & Design',
-      description:
-        'Personalize your chatbot’s appearance and behavior to reflect your brand’s identity with custom colors, logos, and voice instructions.',
+      title: 'Customize',
+      description: 'Personalize your chatbot\'s appearance and behavior to match your brand.',
+      image: StepImage02,
     },
     {
       id: 3,
-      title: 'Effortlessly Embed on Your Website',
-      description:
-        'Integrate your chatbot onto your website with just a simple embed code. Let it handle customer interactions directly on your platform with ease.',
+      title: 'Embed',
+      description: 'Effortlessly integrate your chatbot onto your website with a simple code.',
+      image: StepImage03,
     },
     {
       id: 4,
-      title: 'Connect With Your Favorite Tools',
-      description:
-        'Expand your chatbot’s capabilities by integrating it with tools like Slack, WhatsApp, Zapier, and more for enhanced communication and automation.',
+      title: 'Integrate',
+      description: 'Connect with your favorite tools to enhance communication and automation.',
+      image: StepImage04,
     },
   ];
 
   return (
-    <section className="relative">
-      <div className="py-8 md:py-12"> {/* Reduced padding here */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto text-center pb-8"> {/* Reduced padding */}
-            <h2 className="font-inter-tight text-3xl md:text-4xl font-bold text-black dark:text-white mb-4">
-              Unlock the Full Power of AI-Powered Chatbots
-            </h2>
-            <p className="text-lg text-black dark:text-white">
-              Leverage cutting-edge AI to engage your customers, streamline support, and drive meaningful results—tailored to your business, no coding required.
-            </p>
-          </div>
+    <section className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-20 sm:py-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl mb-4">
+            Four Simple Steps to AI-Powered Success
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Follow these steps to unlock the full potential of your AI chatbot and transform your customer engagement.
+          </p>
+        </div>
 
-          <div>
-            {/* Tabs buttons */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {featuresData.map((feature) => (
-                <button
-                  key={feature.id}
-                  className={`relative text-left px-4 py-5 rounded transform shadow-md ${tabColors[feature.id]} ${
-                    tab !== feature.id
-                      ? 'opacity-60 hover:opacity-100 transition'
-                      : 'rotate-1 shadow-lg scale-105'
-                  }`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setTab(feature.id);
-                  }}
+        <div className="relative">
+          <div className="absolute top-0 left-8 w-1 h-full bg-gradient-to-b from-indigo-400 to-indigo-600 rounded-full hidden md:block" aria-hidden="true"></div>
+
+          {stepsData.map((step, index) => (
+            <motion.div
+              key={step.id}
+              className="relative mb-12 md:mb-20"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.2 }}
+            >
+              <div className="flex flex-col md:flex-row items-center">
+                <motion.div
+                  className="flex-shrink-0 w-16 h-16 rounded-full border-4 border-white dark:border-gray-800 bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-xl flex items-center justify-center mb-4 md:mb-0 md:mr-8 z-10 shadow-lg cursor-pointer"
+                  whileHover={{ scale: 1.1, boxShadow: "0 0 15px rgba(79, 70, 229, 0.6)" }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setActiveStep(step.id)}
                 >
-                  {/* Pin icon */}
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="font-inter-tight font-semibold text-black dark:text-white">
-                      {feature.title}
-                    </div>
-                  </div>
-                  <div className="text-sm text-black dark:text-white">
-                    {feature.description}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Tabs items */}
-            <div className="relative lg:max-w-none [mask-image:linear-gradient(white_0%,white_calc(100%-40px),_transparent_calc(100%-1px))] -mx-6">
-              <div className="relative flex flex-col pt-8 md:pt-12 mx-6" ref={tabs}>
-                {featuresData.map((feature) => (
-                  <Transition
-                    key={feature.id}
-                    show={tab === feature.id}
-                    className="w-full text-center"
-                    enter="transition ease-in-out duration-700 transform order-first"
-                    enterFrom="opacity-0 -translate-y-4"
-                    enterTo="opacity-100 translate-y-0"
-                    leave="transition ease-in-out duration-300 transform absolute"
-                    leaveFrom="opacity-100 translate-y-0"
-                    leaveTo="opacity-0 translate-y-4"
-                    beforeEnter={() => heightFix()}
-                    unmount={false}
+                  {step.id}
+                </motion.div>
+                <div className="md:flex-1">
+                  <motion.div
+                    className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 md:p-8 transition-all duration-300 ${
+                      activeStep === step.id ? 'scale-105 border-2 border-indigo-500' : ''
+                    }`}
+                    whileHover={{ scale: 1.03, boxShadow: "0 4px 20px rgba(79, 70, 229, 0.2)" }}
                   >
-                    <div className="inline-flex relative align-top">
-                      <div className={`rounded-lg overflow-hidden ${tabColors[feature.id]} p-8 shadow-lg`}>
-                        <Image
-                          className="object-cover object-center mx-auto"
-                          src={tabImages[feature.id]}
-                          width={1200}
-                          height={800}
-                          alt={`Feature ${feature.id}`}
-                          style={{
-                            maxWidth: '100%',
-                            height: 'auto',
-                          }}
-                        />
-                      </div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      {step.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                      {step.description}
+                    </p>
+                    <div className="relative aspect-video rounded-lg overflow-hidden shadow-md border border-gray-200 dark:border-gray-700">
+                      <Image
+                        src={step.image}
+                        alt={step.title}
+                        layout="fill"
+                        objectFit="cover"
+                        className="transition-all duration-300 transform hover:scale-105"
+                      />
                     </div>
-                  </Transition>
-                ))}
+                  </motion.div>
+                </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>

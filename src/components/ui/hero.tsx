@@ -50,10 +50,19 @@ export default function Hero() {
 
         {/* Image */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-center pb-12 md:pb-20 relative">
-          <div className="relative group">
+          <div className="relative group overflow-hidden rounded-lg">
             <div className="absolute inset-0 rounded-lg border border-zinc-200 dark:border-zinc-700 transition-transform duration-500 group-hover:scale-105"></div>
             <div className="absolute inset-0 rounded-lg border border-transparent group-hover:border-blue-600 dark:group-hover:border-pink-500 animate-border-glow transition duration-300"></div>
-            <Image className="rounded-lg shadow-2xl" src={HeroImage} width={1104} height={620} alt="Hero" priority />
+            <div className="overflow-hidden rounded-lg">
+              <Image 
+                className="rounded-lg shadow-2xl transition-transform duration-500 group-hover:scale-110" 
+                src={HeroImage} 
+                width={1104} 
+                height={620} 
+                alt="Hero" 
+                priority 
+              />
+            </div>
           </div>
         </div>
 

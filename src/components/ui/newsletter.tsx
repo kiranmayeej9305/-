@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { subscribeToNewsletter } from '@/lib/queries'; // Import the server-side query
+import { subscribeToNewsletter } from '@/lib/queries';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
@@ -19,9 +18,9 @@ export default function Newsletter() {
     setSuccess(false);
 
     try {
-      await subscribeToNewsletter(email); // Call the server-side query
+      await subscribeToNewsletter(email);
       setSuccess(true);
-      setEmail(''); // Reset email after success
+      setEmail('');
     } catch (error) {
       setError('Subscription failed. Please try again.');
     } finally {
@@ -30,46 +29,55 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="w-full py-8 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <Card className="relative bg-white text-gray-400 shadow-md rounded-lg p-8 lg:p-2">
-          <div className="flex flex-col lg:flex-row justify-between items-center">
-            <CardHeader className="mb-8 lg:mr-8 lg:mb-0 text-center lg:text-left lg:w-1/2">
-              <CardTitle className="text-gray-900 dark:text-gray-100 mb-4 text-3xl font-semibold">
-                Stay in the Loop!
-              </CardTitle>
-              <p className="text-md text-gray-600">
-                Subscribe now to gain <span className="font-semibold">early access</span> and receive a <span className="font-semibold">special discount</span> once our product is live.
-              </p>
-            </CardHeader>
-            <CardContent className="w-full lg:w-1/2">
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row justify-center max-w-md mx-auto sm:max-w-lg lg:max-w-full gap-4">
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-gray-200 border-gray-300 focus:border-purple-600 focus:ring-purple-600 rounded-full px-6 py-3 text-gray-900 placeholder-gray-400"
-                  placeholder="Enter your email..."
-                  aria-label="Your email address"
-                  required
-                />
-                <Button
-                  className="w-full sm:w-auto btn-sm text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-300 px-6 py-3 rounded-full transition duration-150 ease-in-out"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? 'Subscribing...' : 'Subscribe'}
-                </Button>
-              </form>
-              {success && (
-                <p className="text-green-500 mt-4 text-center">
-                  Thank you for subscribing! You’ll be the first to know when we launch and will receive exclusive early access and discounts.
+    <section className="bg-gradient-to-r from-indigo-600 to-purple-600 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-6 py-12 sm:px-12 lg:py-16 lg:pr-0 xl:px-16 xl:py-20">
+            <div className="lg:flex lg:items-center lg:justify-between">
+              <div className="lg:w-0 lg:flex-1">
+                <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                  Stay ahead of the curve
+                </h2>
+                <p className="mt-4 max-w-3xl text-lg text-gray-500">
+                  Subscribe to our newsletter for exclusive updates, early access, and special discounts on our upcoming product launch.
                 </p>
-              )}
-              {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-            </CardContent>
+              </div>
+              <div className="mt-8 lg:mt-0 lg:ml-8">
+                <form onSubmit={handleSubmit} className="sm:flex">
+                  <label htmlFor="email-address" className="sr-only">
+                    Email address
+                  </label>
+                  <Input
+                    id="email-address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="w-full px-5 py-3 border border-gray-300 shadow-sm placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black sm:max-w-xs rounded-md"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3 sm:flex-shrink-0">
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+                    >
+                      {loading ? 'Subscribing...' : 'Subscribe'}
+                    </Button>
+                  </div>
+                </form>
+                {success && (
+                  <p className="mt-3 text-sm text-green-600">
+                    Thank you for subscribing! We'll keep you updated on our launch.
+                  </p>
+                )}
+                {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+              </div>
+            </div>
           </div>
-        </Card>
+        </div>
       </div>
     </section>
   );
