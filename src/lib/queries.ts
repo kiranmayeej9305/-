@@ -451,106 +451,6 @@ export const sendInvitation = async (
 //   return response
 // }
 
-export const deleteMedia = async (mediaId: string) => {
-  const response = await db.media.delete({
-    where: {
-      id: mediaId,
-    },
-  })
-  return response
-}
-
-
-
-export const upsertPipeline = async (
-  pipeline: Prisma.PipelineUncheckedCreateWithoutLaneInput
-) => {
-  const response = await db.pipeline.upsert({
-    where: { id: pipeline.id || v4() },
-    update: pipeline,
-    create: pipeline,
-  })
-
-  return response
-}
-
-export const deletePipeline = async (pipelineId: string) => {
-  const response = await db.pipeline.delete({
-    where: { id: pipelineId },
-  })
-  return response
-}
-
-export const updateLanesOrder = async (lanes: Lane[]) => {
-  try {
-    const updateTrans = lanes.map((lane) =>
-      db.lane.update({
-        where: {
-          id: lane.id,
-        },
-        data: {
-          order: lane.order,
-        },
-      })
-    )
-
-    await db.$transaction(updateTrans)
-    console.log('🟢 Done reordered 🟢')
-  } catch (error) {
-    console.log(error, 'ERROR UPDATE LANES ORDER')
-  }
-}
-
-export const updateTicketsOrder = async (tickets: Ticket[]) => {
-  try {
-    const updateTrans = tickets.map((ticket) =>
-      db.ticket.update({
-        where: {
-          id: ticket.id,
-        },
-        data: {
-          order: ticket.order,
-          laneId: ticket.laneId,
-        },
-      })
-    )
-
-    await db.$transaction(updateTrans)
-    console.log('🟢 Done reordered 🟢')
-  } catch (error) {
-    console.log(error, '🔴 ERROR UPDATE TICKET ORDER')
-  }
-}
-
-export const upsertLane = async (lane: Prisma.LaneUncheckedCreateInput) => {
-  let order: number
-
-  if (!lane.order) {
-    const lanes = await db.lane.findMany({
-      where: {
-        pipelineId: lane.pipelineId,
-      },
-    })
-
-    order = lanes.length
-  } else {
-    order = lane.order
-  }
-
-  const response = await db.lane.upsert({
-    where: { id: lane.id || v4() },
-    update: lane,
-    create: { ...lane, order },
-  })
-
-  return response
-}
-
-export const deleteLane = async (laneId: string) => {
-  const resposne = await db.lane.delete({ where: { id: laneId } })
-  return resposne
-}
-
 export const getChatbotUsersWithAccess = async (chatbotId: string) => {
   const chatbotUsersWithAccess = await db.user.findMany({
     where: {
@@ -814,7 +714,7 @@ export const upsertChatbot = async (chatbot: Chatbot, settings: any, isCreating:
 
 
 export const upsertChatbotSettings = async (chatbotId: string, settingsData: any) => {
-  const settingsResponse = await prisma.chatbotSettings.upsert({
+  const settingsResponse = await db.chatbotSettings.upsert({
     where: { chatbotId },
     update: { ...settingsData, chatbotId },
     create: { ...settingsData, chatbotId },
@@ -826,7 +726,7 @@ export const upsertChatbotSettings = async (chatbotId: string, settingsData: any
 
 export const getAIModels = async () => {
   try {
-    const response = await prisma.aIModel.findMany();
+    const response = await db.aIModel.findMany();
     return response;
   } catch (error) {
     console.error('Error fetching AI models:', error);
@@ -836,7 +736,7 @@ export const getAIModels = async () => {
 
 export const getChatbotTypes = async () => {
   try {
-    const response = await prisma.chatbotType.findMany();
+    const response = await db.chatbotType.findMany();
     return response;
   } catch (error) {
     console.error('Error fetching chatbot types:', error);
@@ -858,7 +758,7 @@ export const getDefaultPromptByChatbotTypeId = async (chatbotTypeId: string) => 
 };
 export const fetchChatbotData = async (chatbotId: string) => {
   try {
-    const chatbotData = await prisma.chatbot.findUnique({
+    const chatbotData = await db.chatbot.findUnique({
       where: { id: chatbotId },
       include: {
         Permissions: true,
@@ -931,7 +831,7 @@ export const upsertInterfaceSettings = async (data) => {
   try {
     const { chatbotId, ...restData } = data;
 
-    const result = await prisma.interface.upsert({
+    const result = await db.interface.upsert({
       where: {
         chatbotId: chatbotId,
       },
@@ -975,7 +875,7 @@ export const getInterfaceSettings = async (chatbotId: string) => {
 };
 export const getFilteredQuestions = async (chatbotId: string) => {
   try {
-    const questions = await prisma.filterQuestions.findMany({
+    const questions = await db.filterQuestions.findMany({
       where: { chatbotId },
     });
     return questions;
@@ -987,11 +887,11 @@ export const getFilteredQuestions = async (chatbotId: string) => {
 
 export const saveFilteredQuestions = async (chatbotId: string, questions: { question: string }[]) => {
   try {
-    await prisma.filterQuestions.deleteMany({
+    await db.filterQuestions.deleteMany({
       where: { chatbotId },
     });
 
-    await prisma.filterQuestions.createMany({
+    await db.filterQuestions.createMany({
       data: questions.map((q) => ({ ...q, chatbotId })),
     });
 
@@ -1003,7 +903,7 @@ export const saveFilteredQuestions = async (chatbotId: string, questions: { ques
 };
 
 export const getConversationMode = async (id: string) => {
-  return await prisma.chatRoom.findUnique({
+  return await db.chatRoom.findUnique({
     where: { id },
     select: { live: true },
   });
@@ -1013,7 +913,7 @@ export const getConversationMode = async (id: string) => {
 
 
 export const updateChatRoom = async (id: string, data: any, select: any) => {
-  return await prisma.chatRoom.update({
+  return await db.chatRoom.update({
     where: { id },
     data,
     select,
@@ -1022,7 +922,7 @@ export const updateChatRoom = async (id: string, data: any, select: any) => {
 
 
 export const getChatbotChatRooms = async (chatbotId: string) => {
-  return await prisma.chatRoom.findMany({
+  return await db.chatRoom.findMany({
     where: {
       chatbotId: chatbotId,
     },
@@ -1059,7 +959,7 @@ export const getChatbotChatRooms = async (chatbotId: string) => {
 
 
 export const getChatMessages = async (roomId: string) => {
-  return await prisma.chatRoom.findUnique({
+  return await db.chatRoom.findUnique({
     where: {
       id: roomId,
     },
@@ -1128,7 +1028,7 @@ export const createMessageInChatRoom = async (
 // Example functions to fetch data from your database
 export async function getChatbotData(chatbotId: string) {
   // Fetch chatbot data from the database
-  const chatbot = await prisma.chatbot.findUnique({
+  const chatbot = await db.chatbot.findUnique({
     where: { id: chatbotId },
   });
   return chatbot;
@@ -1136,7 +1036,7 @@ export async function getChatbotData(chatbotId: string) {
 
 export async function getAccountData(accountId: string) {
   // Fetch account data from the database
-  const account = await prisma.account.findUnique({
+  const account = await db.account.findUnique({
     where: { id: accountId },
   });
   return account;
@@ -1144,7 +1044,7 @@ export async function getAccountData(accountId: string) {
 
 
 export const updateMessagesToSeen = async (chatRoomId: string) => {
-  return await prisma.chatMessage.updateMany({
+  return await db.chatMessage.updateMany({
     where: { chatRoomId },
     data: { seen: true },
   });
@@ -1161,7 +1061,7 @@ export const enableLiveAgentMode = async (chatRoomId: string, agentId: string) =
 };
 
 export const assignAgentToChatRoom = async (chatRoomId: string, agentId: string) => {
-  return await prisma.chatRoom.update({
+  return await db.chatRoom.update({
     where: { id: chatRoomId },
     data: { agentId, live: true },
   });
@@ -1169,7 +1069,7 @@ export const assignAgentToChatRoom = async (chatRoomId: string, agentId: string)
 
 // End a chatroom session
 export const endChatRoomSession = async (chatRoomId: string) => {
-  return await prisma.chatRoom.update({
+  return await db.chatRoom.update({
     where: { id: chatRoomId },
     data: { live: false },
   });
@@ -1194,7 +1094,7 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
 
   if (isPlayground) {
     // When in playground mode, use chatbotId as both customerId and chatRoomId
-    customer = await prisma.customer.upsert({
+    customer = await db.customer.upsert({
       where: { id: chatbotId },
       update: {},
       create: {
@@ -1205,7 +1105,7 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
       },
     });
 
-    chatRoom = await prisma.chatRoom.upsert({
+    chatRoom = await db.chatRoom.upsert({
       where: { id: chatbotId },
       update: {},
       create: {
@@ -1219,12 +1119,12 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
     return { customerId: chatbotId, chatRoomId: chatbotId };
   } else {
     // Generate a dynamic name (e.g., Customer1, Customer2, ...)
-    const customerCount = await prisma.customer.count({
+    const customerCount = await db.customer.count({
       where: { chatbotId },
     });
     const dynamicName = `Customer${customerCount + 1}`;
 
-    customer = await prisma.customer.create({
+    customer = await db.customer.create({
       data: {
         name: dynamicName,
         email: null, // Start with no email
@@ -1232,7 +1132,7 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
       },
     });
 
-    chatRoom = await prisma.chatRoom.create({
+    chatRoom = await db.chatRoom.create({
       data: {
         chatbotId,
         customerId: customer.id,
@@ -1246,7 +1146,7 @@ export const createCustomerAndChatRoom = async (chatbotId: string, isPlayground:
 
 export const updateChatbotStatus = async (chatbotId, isPublic) => {
   try {
-    await prisma.chatbot.update({
+    await db.chatbot.update({
       where: { id: chatbotId },
       data: { isPublic },
     });
@@ -1258,7 +1158,7 @@ export const updateChatbotStatus = async (chatbotId, isPublic) => {
 
 export const fetchChatbotStatus = async (chatbotId) => {
   try {
-    const chatbot = await prisma.chatbot.findUnique({
+    const chatbot = await db.chatbot.findUnique({
       where: { id: chatbotId },
       select: { isPublic: true },
     });
@@ -1269,7 +1169,7 @@ export const fetchChatbotStatus = async (chatbotId) => {
   }
 };
 export const fetchChatRoomById = async (chatbotId: string) => {
-  const chatRoom = await prisma.chatRoom.findFirst({
+  const chatRoom = await db.chatRoom.findFirst({
     where: { id: chatbotId },
     include: {
       ChatMessages: {
@@ -1781,7 +1681,7 @@ export async function saveAppointment({ chatbotId, customerEmail, eventId, appoi
   });
 }
 export const getLeads = async (limit: number, offset: number, search: string) => {
-  const leads = await prisma.customer.findMany({
+  const leads = await db.customer.findMany({
     where: {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
@@ -1795,7 +1695,7 @@ export const getLeads = async (limit: number, offset: number, search: string) =>
     skip: offset,
   })
 
-  const totalLeads = await prisma.customer.count({
+  const totalLeads = await db.customer.count({
     where: {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
@@ -1808,7 +1708,7 @@ export const getLeads = async (limit: number, offset: number, search: string) =>
 }
 
 export const updateLeadDetails = async (id: string, { name, email, leadQuality }: { name: string; email: string; leadQuality: 'GOOD' | 'BAD' | 'EXCELLENT' }) => {
-  return await prisma.customer.update({
+  return await db.customer.update({
     where: { id },
     data: { name, email, leadQuality },
   })
@@ -1816,7 +1716,7 @@ export const updateLeadDetails = async (id: string, { name, email, leadQuality }
 
 
 export const deleteLead = async (id: string) => {
-  return await prisma.customer.delete({
+  return await db.customer.delete({
     where: { id },
   })
 }
@@ -2465,7 +2365,7 @@ export const upsertBlog = async (blogData) => {
 
   if (!id || id === 0) {
     // Create new blog post
-    return await prisma.blog.create({
+    return await db.blog.create({
       data: {
         title,
         content,
@@ -2479,7 +2379,7 @@ export const upsertBlog = async (blogData) => {
     });
   } else {
     // Update existing blog post
-    return await prisma.blog.upsert({
+    return await db.blog.upsert({
       where: { id: parseInt(id) },
       update: {
         title,
@@ -2605,7 +2505,7 @@ export async function getBlogTagsById(blogId) {
 }
 export async function getBlogsByTopicName(topicName: string) {
   try {
-    const blogs = await prisma.blog.findMany({
+    const blogs = await db.blog.findMany({
       where: {
         topic: {
           name: topicName,
