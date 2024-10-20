@@ -16,7 +16,7 @@ const BlogForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { accountId } = useParams();
-  const id = searchParams.get('id');
+  const id: number = parseInt(searchParams.get('id') || '0');
 
   const [blog, setBlog] = useState({
     id: 0,
@@ -24,11 +24,11 @@ const BlogForm = () => {
     subTitle: '',
     content: '',
     author: '',
-    publishedAt: new Date().toISOString().slice(0, 16),
+    publishedAt: new Date(), // Ensure this is in string format
     status: 'Draft',
     path: '',
     topicId: 0,
-    blogTags: [],
+    tags: [], // Ensure blogTags is included
     excerpt: '',
     imageUrl: '', // Cover image URL
   });
@@ -42,8 +42,8 @@ const BlogForm = () => {
   // Fetch blog data using queries
   const fetchBlogData = async () => {
     if (id) {
-      const blogData = await getBlogById(Number(id));
-      setBlog(blogData);
+      const blogData = await getBlogById(id);
+      setBlog({ ...blogData, tags: (blogData as any).tags || [] });
       if (blogData.imageUrl) {
         setImagePreview(blogData.imageUrl);
       }
@@ -52,7 +52,7 @@ const BlogForm = () => {
 
   // Fetch topics and tags using queries
   const fetchTopicsAndTags = async () => {
-    const topicsData = await getTopics();
+    const topicsData = await getTopics(100);
     setTopics(topicsData.map((topic: any) => ({ value: topic.id, label: topic.name })));
 
     const tagsData = await getTags();
@@ -139,9 +139,15 @@ const BlogForm = () => {
         <BlogPreview
           source={mdxSource}
           frontMatter={{
-            ...blog,
-            tags: blog.blogTags.map((bt) => bt.tag),
-            topic: topics.find((topic) => topic.id === blog.topicId),
+            title: blog.title,
+            subTitle: blog.subTitle,
+            publishedAt: blog.publishedAt.toISOString(),
+            imageUrl: blog.imageUrl,
+            summary: blog.excerpt,
+            author: blog.author,
+            authorImg: '', // Add a default empty string or provide an actual author image URL
+            tags: blog.tags.map((bt) => ({ id: bt.tag.id, name: bt.tag.name })),
+            topic: topics.find((topic) => topic.id === blog.topicId) || { id: blog.topicId, name: '' },
           }}
         />
       ) : (
@@ -179,19 +185,19 @@ const BlogForm = () => {
 
           {/* UploadThing Dropzone for the Cover Image */}
           <div className="mb-5">
-          <UploadDropzone
-  endpoint="media"  // Make sure this matches the endpoint defined in your `ourFileRouter`
-  onClientUploadComplete={(res) => {
-    if (res) {
-      setBlog((prev) => ({ ...prev, imageUrl: res[0].url }));
-      setImagePreview(res[0].url);
-    }
-  }}
-  onUploadError={() => {
-    alert('Error while uploading the image. Please try again.');
-  }}
-  multiple={false} // Upload single cover image
-/>
+            <UploadDropzone
+              endpoint="media"
+              onClientUploadComplete={(res) => {
+                if (res) {
+                  setBlog((prev) => ({ ...prev, imageUrl: res[0].url }));
+                  setImagePreview(res[0].url);
+                }
+              }}
+              onUploadError={() => {
+                alert('Error while uploading the image. Please try again.');
+              }}
+              // Remove the multiple prop
+            />
           </div>
 
           {imagePreview && (
@@ -220,7 +226,7 @@ const BlogForm = () => {
             <input
               type="datetime-local"
               name="publishedAt"
-              value={blog.publishedAt}
+              value={blog.publishedAt.toISOString().slice(0, 16)}
               onChange={handleChange}
               className="form-input w-full"
             />
@@ -245,7 +251,8 @@ const BlogForm = () => {
               onChange={(newValue) =>
                 setBlog((prev) => ({
                   ...prev,
-                  blogTags: newValue ? newValue.map((tag) => ({ blogId: prev.id, tagId: tag.value, tag: { id: tag.value, name: tag.label } })) : [],
+                  tags: newValue ? newValue.map((tag) => ({ blogId: prev.id, tagId: tag.value, tag: { id: tag.value, name: tag.label } })) : [],
+
                 }))
               }
               onCreateOption={async (inputValue) => {
@@ -253,7 +260,7 @@ const BlogForm = () => {
                 setTags((prev) => [...prev, { value: createdTag.id, label: createdTag.name }]);
               }}
               options={tags}
-              value={blog.blogTags?.map((bt) => ({ value: bt.tagId, label: bt.tag.name }))}
+              value={blog.tags?.map((bt) => ({ value: bt.tagId, label: bt.tag.name }))}
               placeholder="Select or create Tags"
               className="w-full"
             />

@@ -7,6 +7,11 @@ import Image from 'next/image'
 // import ChannelImage02 from '@/public/images/channel-02.png'
 // import ChannelImage03 from '@/public/images/channel-03.png'
 
+const options = [
+  // Define your options here
+  // For example: { label: 'Option 1', value: 'option1' },
+];
+
 export default function ChannelMenu() {
 
   
@@ -17,9 +22,9 @@ export default function ChannelMenu() {
     <>
       <Menu as="div" className="relative">
         <Menu.Button className="grow flex items-center truncate">
-          <Image className="w-8 h-8 rounded-full mr-2" src={options[selected].image} width={32} height={32} alt="Group 01" />
+          <Image className="w-8 h-8 rounded-full mr-2" src={Option[selected].image} width={32} height={32} alt="Group 01" />
           <div className="truncate">
-            <span className="font-semibold text-slate-800 dark:text-slate-100">#{options[selected].channel}</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-100">#{Option[selected].channel}</span>
           </div>
           <svg className="w-3 h-3 shrink-0 ml-1 fill-current text-slate-400" viewBox="0 0 12 12">
             <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
@@ -48,7 +53,7 @@ export default function ChannelMenu() {
                         <div className="truncate">#{option.channel}</div>
                       </div>
                       <svg className={`w-3 h-3 shrink-0 fill-current text-indigo-500 ml-1 ${option.id !== selected && 'invisible'}`} viewBox="0 0 12 12">
-                        <path d="M10.28 1.28L3.989 7.575 1.695 5.28A1 1 0 00.28 6.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 1.28z" />
+                        <path d="M10.28 1.28L3.989 7.575 1.695 5.28A1 1 0 001.28 6.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 1.28z" />
                       </svg>
                     </div>
                   </button>

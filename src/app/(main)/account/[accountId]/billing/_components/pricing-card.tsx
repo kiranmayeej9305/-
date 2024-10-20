@@ -8,7 +8,7 @@ import React from 'react';
 import CustomModal from '@/components/global/custom-modal';
 
 type PricingCardProps = {
-  features: Array<{ name: string; description: string; value: string | number }>;
+  features: Array<{ name: string; description: string;}>;
   buttonCta: string;
   title: string;
   description: string;

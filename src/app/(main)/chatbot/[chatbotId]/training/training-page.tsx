@@ -39,7 +39,7 @@ const TrainingPage = ({ params }) => {
 
     if (activeData && activeData.type === 'file' && activeData.content) {
       const file = activeData.content;
-      const uploadResult = await uploadToS3(file, file.name); // upload the file to S3
+      const uploadResult = await uploadToS3(file); // upload the file to S3
 
       if (uploadResult?.file_key && uploadResult.file_name) {
         activeData.content = uploadResult.file_key; // use the S3 key as content

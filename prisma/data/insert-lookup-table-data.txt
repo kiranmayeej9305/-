@@ -1,0 +1,142 @@
+-- Account Sidebar Options Seed Data
+INSERT INTO "AccountSidebarOption" (id, name, link, icon, parentId, isSubmenu, isVisible, createdAt, updatedAt) VALUES
+  ('4d3e8f3d-0a6f-4a58-b9a4-fd5e2b1f3f80', 'Analytics & Usage', '/account/{accountId}/analytics', 'chart', NULL, false, true, now(), now()),
+  ('f5a1b0c4-5e9d-4b9d-b3fa-3e7d5d123a1e', 'Chatbots', '/account/{accountId}', 'person', NULL, false, true, now(), now()),
+  ('8bdbd1e3-f8c2-4d67-a3e8-fd8b19b8cfe0', 'Settings', '/account/{accountId}/settings', 'settings', NULL, false, true, now(), now()),
+  ('cbe5d5e4-6c0b-4f12-8f6d-cd5b1f3d5f80', 'Team', '/account/{accountId}/team', 'shield', NULL, false, true, now(), now()),
+  ('a1b8d5c2-8d4e-49b5-8d7d-f2e7c8b4f3f0', 'Billing', '/account/{accountId}/billing', 'wallet', NULL, false, true, now(), now());
+
+-- Chatbot Sidebar Options Seed Data
+INSERT INTO "ChatbotSidebarOption" (id, name, link, icon, parentId, isSubmenu, isVisible, createdAt, updatedAt) VALUES
+  ('49efe59f-1b4a-4b4b-bdfa-48457a63c482', 'Analytics & Usage', '/chatbot/{chatbotId}/analytics', 'chart', NULL, false, true, now(), now()),
+  ('59efe59f-1b4a-4b4b-bdfa-48457a63c483', 'Settings', '/chatbot/{chatbotId}/settings', 'settings', NULL, false, true, now(), now()),
+  ('69efe59f-1b4a-4b4b-bdfa-48457a63c484', 'Training', '/chatbot/{chatbotId}/training', 'clipboardIcon', NULL, false, true, now(), now()),
+  ('79efe59f-1b4a-4b4b-bdfa-48457a63c485', 'Integration', '/chatbot/{chatbotId}/integration', 'link', NULL, false, true, now(), now()),
+  ('89efe59f-1b4a-4b4b-bdfa-48457a63c486', 'Conversations', '/chatbot/{chatbotId}/conversations', 'messages', NULL, false, true, now(), now());
+
+-- AIModel Table Seed Data
+INSERT INTO "AIModel" (id, name, provider, apiUrl, description, createdAt, updatedAt) VALUES
+  (gen_random_uuid(), 'gpt-4o', 'OpenAI', 'https://api.openai.com/v1/gpt-4', 'Advanced model from OpenAI capable of generating human-like text.', now(), now()),
+  (gen_random_uuid(), 'gpt-4o-mini', 'OpenAI', 'https://api.openai.com/v1/gpt-4', 'Advanced model from OpenAI capable of generating human-like text.', now(), now()),
+  (gen_random_uuid(), 'gpt-4-turbo', 'OpenAI', 'https://api.openai.com/v1/gpt-4', 'Advanced model from OpenAI capable of generating human-like text.', now(), now()),
+  (gen_random_uuid(), 'gpt-4', 'OpenAI', 'https://api.openai.com/v1/gpt-4', 'Advanced model from OpenAI capable of generating human-like text.', now(), now()),
+  (gen_random_uuid(), 'gpt-3.5-turbo', 'OpenAI', 'https://api.openai.com/v1/gpt-4', 'Advanced model from OpenAI capable of generating human-like text.', now(), now()),
+  (gen_random_uuid(), 'BERT', 'Google', 'https://api.google.com/v1/bert', 'Model from Google designed for natural language understanding.', now(), now()),
+  (gen_random_uuid(), 'RoBERTa', 'Meta', 'https://api.meta.com/v1/roberta', 'Optimized version of BERT from Meta for better performance on various NLP tasks.', now(), now()),
+  (gen_random_uuid(), 'T5', 'Google', 'https://api.google.com/v1/t5', 'Text-to-Text Transfer Transformer model from Google.', now(), now()),
+  (gen_random_uuid(), 'XLNet', 'Google', 'https://api.google.com/v1/xlnet', 'Model from Google that outperforms BERT on several benchmarks.', now(), now());
+
+-- ChatbotType Table Seed Data
+INSERT INTO "ChatbotType" (id, name, defaultPrompts, description, createdAt, updatedAt) VALUES
+  (gen_random_uuid(), 'Sales Agent', 'You are a sales agent. Your goal is to assist customers with their purchases.', 'A chatbot type designed to assist users in making purchasing decisions.', now(), now()),
+  (gen_random_uuid(), 'Life Coach', 'You are a life coach. Your goal is to provide advice and support to users.', 'A chatbot type designed to offer advice and support on various life topics.', now(), now()),
+  (gen_random_uuid(), 'Travel Planner', 'You are a travel planner. Your goal is to help users plan their trips.', 'A chatbot type designed to assist users in planning their travels.', now(), now()),
+  (gen_random_uuid(), 'Customer Support Agent', 'You are a customer support agent. Your goal is to assist users with their inquiries.', 'A chatbot type designed to provide customer support and handle inquiries.', now(), now()),
+  (gen_random_uuid(), 'Technical Support', 'You are a technical support agent. Your goal is to assist users with technical issues.', 'A chatbot type designed to assist users with technical problems and troubleshooting.', now(), now()),
+  (gen_random_uuid(), 'AI Bot', 'You are an AI chatbot who helps users with their inquiries, issues and requests. Your role is to listen attentively and assist.', 'A chatbot type designed to assist users with various inquiries.', now(), now()),
+  (gen_random_uuid(), 'Custom', 'You are an AI chatbot who helps users with their inquiries, issues and requests.', 'A custom chatbot type for various user needs.', now(), now());-- Insert into Feature Table
+INSERT INTO "Feature" (id, name, description, identifier, type) VALUES
+  (gen_random_uuid(), 'Message Credits', 'Provides a limit for message credits.', 'message_credits', 'account'),
+  (gen_random_uuid(), 'Chatbots', 'Allows managing multiple chatbots.', 'chatbots', 'account'),
+  (gen_random_uuid(), 'Characters Per Chatbot', 'Defines characters limit per chatbot.', 'characters_per_chatbot', 'chatbot'),
+  (gen_random_uuid(), 'Team Members', 'Allows adding team members.', 'team_members', 'account'),
+  (gen_random_uuid(), 'Links for Training', 'Limit for chatbot training links.', 'links_for_training', 'chatbot'),
+  (gen_random_uuid(), 'Unlimited Embedding', 'Ability to embed on multiple websites.', 'unlimited_embedding', 'account'),
+  (gen_random_uuid(), 'Leads Capture', 'Capture leads from users.', 'leads_capture', 'chatbot'),
+  (gen_random_uuid(), 'Chat History', 'Access to chat history.', 'chat_history', 'chatbot'),
+  (gen_random_uuid(), 'API Access', 'Access the chatbot via API.', 'api_access', 'account'),
+  (gen_random_uuid(), 'Analytics', 'Access to chatbot analytics.', 'analytics', 'chatbot'),
+  (gen_random_uuid(), 'Remove "Powered by InsertBot"', 'Remove the "Powered by InsertBot" branding.', 'remove_powered_by_InsertBot', 'account'),
+  (gen_random_uuid(), 'Use Your Own Custom Domains', 'Host chatbots on your own custom domains.', 'custom_domains', 'account'),
+  (gen_random_uuid(), 'Advanced Analytics', 'Access to advanced analytics features.', 'advanced_analytics', 'chatbot');
+
+-- Insert into FrontendFeature Table
+INSERT INTO "FrontendFeature" (id, name, description) VALUES
+  (gen_random_uuid(), 'Message Credits', 'Receive 20 message credits per month for chatbot conversations.'),
+  (gen_random_uuid(), 'Chatbots', 'Manage up to 1 chatbot with full access to configuration and settings.'),
+  (gen_random_uuid(), 'Characters Per Chatbot', 'Set a limit of 600,000 characters per chatbot to handle various interactions.'),
+  (gen_random_uuid(), 'Team Members', 'Add up to 1 team member to collaborate on chatbot management.'),
+  (gen_random_uuid(), 'Links for Training', 'Allow up to 10 links for chatbot training to optimize performance.'),
+  (gen_random_uuid(), 'Unlimited Embedding', 'Embed the chatbot across unlimited websites for broader reach.'),
+  (gen_random_uuid(), 'Leads Capture', 'Capture an unlimited number of leads directly through your chatbot.'),
+  (gen_random_uuid(), 'Chat History', 'Enjoy unlimited access to your chatbot’s complete chat history.'),
+  (gen_random_uuid(), 'API Access', 'Gain unlimited access to the chatbot API for seamless integrations.'),
+  (gen_random_uuid(), 'Analytics', 'Access unlimited data and insights from chatbot analytics to track performance.'),
+  (gen_random_uuid(), 'Remove "Powered by InsertBot"', 'Remove the "Powered by InsertBot" branding to personalize your chatbot.'),
+  (gen_random_uuid(), 'Use Your Own Custom Domains', 'Host chatbots on your own custom domains with no limitations.'),
+  (gen_random_uuid(), 'Advanced Analytics', 'Get advanced analytics features for in-depth insights on chatbot usage.');
+
+-- Insert into Plan Table
+INSERT INTO "Plan" (id, name, description, monthlyPrice, yearlyPrice, stripeMonthlyPriceId, stripeYearlyPriceId, isAddOn, createdAt) VALUES
+  (gen_random_uuid(), 'Free', 'A basic plan for testing.', 0, 0, NULL, NULL, false, now()),
+  (gen_random_uuid(), 'Hobby', 'For hobbyists with more needs.', 1900, 19900, 'price_1PGDITCVtIA4fkI2sApcxiYo', 'price_1PIGkNCVtIA4fkI2VrRj5qnH', false, now()),
+  (gen_random_uuid(), 'Standard', 'For small businesses needing more power.', 9900, 99900, 'price_1PIGjrCVtIA4fkI2LyvHLMx0', 'price_1PIGjrCVtIA4fkI2LyvHLMx0', false, now()),
+  (gen_random_uuid(), 'Unlimited', 'For enterprises needing everything.', 39900, 399900, 'price_1PGDJZCVtIA4fkI2V8ufr2Hd', 'price_1PIGjPCVtIA4fkI2I9z76rke', false, now());
+
+-- Insert into PlanFeature Table
+-- Free Plan Features
+INSERT INTO "PlanFeature" (id, planId, featureId, value, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "Feature" WHERE identifier = 'message_credits'), 20, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "Feature" WHERE identifier = 'chatbots'), 1, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "Feature" WHERE identifier = 'characters_per_chatbot'), 400000, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "Feature" WHERE identifier = 'team_members'), 1, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "Feature" WHERE identifier = 'links_for_training'), 10, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "Feature" WHERE identifier = 'unlimited_embedding'), NULL, now());
+
+-- Hobby Plan Features
+INSERT INTO "PlanFeature" (id, planId, featureId, value, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "Feature" WHERE identifier = 'message_credits'), 2000, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "Feature" WHERE identifier = 'chatbots'), 2, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "Feature" WHERE identifier = 'characters_per_chatbot'), 11000000, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "Feature" WHERE identifier = 'api_access'), NULL, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "Feature" WHERE identifier = 'analytics'), NULL, now());
+
+-- Standard Plan Features
+INSERT INTO "PlanFeature" (id, planId, featureId, value, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "Feature" WHERE identifier = 'message_credits'), 10000, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "Feature" WHERE identifier = 'chatbots'), 5, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "Feature" WHERE identifier = 'team_members'), 3, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "Feature" WHERE identifier = 'api_access'), NULL, now());
+
+-- Unlimited Plan Features
+INSERT INTO "PlanFeature" (id, planId, featureId, value, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "Feature" WHERE identifier = 'message_credits'), 40000, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "Feature" WHERE identifier = 'chatbots'), 10, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "Feature" WHERE identifier = 'team_members'), 5, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "Feature" WHERE identifier = 'remove_powered_by_InsertBot'), NULL, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "Feature" WHERE identifier = 'custom_domains'), NULL, now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "Feature" WHERE identifier = 'advanced_analytics'), NULL, now());
+
+-- Insert into PlanFrontendFeature Table
+-- Free Plan Frontend Features
+INSERT INTO "PlanFrontendFeature" (id, planId, featureId, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "FrontendFeature" WHERE name = 'Message Credits'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "FrontendFeature" WHERE name = 'Chatbots'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "FrontendFeature" WHERE name = 'Characters Per Chatbot'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "FrontendFeature" WHERE name = 'Team Members'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "FrontendFeature" WHERE name = 'Links for Training'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Free'), (SELECT id FROM "FrontendFeature" WHERE name = 'Unlimited Embedding'), now());
+
+-- Hobby Plan Frontend Features
+INSERT INTO "PlanFrontendFeature" (id, planId, featureId, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "FrontendFeature" WHERE name = 'Message Credits'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "FrontendFeature" WHERE name = 'Chatbots'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "FrontendFeature" WHERE name = 'Characters Per Chatbot'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "FrontendFeature" WHERE name = 'API Access'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Hobby'), (SELECT id FROM "FrontendFeature" WHERE name = 'Analytics'), now());
+
+-- Standard Plan Frontend Features
+INSERT INTO "PlanFrontendFeature" (id, planId, featureId, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "FrontendFeature" WHERE name = 'Message Credits'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "FrontendFeature" WHERE name = 'Chatbots'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "FrontendFeature" WHERE name = 'Team Members'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Standard'), (SELECT id FROM "FrontendFeature" WHERE name = 'API Access'), now());
+
+-- Unlimited Plan Frontend Features
+INSERT INTO "PlanFrontendFeature" (id, planId, featureId, createdAt) VALUES
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "FrontendFeature" WHERE name = 'Message Credits'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "FrontendFeature" WHERE name = 'Chatbots'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "FrontendFeature" WHERE name = 'Team Members'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "FrontendFeature" WHERE name = 'Remove "Powered by InsertBot"'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "FrontendFeature" WHERE name = 'Use Your Own Custom Domains'), now()),
+  (gen_random_uuid(), (SELECT id FROM "Plan" WHERE name = 'Unlimited'), (SELECT id FROM "FrontendFeature" WHERE name = 'Advanced Analytics'), now());

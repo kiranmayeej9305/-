@@ -40,13 +40,13 @@ export default function AppointmentForm({ slot, chatbotId }) {
         toast({
           title: 'Appointment Booked',
           description: `Your appointment has been successfully booked. Check your email for details!`,
-          status: 'success',
+          variant: 'default',
         });
       } else {
         toast({
           title: 'Error',
           description: 'Failed to book the appointment.',
-          status: 'error',
+          variant: 'destructive',
         });
       }
     } catch (error) {
@@ -54,7 +54,7 @@ export default function AppointmentForm({ slot, chatbotId }) {
       toast({
         title: 'Error',
         description: 'An error occurred while booking your appointment.',
-        status: 'error',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -66,25 +66,25 @@ export default function AppointmentForm({ slot, chatbotId }) {
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">Name</label>
         <Input {...register('name')} placeholder="Your Name" />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+        {errors.name && <p className="text-red-500 text-sm">{errors.name.message?.toString()}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">Email</label>
         <Input {...register('email')} placeholder="Your Email" />
-        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+        {errors.email && <p className="text-red-500 text-sm">{errors.email.message?.toString()}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">Phone</label>
         <Input {...register('phone')} placeholder="Your Phone Number" />
-        {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
+        {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message?.toString()}</p>}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">Meeting Agenda</label>
         <Textarea {...register('agenda')} placeholder="Briefly describe the meeting agenda" />
-        {errors.agenda && <p className="text-red-500 text-sm">{errors.agenda.message}</p>}
+        {errors.agenda && <p className="text-red-500 text-sm">{errors.agenda.message?.toString()}</p>}
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">

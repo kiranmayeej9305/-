@@ -18,9 +18,9 @@ const ChatbotIframePage = async ({ params }) => {
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-900">
       <div className="w-full h-full max-w-4xl">
-        <ChatProvider isIframe={true}>
+        <ChatProvider>
           <InterfaceSettingsProvider chatbotId={chatbotId}>
-            <ChatRoom chatbotId={chatbotId} isPlayground={false} isPublic={true} />
+            <ChatRoom chatbotId={chatbotId} isPlayground={false} />
           </InterfaceSettingsProvider>
         </ChatProvider>
       </div>

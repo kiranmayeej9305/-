@@ -38,11 +38,10 @@ export async function createGoogleCalendarEvent(chatbotId: string, customerEmail
         ],
       },
     };
-
     // Create the event on Google Calendar
     const createdEvent = await calendar.events.insert({
       calendarId: 'primary',
-      resource: event,
+      requestBody: event,
     });
 
     // Return the booking URL for the event

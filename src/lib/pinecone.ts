@@ -29,7 +29,8 @@ export async function loadS3IntoPinecone(fileKey: string, chatbotId: string, fil
       const pages = await loader.load();
       console.log("PDF loaded successfully. Number of pages:", pages.length);
 
-      documents = await Promise.all(pages.map(prepareDocument));
+      const preparedDocuments = await Promise.all(pages.map(prepareDocument));
+      documents = preparedDocuments.flat();  // Flatten the array of arrays
       console.log("Documents prepared. Number of documents:", documents.length);
     } else if (fileType === 'json') {
       console.log(file_name);
@@ -146,7 +147,11 @@ async function prepareDocument(page: Document) {
   const docs = await splitter.splitDocuments([
     new Document({
       pageContent: pageContent.replace(/\n/g, ""),
-      metadata: { pageNumber: metadata.loc.pageNumber, text: pageContent },
+      metadata: { 
+        pageNumber: metadata.loc && typeof metadata.loc === 'object' && 'pageNumber' in metadata.loc ? metadata.loc.pageNumber : undefined,
+        text: pageContent,
+        ...sanitizeMetadata(metadata)
+      },
     }),
   ]);
 

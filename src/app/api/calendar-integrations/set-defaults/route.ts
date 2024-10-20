@@ -1,15 +1,16 @@
-// pages/api/integrations/set-default.ts
-
-import { NextApiRequest, NextApiResponse } from 'next';
+// File: /app/api/calendar-integrations/set-defaults/route.ts
+import { NextRequest, NextResponse } from 'next/server';
 import { setDefaultCalendarIntegration } from '@/lib/queries';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { platform, chatbotId } = req.body;
-
+export async function POST(req: NextRequest) {
   try {
+    const { platform, chatbotId } = await req.json(); // Parse JSON from the request body
+
     await setDefaultCalendarIntegration(chatbotId, platform);
-    res.status(200).json({ message: 'Default calendar set successfully' });
+
+    return NextResponse.json({ message: 'Default calendar set successfully' }, { status: 200 });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to set default calendar' });
+    console.error('Error setting default calendar:', error);
+    return NextResponse.json({ error: 'Failed to set default calendar' }, { status: 500 });
   }
 }

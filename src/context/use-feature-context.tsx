@@ -9,7 +9,7 @@ interface FeatureContextType {
 
 const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
 
-export const FeatureProvider: React.FC = ({ children }) => {
+export const FeatureProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { plan } = usePlanAddOn();
 
   const hasFeature = (featureIdentifier: string) => {

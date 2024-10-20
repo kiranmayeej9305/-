@@ -39,7 +39,7 @@ const SendInvitation: React.FC<SendInvitationProps> = ({ accountId }) => {
   const { toast } = useToast()
   const userDataSchema = z.object({
     email: z.string().email(),
-    role: z.enum(['ACCOUNT_ADMIN', 'CHATBOT_USER', 'CHATBOT_GUEST']),
+    role: z.enum(['ACCOUNT_ADMIN', 'CHATBOT_USER', 'CHATBOT_ADMIN']),
   })
 
   const form = useForm<z.infer<typeof userDataSchema>>({

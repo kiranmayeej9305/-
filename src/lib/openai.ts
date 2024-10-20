@@ -1,4 +1,4 @@
-import { Configuration, OpenAIApi } from 'openai-edge';
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai-edge';
 import { getContext } from '@/lib/context';
 
 const config = new Configuration({
@@ -55,8 +55,8 @@ export async function prepareChatResponse(
     const response = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
       messages: [
-        prompt,
-        { role: 'user', content: message },
+        prompt as ChatCompletionRequestMessage,
+        { role: 'user', content: message } as ChatCompletionRequestMessage,
       ],
     });
 

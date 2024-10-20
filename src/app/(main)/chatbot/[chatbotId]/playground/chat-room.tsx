@@ -34,7 +34,17 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
           } else {
             const { chatRoomId } = await createCustomerAndChatRoom(chatbotId, true);
             const chatMessagesData = await getChatMessages(chatRoomId);
-            setChatRoom({ id: chatRoomId, live: true, ...chatMessagesData });
+            setChatRoom({ 
+              id: chatRoomId, 
+              live: true, 
+              mailed: false,
+              agentId: '', // Add this line
+              createdAt: new Date(), 
+              updatedAt: new Date(), 
+              customerId: '', // Assuming this is set by createCustomerAndChatRoom
+              chatbotId: chatbotId,
+              ...chatMessagesData 
+            });
             setChats(chatMessagesData.ChatMessages || []);
           }
         }
@@ -84,7 +94,17 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
       if (!chatRoom) {
         const { chatRoomId } = await createCustomerAndChatRoom(chatbotId, isPlayground);
         const chatMessagesData = await getChatMessages(chatRoomId);
-        setChatRoom({ id: chatRoomId, live: true, ...chatMessagesData });
+        setChatRoom({ 
+          id: chatRoomId, 
+          live: true, 
+          mailed: false, 
+          createdAt: new Date(), 
+          updatedAt: new Date(), 
+          customerId: '', // Assuming this is set by createCustomerAndChatRoom
+          chatbotId: chatbotId,
+          agentId: '', // Adding agentId as it's required in ChatRoom type
+          ...chatMessagesData 
+        });
         setChats(chatMessagesData.ChatMessages || []);
       } else {
         await handleChatMessage(chatRoom.id, chatbotId, newMessage);

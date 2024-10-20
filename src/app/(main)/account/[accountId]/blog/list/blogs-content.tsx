@@ -11,7 +11,11 @@ function BlogsContent() {
     const fetchBlogs = async () => {
       try {
         const data = await getBlogs();  // Fetch all blogs
-        setBlogs(data);
+        setBlogs(data.map(blog => ({
+          ...blog,
+          publishedAt: blog.publishedAt.toISOString(), // Convert Date to string
+          tags: blog.blogTags.map(bt => bt.tag.id) // Change to tag.id instead of tag.name
+        })));
       } catch (error) {
         console.error("Error fetching blogs:", error);
       }
@@ -26,7 +30,7 @@ function BlogsContent() {
           <h1 className="text-2xl md:text-3xl text-slate-800 dark:text-slate-100 font-bold">Blogs</h1>
         </div>
       </div>
-      <BlogsTable blogs={blogs} />
+      <BlogsTable />
     </div>
   );
 }

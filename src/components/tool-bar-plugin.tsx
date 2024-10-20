@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getSelection, $isRangeSelection, CAN_REDO_COMMAND, CAN_UNDO_COMMAND, FORMAT_ELEMENT_COMMAND, FORMAT_TEXT_COMMAND, REDO_COMMAND, SELECTION_CHANGE_COMMAND, UNDO_COMMAND } from 'lexical';
+import { INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
 import { mergeRegister } from '@lexical/utils';
 
 const LowPriority = 1;
@@ -185,7 +186,7 @@ const ToolbarPlugin = () => {
       <Divider />
       <button
         onClick={() => {
-          editor.dispatchCommand('INSERT_UNORDERED_LIST_COMMAND');
+          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify');
         }}
         style={{ padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer' }}
         className="toolbar-item spaced"
@@ -195,7 +196,7 @@ const ToolbarPlugin = () => {
       </button>
       <button
         onClick={() => {
-          editor.dispatchCommand('INSERT_ORDERED_LIST_COMMAND');
+          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify');
         }}
         style={{ padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer' }}
         className="toolbar-item spaced"

@@ -10,9 +10,9 @@ interface ChatRoomPageProps {
 const ChatRoomPage: React.FC<ChatRoomPageProps> = ({ params }) => {
   return (
     <div className="flex justify-center items-start h-screen bg-gray-100 dark:bg-gray-900 p-12"> 
-          <ChatProvider isIframe={false}>
+          <ChatProvider>
             <InterfaceSettingsProvider chatbotId={params.chatbotId}>
-              <ChatRoom chatbotId={params.chatbotId} isPlayground={true} isPublic={false} />
+              <ChatRoom chatbotId={params.chatbotId} isPlayground={true} />
             </InterfaceSettingsProvider>
           </ChatProvider>
     </div>

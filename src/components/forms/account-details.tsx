@@ -139,6 +139,7 @@ const AccountDetails = ({ data, isCreating }: Props) => {
           otherReferralSource: values.otherReferralSource || null,
           createdAt: new Date(),
           updatedAt: new Date(),
+          connectAccountId: ''
         },
         isCreating
       );

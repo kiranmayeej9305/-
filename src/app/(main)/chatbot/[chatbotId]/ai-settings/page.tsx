@@ -35,7 +35,13 @@ const AiSettingPage = async ({ params }: Props) => {
       <div className="container mx-auto p-4 lg:p-8">
           <ChatbotDetails
             accountDetails={accountDetails}
-            details={chatbot}
+            details={{
+              ...chatbot,
+              ChatbotSettings: {
+                ...chatbot.ChatbotSettings,
+                knowledgeSources: chatbot.ChatbotSettings.knowledgeSources as "training" | "generic" | "both"
+              }
+            }}
             userId={userDetails.id}
             userName={userDetails.name}
           />

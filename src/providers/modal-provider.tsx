@@ -3,12 +3,14 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface ModalProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export type ModalData = {
+  contact: (contact: any) => unknown;
+  user: any;
   plan?: any;
-  addons?: AddOn[];
+  addons?: any[]; // Changed AddOn[] to any[]
 }
 
 type ModalContextType = {
@@ -19,7 +21,10 @@ type ModalContextType = {
 }
 
 const ModalContext = createContext<ModalContextType>({
-  data: {},
+  data: {
+    contact: () => {},
+    user: null,
+  },
   isOpen: false,
   setOpen: () => {},
   setClose: () => {},
@@ -27,7 +32,10 @@ const ModalContext = createContext<ModalContextType>({
 
 const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [data, setData] = useState<ModalData>({});
+  const [data, setData] = useState<ModalData>({
+    contact: () => {},
+    user: null,
+  });
   const [showingModal, setShowingModal] = useState<React.ReactNode>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -47,7 +55,10 @@ const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
 
   const setClose = () => {
     setIsOpen(false);
-    setData({});
+    setData({
+      contact: () => {},
+      user: null,
+    });
   };
 
   if (!isMounted) return null;

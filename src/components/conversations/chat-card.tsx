@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription } from '../ui/card'
 import { Avatar, AvatarFallback } from '../ui/avatar'
 import { User } from 'lucide-react'
-import { UrgentIcon } from '@/icons/urgent-icon'
 import { useChatContext } from '@/context/use-chat-context'
 
 type Props = {
@@ -47,21 +46,7 @@ const ChatCard = ({
     }
   }
 
-  const onSeenChat = async () => {
-    if (chatRoom === id && urgent) {
-      // Assuming there is a function to mark messages as read
-      await updateMessagesToSeen(id)
-      setUrgent(false)
-    }
-  }
 
-  useEffect(() => {
-    onSeenChat()
-  }, [chatRoom])
-
-  useEffect(() => {
-    onSetMessageReceivedDate()
-  }, [])
 
   return (
     <Card
@@ -82,7 +67,6 @@ const ChatCard = ({
               <CardDescription className="font-bold leading-none text-gray-600">
                 {title}
               </CardDescription>
-              {urgent && !seen && <UrgentIcon />}
             </div>
             <CardDescription>
               {description

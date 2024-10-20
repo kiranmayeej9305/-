@@ -36,8 +36,13 @@ export default function Blog() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const data: PaginatedData = await getPaginatedBlogs(currentPage, postsPerPage);
-        setPosts(data.posts);
+        const data = await getPaginatedBlogs(currentPage, postsPerPage);
+        setPosts(data.posts.map(post => ({
+          ...post,
+          authorImg: post.author || undefined,
+          tags: post.blogTags.map(bt => bt.tag),
+          publishedAt: post.publishedAt.toString() // Convert Date to string
+        })));
         setTotalPages(data.totalPages);
       } catch (error) {
         console.error('Error fetching paginated blogs:', error);
@@ -87,7 +92,6 @@ export default function Blog() {
                       publishedAt={post.publishedAt}
                       imageUrl={post.imageUrl}
                       topic={post.topic}
-                      tags={post.tags}
                     />
                   ))}
                 </div>

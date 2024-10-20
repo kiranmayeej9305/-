@@ -27,18 +27,12 @@ const LaunchPadPage = async ({ params, searchParams }: Props) => {
   })
 
   if (!accountDetails) return
-
   const allDetailsExist =
-    accountDetails.address &&
-    accountDetails.address &&
-    accountDetails.accountLogo &&
-    accountDetails.city &&
-    accountDetails.companyEmail &&
-    accountDetails.companyPhone &&
-    accountDetails.country &&
     accountDetails.name &&
-    accountDetails.state &&
-    accountDetails.zipCode
+    accountDetails.companyEmail &&
+    accountDetails.industry &&
+    accountDetails.referralSource
+    accountDetails.name 
 
   const stripeOAuthLink = getStripeOAuthLink(
     'account',
@@ -112,31 +106,6 @@ const LaunchPadPage = async ({ params, searchParams }: Props) => {
                 <Link
                   className="bg-primary py-2 px-4 rounded-md text-white"
                   href={stripeOAuthLink}
-                >
-                  Start
-                </Link>
-              )}
-            </div>
-            <div className="flex justify-between items-center w-full border p-4 rounded-lg gap-2">
-              <div className="flex md:items-center gap-4 flex-col md:!flex-row">
-                <Image
-                  src={accountDetails.accountLogo}
-                  alt="app logo"
-                  height={80}
-                  width={80}
-                  className="rounded-md object-contain"
-                />
-                <p> Fill in all your bussiness details</p>
-              </div>
-              {allDetailsExist ? (
-                <CheckCircleIcon
-                  size={50}
-                  className="text-primary p-2 flex-shrink-0"
-                />
-              ) : (
-                <Link
-                  className="bg-primary py-2 px-4 rounded-md text-white"
-                  href={`/account/${params.accountId}/settings`}
                 >
                   Start
                 </Link>

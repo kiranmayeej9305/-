@@ -3,8 +3,7 @@ import { Upload } from "@aws-sdk/lib-storage";
 
 
 export async function uploadToS3(
-  file: File
-): Promise<{ file_key: string; file_name: string }> {
+file: File): Promise<{ file_key: string; file_name: string }> {
   try {
     console.log("Uploading file to S3...");
     const s3 = new S3({

@@ -60,7 +60,7 @@ const interfaceSchema = z.object({
   isLiveAgentEnabled: z.boolean().optional(),
 });
 
-type InterfaceForm = z.infer<typeof interfaceSchema>;
+export type InterfaceForm = z.infer<typeof interfaceSchema>;
 
 type Props = {
   chatbotId: string;

@@ -21,7 +21,7 @@ export default function MessagesBody({ onSendMessage, settings }: MessagesBodyPr
         <MessagesChat settings={settings} />
       </div>
       <div className="flex-shrink-0">
-        <MessagesFooter onSendMessage={onSendMessage} settings={settings} />
+        <MessagesFooter onSendMessage={(message) => Promise.resolve(onSendMessage(message))} settings={settings} />
       </div>
     </div>
   );

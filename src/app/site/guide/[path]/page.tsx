@@ -42,7 +42,10 @@ const BlogPost = ({ params }: BlogPostProps) => {
     const fetchBlogData = async () => {
       try {
         const blogData = await getBlogByPath(path);
-        setBlog(blogData);
+        setBlog({
+          ...blogData,
+          publishedAt: new Date(blogData.publishedAt).toISOString()
+        });
 
         // Dynamically import the serialize function for MDX
         const { serialize } = await import('next-mdx-remote/serialize');
@@ -76,7 +79,14 @@ const BlogPost = ({ params }: BlogPostProps) => {
         <meta property="og:description" content={frontMatter.excerpt} />
         <meta property="og:image" content={frontMatter.imageUrl} />
       </Head>
-      <BlogPreview source={mdxSource} frontMatter={frontMatter} />
+      <BlogPreview 
+        source={mdxSource} 
+        frontMatter={{
+          ...frontMatter,
+          summary: frontMatter.excerpt,
+          authorImg: '/path/to/default/author/image.jpg' // You may need to adjust this path
+        }} 
+      />
       <Footer />
     </>
   );

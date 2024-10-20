@@ -1,15 +1,23 @@
 'use client'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/use-toast'
-import { AddOn } from '@prisma/client'
 import { StripeElementsOptions } from '@stripe/stripe-js'
 import clsx from 'clsx'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { ReactNode, useEffect, useMemo, useState } from 'react'
 import { Elements } from '@stripe/react-stripe-js'
 import { getStripe } from '@/lib/stripe/stripe-client'
 import Loading from '@/components/global/loading'
 import AddOnForm from '.' // A new form component for Add-on subscriptions
+
+type AddOn = {
+  description: ReactNode
+  name: ReactNode
+  price: any
+  id: string
+  stripePriceId: string
+  // Add other properties of AddOn as needed
+}
 
 type Props = {
   addOns: AddOn[] // The list of Add-ons
@@ -61,10 +69,10 @@ const AddOnFormWrapper = ({ addOns, customerId }: Props) => {
       <div className="flex flex-col gap-4">
         {addOns.map((addOn) => (
           <Card
-            onClick={() => setSelectedAddOnId(addOn.id)}
+            onClick={() => setSelectedAddOnId(addOn)}
             key={addOn.id}
             className={clsx('relative cursor-pointer transition-all', {
-              'border-primary': selectedAddOnId === addOn.id,
+              'border-primary': selectedAddOnId === addOn,
             })}
           >
             <CardHeader>
@@ -84,7 +92,7 @@ const AddOnFormWrapper = ({ addOns, customerId }: Props) => {
           <>
             <h1 className="text-xl">Payment Method</h1>
             <Elements stripe={getStripe()} options={options}>
-              <AddOnForm selectedAddOnId={selectedAddOnId} />
+              <AddOnForm selectedAddOnId={selectedAddOnId ? selectedAddOnId.id : ''} />
             </Elements>
           </>
         )}

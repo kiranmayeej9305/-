@@ -27,13 +27,27 @@ export async function downloadFromS3(file_key: string): Promise<string> {
       const obj = await s3.getObject(params);
       const file_name = `/tmp/insert-bot${Date.now().toString()}.pdf`;
 
-      if (obj.Body instanceof require("stream").Readable) {
+      if (obj.Body instanceof Blob) {
         const file = fs.createWriteStream(file_name);
-        obj.Body.pipe(file).on("finish", () => {
-          console.log(`File downloaded and saved as: ${file_name}`);
-          resolve(file_name);
-        }).on("error", (err) => {
-          console.error("Error writing file to disk:", err);
+        const stream = obj.Body.transformToWebStream();
+        const reader = stream.getReader();
+        
+        const writeStream = async () => {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            file.write(Buffer.from(value));
+          }
+          file.end();
+        };
+
+        writeStream()
+          .then(() => {
+            console.log(`File downloaded and saved as: ${file_name}`);
+            resolve(file_name);
+          })
+          .catch((err) => {
+            console.error("Error writing file to disk:", err);
           reject(err);
         });
       }

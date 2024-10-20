@@ -42,7 +42,7 @@ const ChatbotSettingPage = async ({ params }: Props) => {
           userName={userDetails.name}
         />
         <UserDetails
-          type="chatbot"
+          type="Chatbot"
           id={params.chatbotId}
           chatbots={chatbots}
           userData={userDetails}

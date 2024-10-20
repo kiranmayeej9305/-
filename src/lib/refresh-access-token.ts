@@ -33,7 +33,7 @@ export async function refreshAccessToken(chatbotId: string) {
 
       // Update the integration object with new values
       integration.accessToken = newAccessToken;
-      integration.expiryDate = newExpiryDate;
+      integration.expiryDate = new Date(newExpiryDate);
 
     } catch (error) {
       console.error('Failed to refresh access token:', error);

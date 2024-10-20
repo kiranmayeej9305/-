@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { getAccountSidebarOptions, getChatbotSidebarOptions } from '@/lib/queries';
 import { icons } from '@/lib/constants';
 import { Card } from '../ui/card';
+import { AccountSidebarOption, Chatbot, ChatbotSidebarOption } from '@prisma/client';
 
 type Props = {
   defaultOpen?: boolean;
@@ -100,9 +101,12 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
                 )}
               >
                 {IconComponent && (
-                  <IconComponent className="text-muted-foreground group-hover:text-white" />
+                  <IconComponent
+                    width="24"
+                    height="24"
+                  />
                 )}
-                <span className="font-semibold group-hover:text-white">
+                <span className={`font-semibold group-hover:text-white ${selectedMenu === option.id ? 'text-white' : ''}`}>
                   {option.name}
                 </span>
               </Button>

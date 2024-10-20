@@ -49,7 +49,7 @@ export default function CalendarIntegrationEmbed({ chatbotId }: CalendarIntegrat
       <CardContent>
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <Loader />  {/* Assuming a loader/spinner */}
+            <Loader loading={false} children={''} />  {/* Assuming a loader/spinner */}
           </div>
         ) : (
           <>

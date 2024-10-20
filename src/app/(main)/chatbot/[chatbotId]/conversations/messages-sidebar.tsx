@@ -29,9 +29,9 @@ export default function MessagesSidebar({ chatbotId, onChatSelect }: { chatbotId
   const handleChatSelect = async (roomId: string) => {
     try {
       const messages = await getChatMessages(roomId);
-      setChatRoom(roomId); 
+      setChatRoom((prevRoom) => ({ ...prevRoom, id: roomId }));
       setChats(messages?.ChatMessages || []);
-      onChatSelect(roomId); 
+      onChatSelect(roomId);
     } catch (error) {
       console.error('Failed to fetch chat messages:', error);
     }

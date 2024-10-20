@@ -111,11 +111,11 @@ export const handleAddOnSubscriptionEvent = async (
       };
 
       // Upsert the Add-On in the database
-      await db.subscription.upsert({
-        where: { subscriptionId: subscription.id },
-        create: addOnData,
-        update: addOnData,
-      });
+      // await db.subscription.upsert({
+      //   where: { subscriptionId: subscription.id },
+      //   create: addOnData,
+      //   update: addOnData,
+      // });
 
       console.log(`🟢 Add-on handled for subscription: ${subscription.id}`);
     }

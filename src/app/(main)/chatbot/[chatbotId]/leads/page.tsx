@@ -184,7 +184,6 @@ const LeadsPage = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           setCurrentPage={setCurrentPage}
-          className="mt-6"
         />
       </div>
     </BlurPage>

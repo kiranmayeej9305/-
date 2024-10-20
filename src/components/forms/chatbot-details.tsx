@@ -39,6 +39,20 @@ import {
 import Loading from '@/components/global/loading';
 import { useModal } from '@/providers/modal-provider';
 import { Plus, Trash2 } from 'lucide-react';
+import { Account, Chatbot } from '@prisma/client';
+
+// Add this interface to extend the Chatbot type
+interface ExtendedChatbot extends Chatbot {
+  ChatbotSettings?: {
+    welcomeMessage?: string;
+    aiModelId?: string;
+    chatbotTypeId?: string;
+    knowledgeSources?: 'training' | 'generic' | 'both';
+    creativityLevel?: number;
+    customPrompts?: string;
+    scheduleAppointment?: boolean;
+  };
+}
 
 const formSchema = z.object({
   name: z.string().nonempty(),
@@ -53,7 +67,7 @@ const formSchema = z.object({
 
 interface ChatbotDetailsProps {
   accountDetails: Account;
-  details?: Partial<Chatbot>;
+  details?: Partial<ExtendedChatbot>;
   userId: string;
   userName: string;
 }
@@ -75,6 +89,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: details?.name || '',
       welcomeMessage: details?.ChatbotSettings?.welcomeMessage || '',
       aiModelId: details?.ChatbotSettings?.aiModelId || '',
       chatbotTypeId: details?.ChatbotSettings?.chatbotTypeId || '',

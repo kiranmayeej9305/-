@@ -18,7 +18,7 @@ const InterfacePage = async ({ params }: Props) => {
     <BlurPage>
       <div className="container mx-auto p-4 lg:p-8">
       <InterfaceSettings
-        data={data}
+        {...data}
         chatbotId={params.chatbotId}
       />
       </div>

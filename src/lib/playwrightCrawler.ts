@@ -10,7 +10,7 @@ export async function crawlWebsite(url: string, depth: number): Promise<{ url: s
 
   const result = [];
 
-  for (const link of links) {
+  for (const link of Array.from(links)) {
     const content = await fetchContent(link, browser);
     result.push({ url: link, charCount: content.length });
   }

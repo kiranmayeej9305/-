@@ -1,6 +1,6 @@
 // Testimonials.tsx
 
-import Testimonial from './Testimonial';
+import Testimonial from './testimonial';
 
 export default function Testimonials() {
   const getInitials = (name: string) => {

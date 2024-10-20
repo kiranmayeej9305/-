@@ -165,7 +165,15 @@ const BlogPreview = ({ source, frontMatter }: BlogPreviewProps) => {
           )}
         </aside>
         <div className="w-full lg:w-3/4" id="blog-content">
-          <Header {...frontMatter} />
+          <Header
+            title={frontMatter.title}
+            subTitle={frontMatter.subTitle || ''}
+            topic={frontMatter.topic}
+            author={frontMatter.author}
+            publishedAt={frontMatter.publishedAt}
+            tags={frontMatter.tags}
+            imageUrl={frontMatter.imageUrl}
+          />
           <article className="prose lg:prose-xl dark:prose-invert mx-auto leading-relaxed">
             <MDXRemote {...source} components={components} />
           </article>

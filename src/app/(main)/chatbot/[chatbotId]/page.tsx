@@ -42,7 +42,7 @@ const ChatbotPageId = async ({ params, searchParams }: Props) => {
   let potentialIncome = 0
   let closingRate = 0
 
-  const chatbotDetails = await db.Chatbot.findUnique({
+  const chatbotDetails = await db.chatbot.findUnique({
     where: {
       id: params.chatbotId,
     },

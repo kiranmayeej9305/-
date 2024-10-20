@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     // Create event on Google Calendar
     const createdEvent = await calendar.events.insert({
       calendarId: 'primary',
-      resource: event,
+      requestBody: event,
     });
 
     const eventId = createdEvent.data.id;

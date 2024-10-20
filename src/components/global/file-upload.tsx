@@ -60,7 +60,7 @@ const FileUpload = ({ apiEndpoint, onChange, value }: Props) => {
   return (
     <div className="w-full bg-muted/30 p-4 rounded-md text-center">
       <UploadButton
-        endpoint={apiEndpoint}
+        endpoint={apiEndpoint as "media" | "chatbotLogo" | "avatar" | "accountLogo"}
         onClientUploadComplete={(res) => {
           const uploadedUrl = res?.[0].url;
           onChange(uploadedUrl); // Update the parent component with the new URL

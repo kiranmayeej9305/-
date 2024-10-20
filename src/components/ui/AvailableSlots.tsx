@@ -46,9 +46,7 @@ export default function AvailableSlots({ chatbotId, customerEmail }) {
       >
         <AppointmentForm
           slot={slot}
-          customerEmail={customerEmail}
           chatbotId={chatbotId}
-          closeModal={closeModal} // Pass function to close the modal
         />
       </CustomModal>
     );
@@ -63,7 +61,11 @@ export default function AvailableSlots({ chatbotId, customerEmail }) {
           </CardHeader>
           <CardContent className="flex justify-center">
             <Calendar
-              onChange={setSelectedDate}
+              onChange={(value) => {
+                if (value instanceof Date) {
+                  setSelectedDate(value);
+                }
+              }}
               value={selectedDate}
               minDate={new Date()} // Only allow current and future dates
               maxDate={addMonths(new Date(), 1)} // Allow up to 1 month in the future
@@ -93,7 +95,7 @@ export default function AvailableSlots({ chatbotId, customerEmail }) {
                     {availableSlots.map((slot) => (
                       <Button
                         key={slot.startTime}
-                        variant={slot.booked ? 'disabled' : 'outline'}
+                        variant={slot.booked ? 'secondary' : 'outline'}
                         className="flex items-center justify-center text-sm p-4"
                         onClick={() => !slot.booked && handleBookAppointment(slot)}
                         disabled={slot.booked}

@@ -47,7 +47,13 @@ const AllChatbotsPage = async ({ params }: Props) => {
     <div className="container mx-auto py-8">
       <div className="flex justify-end mb-6">
         <CreateChatbotButton
-          user={user}
+          user={{
+            ...user,
+            Account: {
+              ...user.Account,
+              SideBarOption: [] 
+            }
+          }}
           id={params.accountId}
           className="w-[200px] self-end m-6"
         />

@@ -42,7 +42,10 @@ const BlogPost = ({ params }: BlogPostProps) => {
     const fetchBlogData = async () => {
       try {
         const blogData = await getBlogByPath(path);
-        setBlog(blogData);
+        setBlog({
+          ...blogData,
+          publishedAt: new Date(blogData.publishedAt).toISOString()
+        });
 
         // Log imageUrl to verify it's being fetched correctly
         console.log('Fetched imageUrl:', blogData.imageUrl);
@@ -75,14 +78,21 @@ const BlogPost = ({ params }: BlogPostProps) => {
     <>
       <Head>
         <title>{frontMatter.title}</title>
-        <meta name="description" content={frontMatter.summary} />
+        <meta name="description" content={frontMatter.excerpt} />
         <meta name="author" content={frontMatter.author} />
         <meta property="og:title" content={frontMatter.title} />
-        <meta property="og:description" content={frontMatter.summary} />
+        <meta property="og:description" content={frontMatter.excerpt} />
         <meta property="og:image" content={frontMatter.imageUrl} />
       </Head>
       {/* <Header /> */}
-      <BlogPreview source={mdxSource} frontMatter={frontMatter} />
+      <BlogPreview 
+        source={mdxSource} 
+        frontMatter={{
+          ...frontMatter,
+          summary: frontMatter.excerpt,
+          authorImg: '/path/to/default/author/image.jpg' // Replace with actual path or logic to get author image
+        }} 
+      />
       <Footer />
     </>
   );

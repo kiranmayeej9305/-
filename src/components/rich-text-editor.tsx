@@ -10,7 +10,6 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
-  const quillRef = useRef(null);
 
   const modules = {
     toolbar: [
@@ -27,7 +26,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
   return (
     <ReactQuill
-      ref={quillRef}
       value={value}
       onChange={onChange}
       modules={modules}

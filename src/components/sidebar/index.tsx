@@ -18,12 +18,12 @@ const Sidebar = async ({ id, type }: Props) => {
 
   if (!details) return null;
 
-  let sideBarLogo = user.Account.accountLogo || '/assets/plura-logo.svg';
+  // let sideBarLogo = user.Account.accountLogo || '/assets/plura-logo.svg';
 
-  if (!user.Account.whiteLabel && type === 'chatbot') {
-    sideBarLogo =
-      details.chatbotLogo || user.Account.accountLogo;
-  }
+  // if (!user.Account.whiteLabel && type === 'chatbot') {
+  //   sideBarLogo =
+  //     details.chatbotLogo || user.Account.accountLogo;
+  // }
 
   const chatbots = user.Account.Chatbot.filter((Chatbot) =>
     user.Permissions.find(
@@ -37,10 +37,10 @@ const Sidebar = async ({ id, type }: Props) => {
       defaultOpen={true}
       details={details}
       id={id}
-      sidebarLogo={sideBarLogo}
       chatbots={chatbots}
       user={user}
       type={type}
+      sidebarLogo={''}
     />
   );
 };

@@ -19,7 +19,6 @@ import {
   Goal,
   ShoppingCart,
 } from 'lucide-react'
-import Link from 'next/link'
 import React from 'react'
 
 const Page = async ({
@@ -47,7 +46,7 @@ const Page = async ({
 
   if (!accountDetails) return
 
-  const chatbots = await db.Chatbot.findMany({
+  const chatbots = await db.chatbot.findMany({
     where: {
       accountId: params.accountId,
     },
@@ -154,21 +153,6 @@ const Page = async ({
                 </p>
               </CardDescription>
             </CardHeader>
-            <CardFooter>
-              <div className="flex flex-col w-full">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">
-                    Current: {chatbots.length}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
-                    Goal: {accountDetails.goal}
-                  </span>
-                </div>
-                <Progress
-                  value={(chatbots.length / accountDetails.goal) * 100}
-                />
-              </div>
-            </CardFooter>
             <Goal className="absolute right-4 top-4 text-muted-foreground" />
           </Card>
         </div>

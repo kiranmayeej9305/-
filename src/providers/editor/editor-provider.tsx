@@ -2,7 +2,6 @@
 import { EditorBtns } from '@/lib/constants'
 import { EditorAction } from './editor-actions'
 import { Dispatch, createContext, useContext, useReducer } from 'react'
-import { FunnelPage } from '@prisma/client'
 
 export type DeviceTypes = 'Desktop' | 'Mobile' | 'Tablet'
 
@@ -355,7 +354,7 @@ export const EditorContext = createContext<{
   dispatch: Dispatch<EditorAction>
   chatbotId: string
   funnelId: string
-  pageDetails: FunnelPage | null
+  pageDetails: null
 }>({
   state: initialState,
   dispatch: () => undefined,
@@ -368,7 +367,6 @@ type EditorProps = {
   children: React.ReactNode
   chatbotId: string
   funnelId: string
-  pageDetails: FunnelPage
 }
 
 const EditorProvider = (props: EditorProps) => {
@@ -381,7 +379,7 @@ const EditorProvider = (props: EditorProps) => {
         dispatch,
         chatbotId: props.chatbotId,
         funnelId: props.funnelId,
-        pageDetails: props.pageDetails,
+        pageDetails: null,
       }}
     >
       {props.children}

@@ -7,7 +7,13 @@ import { useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { usePlanAddOn } from '@/context/use-plan-addon-context';
 
-const SubscriptionHelper = ({ customerId, planExists }) => {
+// Define the props type for the component
+interface SubscriptionHelperProps {
+  customerId: string;   // customerId is a string
+  planExists: boolean;  // planExists is a boolean
+}
+
+const SubscriptionHelper: React.FC<SubscriptionHelperProps> = ({ customerId, planExists }) => {
   const { setOpen } = useModal();
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan');
@@ -32,6 +38,8 @@ const SubscriptionHelper = ({ customerId, planExists }) => {
       );
     }
   }, [plan, planData, loading]);
+
+  return null;
 };
 
 export default SubscriptionHelper;

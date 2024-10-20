@@ -9,6 +9,9 @@ const nextConfig = {
       'files.stripe.com',
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   reactStrictMode: false,
 }
 

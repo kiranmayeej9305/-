@@ -12,7 +12,7 @@ interface QuantitativeFeatureContextType {
 
 const QuantitativeFeatureContext = createContext<QuantitativeFeatureContextType | undefined>(undefined);
 
-export const QuantitativeFeatureProvider: React.FC = ({ children }) => {
+export const QuantitativeFeatureProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { plan } = usePlanAddOn();
 
   const findFeatureInPlan = (planFeatureId: string) => {

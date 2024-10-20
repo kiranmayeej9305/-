@@ -71,7 +71,6 @@ const page = async () => {
     <>
       <BlurPage>
         <SubscriptionHelper
-          prices={planDetails.plan.price}
           customerId={planDetails?.customerId || ''}
           planExists={planExists}
         />

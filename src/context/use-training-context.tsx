@@ -2,7 +2,7 @@
 'use client'
 import { createContext, useContext, useState } from 'react';
 
-const TrainingContext = createContext();
+const TrainingContext = createContext(null);
 
 export function useTrainingContext() {
   return useContext(TrainingContext);

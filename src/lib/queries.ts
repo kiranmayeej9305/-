@@ -19,6 +19,7 @@ import {
 import { v4 } from 'uuid'
 import { prepareChatResponse } from './openai'
 import { refreshAccessToken } from './refresh-access-token';
+import Settings from './../components/icons/settings';
 export const getAuthUserDetails = async () => {
   const user = await currentUser();
   if (!user) {
@@ -45,9 +46,8 @@ export const getAuthUserDetails = async () => {
 
     // Fetch all ChatbotSidebarOptions (since they are not tied to a specific chatbot directly)
     const chatbotSidebarOptions = await db.chatbotSidebarOption.findMany();
-
     // Attach SidebarOptions to Account and Chatbots manually
-    userData.Account.SidebarOptions = accountSidebarOptions;
+    (userData.Account as any).SidebarOptions = accountSidebarOptions;
 
     userData.Account.Chatbot = userData.Account.Chatbot.map((chatbot) => ({
       ...chatbot,
@@ -426,15 +426,7 @@ export const sendInvitation = async (
   return resposne
 }
 
-export const getMedia = async (chatbotId: string) => {
-  const mediafiles = await db.chatbot.findUnique({
-    where: {
-      id: chatbotId,
-    },
-    include: { Media: true },
-  })
-  return mediafiles
-}
+
 // export const getInterfaceSettings = async (chatbotId: string) => {
 //   const interfaceSettings = await db.chatbot.findUnique({
 //     where: {
@@ -444,56 +436,25 @@ export const getMedia = async (chatbotId: string) => {
 //   })
 //   return interfaceSettings
 // }
-export const createMedia = async (
-  chatbotId: string,
-  mediaFile: CreateMediaType
-) => {
-  const response = await db.media.create({
-    data: {
-      link: mediaFile.link,
-      name: mediaFile.name,
-      chatbotId: chatbotId,
-    },
-  })
+// export const createMedia = async (
+//   chatbotId: string,
+//   mediaFile: CreateMediaType
+// ) => {
+//   const response = await db.media.create({
+//     data: {
+//       link: mediaFile.link,
+//       name: mediaFile.name,
+//       chatbotId: chatbotId,
+//     },
+//   })
 
-  return response
-}
+//   return response
+// }
 
 export const deleteMedia = async (mediaId: string) => {
   const response = await db.media.delete({
     where: {
       id: mediaId,
-    },
-  })
-  return response
-}
-
-export const getPipelineDetails = async (pipelineId: string) => {
-  const response = await db.pipeline.findUnique({
-    where: {
-      id: pipelineId,
-    },
-  })
-  return response
-}
-
-export const getLanesWithTicketAndTags = async (pipelineId: string) => {
-  const response = await db.lane.findMany({
-    where: {
-      pipelineId,
-    },
-    orderBy: { order: 'asc' },
-    include: {
-      Tickets: {
-        orderBy: {
-          order: 'asc',
-        },
-        include: {
-          Tags: true,
-          Assigned: true,
-          Customer: true,
-        },
-      },
     },
   })
   return response
@@ -590,30 +551,6 @@ export const deleteLane = async (laneId: string) => {
   return resposne
 }
 
-export const getTicketsWithTags = async (pipelineId: string) => {
-  const response = await db.ticket.findMany({
-    where: {
-      Lane: {
-        pipelineId,
-      },
-    },
-    include: { Tags: true, Assigned: true, Customer: true },
-  })
-  return response
-}
-
-export const _getTicketsWithAllRelations = async (laneId: string) => {
-  const response = await db.ticket.findMany({
-    where: { laneId: laneId },
-    include: {
-      Assigned: true,
-      Customer: true,
-      Lane: true,
-      Tags: true,
-    },
-  })
-  return response
-}
 export const getChatbotUsersWithAccess = async (chatbotId: string) => {
   const chatbotUsersWithAccess = await db.user.findMany({
     where: {
@@ -658,84 +595,6 @@ export const searchContacts = async (searchTerms: string) => {
         contains: searchTerms,
       },
     },
-  })
-  return response
-}
-
-export const upsertTicket = async (
-  ticket: Prisma.TicketUncheckedCreateInput,
-  tags: Tag[]
-) => {
-  let order: number
-  if (!ticket.order) {
-    const tickets = await db.ticket.findMany({
-      where: { laneId: ticket.laneId },
-    })
-    order = tickets.length
-  } else {
-    order = ticket.order
-  }
-
-  const response = await db.ticket.upsert({
-    where: {
-      id: ticket.id || v4(),
-    },
-    update: { ...ticket, Tags: { set: tags } },
-    create: { ...ticket, Tags: { connect: tags }, order },
-    include: {
-      Assigned: true,
-      Customer: true,
-      Tags: true,
-      Lane: true,
-    },
-  })
-
-  return response
-}
-
-export const deleteTicket = async (ticketId: string) => {
-  const response = await db.ticket.delete({
-    where: {
-      id: ticketId,
-    },
-  })
-
-  return response
-}
-
-export const upsertTag = async (
-  chatbotId: string,
-  tag: Prisma.TagUncheckedCreateInput
-) => {
-  const response = await db.tag.upsert({
-    where: { id: tag.id || v4(), chatbotId: chatbotId },
-    update: tag,
-    create: { ...tag, chatbotId: chatbotId },
-  })
-
-  return response
-}
-
-export const getTagsForChatbot = async (chatbotId: string) => {
-  const response = await db.chatbot.findUnique({
-    where: { id: chatbotId },
-    select: { Tags: true },
-  })
-  return response
-}
-
-export const deleteTag = async (tagId: string) => {
-  const response = await db.tag.delete({ where: { id: tagId } })
-  return response
-}
-
-export const upsertContact = async (
-  contact: Prisma.ContactUncheckedCreateInput
-) => {
-  const response = await db.contact.upsert({
-    where: { id: contact.id || v4() },
-    update: contact,
-    create: contact,
   })
   return response
 }
@@ -1143,19 +1002,6 @@ export const saveFilteredQuestions = async (chatbotId: string, questions: { ques
   }
 };
 
-export const updateFilteredQuestionAnswered = async (questionId: string, answered: boolean) => {
-  try {
-    await prisma.filterQuestions.update({
-      where: { id: questionId },
-      data: { answered },
-    });
-
-    return true;
-  } catch (error) {
-    console.error('Error updating filtered question:', error);
-    throw error;
-  }
-};
 export const getConversationMode = async (id: string) => {
   return await prisma.chatRoom.findUnique({
     where: { id },
@@ -1163,33 +1009,6 @@ export const getConversationMode = async (id: string) => {
   });
 };
 
-export const getDomainChatRooms = async (id: string) => {
-  return await prisma.domain.findUnique({
-    where: { id },
-    select: {
-      customer: {
-        select: {
-          email: true,
-          chatRoom: {
-            select: {
-              createdAt: true,
-              id: true,
-              message: {
-                select: {
-                  message: true,
-                  createdAt: true,
-                  seen: true,
-                },
-                orderBy: { createdAt: 'desc' },
-                take: 1,
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-};
 
 
 
@@ -1201,202 +1020,6 @@ export const updateChatRoom = async (id: string, data: any, select: any) => {
   });
 };
 
-
-
-export const integrateDomain = async (clerkId: string, domain: string, icon: string) => {
-  return await prisma.user.update({
-    where: { clerkId },
-    data: {
-      domains: {
-        create: {
-          name: domain,
-          icon,
-          chatBot: {
-            create: {
-              welcomeMessage: 'Hey there, have a question? Text us here',
-            },
-          },
-        },
-      },
-    },
-  });
-};
-
-export const findUserSubscription = async (clerkId: string) => {
-  return await prisma.user.findUnique({
-    where: { clerkId },
-    select: {
-      _count: { select: { domains: true } },
-      subscription: { select: { plan: true } },
-    },
-  });
-};
-
-export const findUserDomainByName = async (clerkId: string, domain: string) => {
-  return await prisma.user.findFirst({
-    where: {
-      clerkId,
-      domains: { some: { name: domain } },
-    },
-  });
-};
-
-export const getUserPlan = async (clerkId: string) => {
-  return await prisma.user.findUnique({
-    where: { clerkId },
-    select: {
-      subscription: { select: { plan: true } },
-    },
-  });
-};
-
-export const getAllAccountDomains = async (clerkId: string) => {
-  return await prisma.user.findUnique({
-    where: { clerkId },
-    select: {
-      id: true,
-      domains: {
-        select: {
-          name: true,
-          icon: true,
-          id: true,
-          customer: {
-            select: {
-              chatRoom: {
-                select: {
-                  id: true,
-                  live: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-};
-
-
-export const getCurrentDomainInfo = async (clerkId: string, domain: string) => {
-  return await prisma.user.findUnique({
-    where: { clerkId },
-    select: {
-      subscription: { select: { plan: true } },
-      domains: {
-        where: { name: { contains: domain } },
-        select: {
-          id: true,
-          name: true,
-          icon: true,
-          userId: true,
-          products: true,
-          chatBot: {
-            select: {
-              id: true,
-              welcomeMessage: true,
-              icon: true,
-            },
-          },
-        },
-      },
-    },
-  });
-};
-
-export const updateDomainName = async (id: string, name: string) => {
-  return await prisma.domain.update({
-    where: { id },
-    data: { name },
-  });
-};
-
-export const updateChatBotIcon = async (id: string, icon: string) => {
-  return await prisma.domain.update({
-    where: { id },
-    data: {
-      chatBot: { update: { data: { icon } } },
-    },
-  });
-};
-
-export const updateWelcomeMessage = async (domainId: string, message: string) => {
-  return await prisma.domain.update({
-    where: { id: domainId },
-    data: {
-      chatBot: { update: { data: { welcomeMessage: message } } },
-    },
-  });
-};
-
-export const deleteUserDomain = async (userId: string, id: string) => {
-  return await prisma.domain.delete({
-    where: { userId, id },
-    select: { name: true },
-  });
-};
-
-export const createHelpDeskQuestion = async (id: string, question: string, answer: string) => {
-  return await prisma.domain.update({
-    where: { id },
-    data: {
-      helpdesk: {
-        create: { question, answer },
-      },
-    },
-    include: {
-      helpdesk: {
-        select: { id: true, question: true, answer: true },
-      },
-    },
-  });
-};
-
-export const getAllHelpDeskQuestions = async (domainId: string) => {
-  return await prisma.helpDesk.findMany({
-    where: { domainId },
-    select: { question: true, answer: true, id: true },
-  });
-};
-
-export const createFilterQuestion = async (id: string, question: string) => {
-  return await prisma.domain.update({
-    where: { id },
-    data: {
-      filterQuestions: { create: { question } },
-    },
-    include: {
-      filterQuestions: {
-        select: { id: true, question: true },
-      },
-    },
-  });
-};
-
-export const getAllFilterQuestions = async (domainId: string) => {
-  return await prisma.filterQuestions.findMany({
-    where: { domainId },
-    select: { question: true, id: true },
-    orderBy: { question: 'asc' },
-  });
-};
-
-export const getPaymentConnected = async (clerkId: string) => {
-  return await prisma.user.findUnique({
-    where: { clerkId },
-    select: { stripeId: true },
-  });
-};
-
-export const createNewDomainProduct = async (id: string, name: string, image: string, price: string) => {
-  return await prisma.domain.update({
-    where: { id },
-    data: {
-      products: {
-        create: { name, image, price: parseInt(price) },
-      },
-    },
-  });
-};
 
 export const getChatbotChatRooms = async (chatbotId: string) => {
   return await prisma.chatRoom.findMany({
@@ -1672,7 +1295,6 @@ export const createTrainingHistory = async (chatbotId: string, data: any) => {
   const trainingHistory = await db.trainingHistory.create({
     data: {
       sourceType: type,
-      undefined,
       fileName,
       websiteUrl,
       question,
@@ -1972,22 +1594,6 @@ export const processCustomerResponse = async (
 };
 
 
-
-
-export const getFirstUnansweredQuestion = async (chatbotId: string) => {
-  const firstUnansweredQuestion = await db.filterQuestions.findFirst({
-    where: {
-      chatbotId,
-      answered: false,  // Fetch unanswered questions
-    },
-    orderBy: {
-      createdAt: 'asc',  // Ask questions in the order they were created
-    },
-  });
-
-  return firstUnansweredQuestion;
-};
-
 export async function setDefaultCalendarIntegration(chatbotId: string, integrationId: string) {
   try {
     // Reset all integrations to not be default
@@ -2024,8 +1630,15 @@ export async function getCalendarIntegration(chatbotId: string) {
   return integration;
 }
 export async function fetchGoogleAppointments(chatbotId: string) {
- 
+  const integration = await getCalendarIntegration(chatbotId);
   await refreshAccessToken(chatbotId);
+  
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials({
+    access_token: integration.accessToken,
+    refresh_token: integration.refreshToken,
+  });
+
   const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   const events = await calendar.events.list({
     calendarId: 'primary',
@@ -2455,7 +2068,7 @@ export async function getPlanAndAddOnDetails(accountId: string) {
   const account = await db.account.findUnique({
     where: { id: accountId },
     include: {
-      subscriptions: {
+      Subscriptions: {
         include: {
           Plan: {
             include: {
@@ -2468,12 +2081,12 @@ export async function getPlanAndAddOnDetails(accountId: string) {
   });
 
   // Check if the account exists
-  if (!account || !account.subscriptions) {
+  if (!account || !account.Subscriptions) {
     throw new Error(`No account found with ID: ${accountId}`);
   }
 
   // Ensure that subscriptions exist
-  const subscriptions = account.subscriptions ?? [];
+  const subscriptions = account.Subscriptions ?? [];
 
   // Separate regular plans and add-ons using the `isAddOn` flag in the Plan
   const regularPlans = subscriptions.filter(
@@ -2506,7 +2119,7 @@ export async function getAccountSubscription(accountId: string) {
     },
     select: {
       customerId: true,
-      Subscription: {
+      Subscriptions: {
         include: {
           Plan: {
             include: {
@@ -2703,10 +2316,10 @@ export const getBlogs = async () => {
 };
 
 // Fetch a single blog by ID
-export const getBlogById = async (id: string) => {
+export const getBlogById = async (id: number) => {
   try {
     const blog = await db.blog.findUnique({
-      where: { id },
+      where: { id: id },
       include: {
         blogTags: {
           include: {
@@ -2725,7 +2338,7 @@ export const getBlogById = async (id: string) => {
 
 
 // Fetch all available topics
-export const getTopics = async () => {
+export const getTopics = async (maxTopics: number) => {
   try {
     const topics = await db.topic.findMany();
     return topics;
@@ -2776,7 +2389,7 @@ export const createBlog = async (blogData: any, tags: any[], image: string) => {
 export const updateBlog = async (id: string, blogData: any, tags: any[], image: string) => {
   try {
     const updatedBlog = await db.blog.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: {
         ...blogData,
         imageUrl: image,
@@ -2804,7 +2417,7 @@ export const updateBlog = async (id: string, blogData: any, tags: any[], image: 
 export const deleteBlog = async (id: string) => {
   try {
     const deletedBlog = await db.blog.delete({
-      where: { id },
+      where: { id: parseInt(id) },
     });
     return deletedBlog;
   } catch (error) {
@@ -2839,33 +2452,6 @@ export const createTopic = async (name: string) => {
   }
 };
 
-// Update settings
-export const updateSettings = async (settingsData: any) => {
-  try {
-    const updatedSettings = await db.settings.update({
-      where: { id: 'settings-id' }, // Assuming you have a settings ID
-      data: settingsData,
-    });
-    return updatedSettings;
-  } catch (error) {
-    console.error("Error updating settings:", error);
-    throw new Error("Failed to update settings");
-  }
-};
-
-// Fetch settings
-export const getSettings = async () => {
-  try {
-    const settings = await db.settings.findUnique({
-      where: { id: 'settings-id' },
-    });
-    return settings;
-  } catch (error) {
-    console.error("Error fetching settings:", error);
-    throw new Error("Failed to fetch settings");
-  }
-};
-
 export const upsertBlog = async (blogData) => {
   const { id, title, content, author, publishedAt, blogTags, ...otherFields } = blogData;
 
@@ -2894,7 +2480,7 @@ export const upsertBlog = async (blogData) => {
   } else {
     // Update existing blog post
     return await prisma.blog.upsert({
-      where: { id },  // Use `id` to find the blog post
+      where: { id: parseInt(id) },
       update: {
         title,
         content,
@@ -3100,4 +2686,56 @@ export const subscribeToNewsletter = async (email: string) => {
   } catch (error) {
     throw new Error('Failed to subscribe to newsletter');
   }
+};
+
+// Function to find account by customerId
+export const findAccountByCustomerId = async (customerId: string) => {
+  return await db.account.findFirst({
+    where: { customerId },
+  });
+};
+
+// Function to find plan by Stripe priceId (monthly or yearly)
+export const findPlanByPriceId = async (priceId: string) => {
+  return await db.plan.findFirst({
+    where: {
+      OR: [
+        { stripeMonthlyPriceId: priceId },
+        { stripeYearlyPriceId: priceId },
+      ],
+    },
+  });
+};
+
+// Function to upsert a subscription
+export const upsertSubscription = async (data: any, accountId: string) => {
+  return await db.subscription.upsert({
+    where: {
+      accountId, // Ensure uniqueness by accountId
+    },
+    create: data,
+    update: data,
+  });
+};
+
+// Function to upsert add-ons
+export const upsertAddOnSubscription = async (data: any, subscriptionId: string) => {
+  return await db.subscription.upsert({
+    where: { subscriptionId },
+    create: data,
+    update: data,
+  });
+};
+
+// Function to find Add-On Plan by priceId
+export const findAddOnPlanByPriceId = async (priceId: string) => {
+  return await db.plan.findFirst({
+    where: {
+      OR: [
+        { stripeMonthlyPriceId: priceId },
+        { stripeYearlyPriceId: priceId },
+      ],
+      isAddOn: true,
+    },
+  });
 };

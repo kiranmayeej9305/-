@@ -6,7 +6,7 @@ import Tooltip from '@/components/tooltip';
 import { faqs, pricingCards } from '@/lib/constants';
 import { stripe } from '@/lib/stripe';
 import Accordion from '@/components/accordion';
-import { BadgeCheckIcon } from '@heroicons/react/solid';
+//import { BadgeCheckIcon } from '@heroicons/react/solid';
 
 export default function PricingTabs() {
   const [billingCycle, setBillingCycle] = useState<string>('monthly');
@@ -61,7 +61,7 @@ export default function PricingTabs() {
                     <div className={`p-8 border border-gray-200 dark:border-zinc-700 ${isMostPopular ? 'ring-2 ring-emerald-500' : ''}`}>
                       {isMostPopular && (
                         <div className="absolute top-0 right-0 mt-3 mr-3 bg-emerald-500 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center">
-                          <BadgeCheckIcon className="w-4 h-4 mr-1" /> Most Popular
+                          {/* <BadgeCheckIcon className="w-4 h-4 mr-1" /> */} Most Popular
                         </div>
                       )}
                       <h3 className="text-2xl font-semibold text-zinc-900 dark:text-white mb-2">{card.nickname}</h3>

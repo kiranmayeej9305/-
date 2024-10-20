@@ -8,6 +8,7 @@ import { serialize } from 'next-mdx-remote/serialize';
 import Footer from '@/components/ui/footer';
 
 interface BlogPost {
+  summary: string;
   id: number;
   title: string;
   subTitle: string;
@@ -38,7 +39,31 @@ export default function BlogMenu() {
     const fetchTopics = async () => {
       try {
         const topicsData = await getTopicsWithBlogs();
-        setTopics(topicsData);
+        setTopics(topicsData.map(topic => ({
+          id: topic.id,
+          name: topic.name,
+          blogs: topic.blogs.map(blog => ({
+            id: blog.id,
+            title: blog.title,
+            subTitle: '',
+            content: '',
+            author: '',
+            path: blog.path,
+            publishedAt: blog.publishedAt instanceof Date ? blog.publishedAt.toISOString() : blog.publishedAt,
+            imageUrl: '',
+            summary: '',
+            topic: {
+              id: blog.topic.id,
+              name: blog.topic.name
+            },
+            blogTags: blog.blogTags.map(tag => ({
+              tag: {
+                id: tag.tag.id,
+                name: tag.tag.name
+              }
+            }))
+          }))
+        })));
       } catch (error) {
         console.error('Error fetching topics:', error);
       }
@@ -55,7 +80,11 @@ export default function BlogMenu() {
     try {
       const blogData = await getBlogByPath(blogPath);
       const serialized = await serialize(blogData.content);
-      setSelectedBlog(blogData);
+      setSelectedBlog({
+        ...blogData,
+        summary: (blogData as any).summary || '', // Type assertion to avoid TypeScript error
+        publishedAt: blogData.publishedAt instanceof Date ? blogData.publishedAt.toISOString() : blogData.publishedAt
+      });
       setSerializedContent(serialized);
     } catch (error) {
       console.error('Error fetching blog:', error);
@@ -130,8 +159,8 @@ export default function BlogMenu() {
                     imageUrl: selectedBlog.imageUrl || '',
                     summary: selectedBlog.summary || '',
                     author: selectedBlog.author || 'Author Name',
-                    authorImg: selectedBlog.authorImg || '',
-                    tags: selectedBlog.blogTags.map((tagObj) => tagObj.tag.name), // Extracting tags correctly
+                    authorImg: selectedBlog.author || '',
+                    tags: selectedBlog.blogTags.map((tagObj) => ({ id: tagObj.tag.id, name: tagObj.tag.name })),
                     topic: selectedBlog.topic,
                   }}
                 />

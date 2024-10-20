@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'URL, type, and depth are required.' }, { status: 400 });
     }
 
-    let links: string[] = [];
+    let links: { url: string; charCount: number; }[] = [];
     if (type === 'website') {
       links = await crawlWebsite(url, depth);
     } else if (type === 'sitemap') {

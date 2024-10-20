@@ -1,5 +1,4 @@
 'use client'
-import useSideBar from '@/context/use-sidebar'
 import React from 'react'
 import { Loader } from '../loader'
 import { Switch } from '../ui/switch'
@@ -52,3 +51,7 @@ const BreadCrumb = (props: Props) => {
 }
 
 export default BreadCrumb
+function useSideBar(): { chatRoom: any; expand: any; loading: any; onActivateRealtime: any; onExpand: any; page: any; onSignOut: any; realtime: any } {
+  throw new Error('Function not implemented.')
+}
+

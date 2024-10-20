@@ -38,14 +38,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Account, Chatbot } from '@prisma/client';
 
-const formSchema = z.object({
-  name: z.string().nonempty(),
-});
+// Add this interface
+interface ChatbotWithSettings extends Chatbot {
+  ChatbotSettings?: {
+    welcomeMessage?: string;
+    aiModelId?: string;
+    chatbotTypeId?: string;
+    knowledgeSources?: string;
+    creativityLevel?: number;
+    customPrompts?: string;
+  };
+}
 
 interface ChatbotSettingsProps {
   accountDetails: Account;
-  details?: Partial<Chatbot>;
+  details?: Partial<ChatbotWithSettings>;
   userId: string;
   userName: string;
 }
@@ -60,6 +69,10 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({
   const { setClose } = useModal();
   const [deletingChatbot, setDeletingChatbot] = useState(false);
   const router = useRouter();
+
+  const formSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

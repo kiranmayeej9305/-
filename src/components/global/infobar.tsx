@@ -33,10 +33,9 @@ const InfoBar = ({ notifications, chatbotId, className, role }: Props) => {
     if (!showAll) {
       setAllNotifications(notifications)
     } else {
-      if (notifications?.length !== 0) {
+      if (notifications && notifications.length !== 0) {
         setAllNotifications(
-          notifications?.filter((item) => item.chatbotId === chatbotId) ??
-            []
+          notifications.filter((item) => 'chatbotId' in item && (item as any).chatbotId === chatbotId) ?? []
         )
       }
     }

@@ -162,11 +162,7 @@ function FAQSection({ faqs }: { faqs: any[] }) {
         {faqs.map((faq, index) => (
           <Accordion 
             key={index} 
-            title={
-              <span className="text-1xl font-bold text-black dark:text-white">
-                {faq.title}
-              </span>
-            } 
+            title={faq.title}
             id={`faqs-${index}`} 
             active={faq.active}
           >

@@ -87,7 +87,7 @@ const UserDetails = ({ id, type, chatbots, userData }: Props) => {
       'ACCOUNT_OWNER',
       'ACCOUNT_ADMIN',
       'CHATBOT_USER',
-      'CHATBOT_GUEST',
+      'CHATBOT_ADMIN',
     ]),
   })
 

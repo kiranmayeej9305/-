@@ -117,7 +117,7 @@ const BlogPreview = ({ source, frontMatter }: BlogPreviewProps) => {
 
   return (
     <div className="py-12">
-        <Header {...frontMatter} />
+        <Header {...frontMatter} subTitle={frontMatter.subTitle || ''} />
         <article className="prose lg:prose-xl dark:prose-invert mx-auto leading-relaxed">
           <MDXRemote {...source} components={components} />
         </article>

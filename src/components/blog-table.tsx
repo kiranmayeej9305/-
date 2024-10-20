@@ -27,8 +27,13 @@ export default function BlogsTable() {
   useEffect(() => {
     const fetchBlogs = async () => {
       const data = await getBlogs();
-      setBlogs(data);
-      setFilteredBlogs(data);
+      const blogsWithTags = data.map(blog => ({
+        ...blog,
+        tags: blog.blogTags.map(bt => bt.tag.id),
+        publishedAt: new Date(blog.publishedAt).toISOString()
+      }));
+      setBlogs(blogsWithTags);
+      setFilteredBlogs(blogsWithTags);
     };
     fetchBlogs();
   }, []);
@@ -56,7 +61,7 @@ export default function BlogsTable() {
 
   const handleConfirmDelete = () => {
     if (blogToDelete) {
-      deleteBlog(blogToDelete.id).then(() => {
+      deleteBlog(blogToDelete.id.toString()).then(() => {
         setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== blogToDelete.id));
         setDangerModalOpen(false);
       });
@@ -142,11 +147,10 @@ export default function BlogsTable() {
         currentPage={currentPage}
         totalPages={totalPages}
         setCurrentPage={setCurrentPage}
-        className="mt-6"
       />
 
       <ModalBlank isOpen={dangerModalOpen} setIsOpen={setDangerModalOpen}>
-        <div className="p-5">
+        <div className="p-5 mt-6">
           <h2 className="text-lg font-semibold">Are you sure you want to delete this blog?</h2>
           <p className="text-sm text-slate-500">
             This action cannot be undone. Once deleted, the blog will be removed permanently.

@@ -43,15 +43,14 @@ export default async function RootLayout({
             {/* Pass userId dynamically to the PlanAddOnProvider */}
             <PlanAddOnProvider userId={userId}>
               <QuantitativeFeatureProvider>
-                <FeatureProvider> {/* Wrap with FeatureProvider for feature checks */}
+                <FeatureProvider>
                   <ModalProvider>
                     {children}
-                    <Toaster />
-                    <SonnarToaster position="bottom-left" />
                   </ModalProvider>
                 </FeatureProvider>
               </QuantitativeFeatureProvider>
             </PlanAddOnProvider>
+            <SonnarToaster position="bottom-left" />
           </ClerkProvider>
         </ThemeProvider>
       </body>

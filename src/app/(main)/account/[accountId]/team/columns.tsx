@@ -133,7 +133,7 @@ export const columns: ColumnDef<UsersWithAccountChatbotPermissionsSidebarOptions
               'bg-emerald-500': role === 'ACCOUNT_OWNER',
               'bg-orange-400': role === 'ACCOUNT_ADMIN',
               'bg-primary': role === 'CHATBOT_USER',
-              'bg-muted': role === 'CHATBOT_GUEST',
+              'bg-muted': role === 'CHATBOT_ADMIN',
             })}
           >
             {role}
