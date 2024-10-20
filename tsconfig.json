@@ -28,7 +28,8 @@
         "./src/*"
       ]
     },
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["bun-types"]
   },
   "include": [
     "next-env.d.ts",

@@ -13,6 +13,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   reactStrictMode: false,
+  output: 'standalone',
+  experimental: {
+    // Enable Bun's runtime
+    runtime: 'experimental-edge',
+  },
 }
 
 module.exports = nextConfig

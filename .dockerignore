@@ -1,0 +1,41 @@
+# Bun lockfile
+bun.lockb
+
+# Node modules
+node_modules
+
+# Next.js build output
+.next
+
+# Logs
+*.log
+
+# Environment variables
+.env*
+
+# Version control
+.git
+.gitignore
+
+# IDE files
+.vscode
+.idea
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage
+
+# Temporary files
+*.tmp
+*.temp
+
+# Debug files
+*.log
+
+# Misc
+README.md
+LICENSE
+*.md
