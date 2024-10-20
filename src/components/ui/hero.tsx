@@ -5,7 +5,7 @@ import Stats from './stats';
 
 export default function Hero() {
   return (
-    <section className="relative bg-white dark:bg-zinc-900 before:absolute before:inset-0 before:h-80 before:pointer-events-none before:bg-gradient-to-b before:from-zinc-100 dark:before:from-zinc-800 before:-z-10">
+    <section className="relative bg-zinc-100 dark:bg-zinc-800 before:absolute before:inset-0 before:h-80 before:pointer-events-none before:bg-gradient-to-b before:from-zinc-200 dark:before:from-zinc-700 before:-z-10">
       <div className="pt-32 pb-12 md:pt-40 md:pb-20">
         {/* Section content */}
         <div className="px-4 sm:px-6">
@@ -34,7 +34,7 @@ export default function Hero() {
               <p className="text-lg text-zinc-600 dark:text-zinc-300 mb-8">
                 Create custom AI chatbots to engage your customers, automate support, and drive business growth — no coding required.
                 <br />
-                <span className="font-semibold text-black">No credit card required.</span>
+                <span className="font-semibold text-black dark:text-white">No credit card required.</span>
               </p>
               <div className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <Link href="/account/sign-up" className="btn-sm text-white bg-gradient-to-r from-blue-600 to-blue-400 hover:bg-blue-500 px-6 py-3 rounded-full transition duration-200 ease-in-out">
@@ -51,8 +51,8 @@ export default function Hero() {
         {/* Image */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-center pb-12 md:pb-20 relative">
           <div className="relative group overflow-hidden rounded-lg">
-            <div className="absolute inset-0 rounded-lg border border-zinc-200 dark:border-zinc-700 transition-transform duration-500 group-hover:scale-105"></div>
-            <div className="absolute inset-0 rounded-lg border border-transparent group-hover:border-blue-600 dark:group-hover:border-pink-500 animate-border-glow transition duration-300"></div>
+            <div className="absolute inset-0 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 transition-transform duration-500 group-hover:scale-105"></div>
+            <div className="absolute inset-0 rounded-lg border-2 border-transparent group-hover:border-blue-600 dark:group-hover:border-pink-500 animate-border-glow transition duration-300"></div>
             <div className="overflow-hidden rounded-lg">
               <Image 
                 className="rounded-lg shadow-2xl transition-transform duration-500 group-hover:scale-110" 
