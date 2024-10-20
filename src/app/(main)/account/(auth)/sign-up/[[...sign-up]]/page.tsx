@@ -93,13 +93,13 @@ const SignUpPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-transparent py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-sm p-10 rounded-xl shadow-lg border border-gray-200">
+      <div className="max-w-md w-full space-y-8">
         <div>
-          <Logo className="mx-auto h-12 w-auto" />
-          <h2 className="mt-6 text-center text-2xl font-light text-gray-800">Create your account</h2>
+        <Logo aria-label="Logo" />
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/account/sign-in" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-300">
+            <Link href="/account/sign-in" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign in here
             </Link>
           </p>
