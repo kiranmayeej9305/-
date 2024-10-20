@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node --max-old-space-size=4096 your-start-script.js",
+    "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate"
   },
