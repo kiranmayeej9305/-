@@ -1,37 +1,45 @@
-# Build stage
+# Stage 1: Build the application
 FROM oven/bun:1 AS builder
+
+# Set the working directory
 WORKDIR /app
 
-# Copy package.json and bun.lockb (if you're using lockfile)
+# Copy only the necessary files for installation
 COPY package.json bun.lockb* ./
 
-# Install dependencies
+# Install dependencies with Bun
 RUN bun install --frozen-lockfile
 
-# Copy source files
+# Copy the rest of the application code
 COPY . .
 
-# Build the application
+# Build the Next.js application
 RUN bun run build
 
-# Production stage
+# Remove development dependencies (optional but useful for larger apps)
+RUN rm -rf node_modules && bun install --production
+
+# Stage 2: Production
 FROM oven/bun:1-slim AS runner
+
+# Set the working directory
 WORKDIR /app
 
-ENV NODE_ENV production
+# Set NODE_ENV to production
+ENV NODE_ENV=production
 
-# Copy necessary files from build stage
+# Copy the necessary files from the build stage
 COPY --from=builder /app/next.config.js ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-# Increase memory limit (Bun uses different flags than Node.js)
-ENV BUN_JS_HEAP_SIZE_MB=4096
+# Set memory limits (adjust as needed based on performance testing)
+ENV BUN_JS_HEAP_SIZE_MB=2048
 
-# Expose the port your app runs on
+# Expose the port the app will run on
 EXPOSE 3000
 
-# Start the application
+# Start the application in production mode
 CMD ["bun", "start"]
