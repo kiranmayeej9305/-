@@ -45,7 +45,7 @@ export default function Features01() {
       id: 1,
       title: 'Seamlessly Import Your Data',
       description:
-        'Easily connect your data sources, upload files, or add websites for automated crawling. Chatbase will use your data to train a custom chatbot tailored to your business.',
+        'Easily connect your data sources, upload files, or add websites for automated crawling. InsertBot  will use your data to train a custom chatbot tailored to your business.',
     },
     {
       id: 2,
