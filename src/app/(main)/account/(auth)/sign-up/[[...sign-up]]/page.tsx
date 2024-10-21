@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useRef } from 'react';
+import { useState } from 'react';
 import { useSignUp } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/logo';
 import Link from 'next/link';
 import { OAuthStrategy } from '@clerk/types';
 
-const SignUpPage = () => {
+const SignUpPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
