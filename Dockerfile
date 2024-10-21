@@ -27,12 +27,11 @@ COPY . .
 # Generate Prisma client
 RUN bunx prisma generate
 
+# Check for TypeScript errors, increase memory limit
+RUN NODE_OPTIONS="--max-old-space-size=4096" bun run tsc --noEmit
 
-# Check for TypeScript errors
-RUN bun run tsc --noEmit
-
-# Build the Next.js application with verbose logging
-RUN bun run build 
+# Build the Next.js application with verbose logging and increased memory limit
+RUN NODE_OPTIONS="--max-old-space-size=4096" bun run build
 
 # Remove development dependencies
 RUN rm -rf node_modules && bun install --production
@@ -47,7 +46,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Copy necessary files from the build stage
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
@@ -56,8 +55,8 @@ COPY --from=builder /app/package.json ./package.json
 # Copy Prisma files (if needed for runtime)
 COPY --from=builder /app/prisma ./prisma
 
-# Set memory limits (adjust as needed)
-ENV BUN_JS_HEAP_SIZE_MB=2048
+# Set memory limits for runtime (adjust as needed)
+ENV BUN_JS_HEAP_SIZE_MB=4096
 
 # Expose the port the app will run on
 EXPOSE 3000
