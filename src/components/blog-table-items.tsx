@@ -16,9 +16,9 @@ interface BlogTableItemProps {
   onDelete: (id: number) => void;
   onSelect?: (id: number, selected: boolean) => void; // Optionally handle selection at the parent level
 }
-
 export default function BlogsTableItem({ blog, onDelete, onSelect }: BlogTableItemProps) {
-  const { accountId } = useParams(); // Fetch the accountId from the route
+  const params = useParams(); // Fetch the params from the route
+  const accountId = params?.accountId; // Safely access accountId
   const [isSelected, setIsSelected] = useState(false);
 
   const handleCheckboxChange = () => {

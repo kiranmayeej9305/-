@@ -233,7 +233,7 @@ export const initUser = async (newUser: Partial<User>) => {
       email: user.emailAddresses[0].emailAddress,
       name: `${user.firstName} ${user.lastName}`,
       role: newUser.role || 'CHATBOT_USER',
-      accountId: newUser.accountId, // Account ID is provided when creating the user
+      accountId: newUser.accountId!, // Use non-null assertion
     },
   });
 
@@ -785,6 +785,9 @@ export const fetchChatbotData = async (chatbotId: string) => {
 export const upsertAndFetchChatbotData = async (chatbotData, settingsData, isCreating) => {
   try {
     const chatbotResponse = await upsertChatbot(chatbotData, settingsData, isCreating);
+    if (!chatbotResponse) {
+      throw new Error('Failed to upsert chatbot');
+    }
     const chatbotId = chatbotResponse.id || chatbotData.id;
 
     if (!chatbotId) {
@@ -1395,73 +1398,83 @@ export const handleChatMessage = async (
       },
     });
 
-    // If the chat is handled by a live agent, exit the process
-    if (chatRoom.live) {
+    // Add null check before accessing chatRoom.live
+    if (chatRoom?.live) {
       return 'Live agent is handling the conversation.';
     }
 
     // Process the customer's response to the previous question
-    const lastAskedQuestion = await db.customerResponses.findFirst({
-      where: {
-        customerId: chatRoom.customerId,
-        answered: false,  // Find the last unanswered question
-      },
-    });
-    
-    if (lastAskedQuestion) {
-      // If the last question was unanswered, update it with the customer's response
-      await processCustomerResponse(chatRoom.customerId, lastAskedQuestion.filterQuestionId!, customerMessage);
+    if (chatRoom) {
+      const lastAskedQuestion = await db.customerResponses.findFirst({
+        where: {
+          customerId: chatRoom.customerId,
+          answered: false,  // Find the last unanswered question
+        },
+      });
+      
+      if (lastAskedQuestion) {
+        // If the last question was unanswered, update it with the customer's response
+        await processCustomerResponse(chatRoom.customerId, lastAskedQuestion.filterQuestionId!, customerMessage);
+      }
+    } else {
+      console.error('Chat room not found');
+      // Handle the case where chatRoom is null
     }
 
     // Get the next unanswered question for the customer
-    const nextQuestion = await getNextUnansweredQuestion(chatbotId, chatRoom.customerId);
-    // Handle the next unanswered question
-    if (nextQuestion) {
-      // Generate AI response for the next question
-      const aiResponse = await prepareChatResponse(
-        customerMessage,
-        nextQuestion.question,
-        chatbotId
-      );
-     
-      // Save AI's response (the next question) in the chatroom
-      await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
-
-      // Save the asked question for tracking
-      await saveAskedQuestion(chatRoom.customerId, nextQuestion.id, nextQuestion.question);
-
-      return { aiResponse };
-    } else {
-      // If no unanswered questions remain, proceed with normal AI response
-      const aiResponse = await prepareChatResponse(
-        customerMessage,
-        null,
-        chatbotId
-      );
-
-      // Save the AI response in the chatroom
-      await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
-      
-      // Check if AI response contains "(realtime)"
-      if (aiResponse.includes('(realtime)')) {
-        const customerName = chatRoom.Customer?.name || 'Unknown';
-        const customerEmail = chatRoom.Customer?.email || 'Unknown';
-        const chatbotName = chatRoom.Chatbot?.name || 'Unknown';
-        const accountName = chatRoom.Chatbot?.Account?.name || 'Unknown';
-        const chatbotId = chatRoom.Chatbot?.id;
-
-        // Trigger email and SMS notifications
-        await sendEmailAndSmsNotifications(
-          chatRoomId,
-          customerName,
-          customerEmail,
-          chatbotName,
-          accountName,
+    if (chatRoom) {
+      const nextQuestion = await getNextUnansweredQuestion(chatbotId, chatRoom.customerId);
+      // Handle the next unanswered question
+      if (nextQuestion) {
+        // Generate AI response for the next question
+        const aiResponse = await prepareChatResponse(
+          customerMessage,
+          nextQuestion.question,
           chatbotId
         );
+       
+        // Save AI's response (the next question) in the chatroom
+        await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
+
+        // Save the asked question for tracking
+        await saveAskedQuestion(chatRoom.customerId, nextQuestion.id, nextQuestion.question);
+
+        return { aiResponse };
       }
-      return { aiResponse };
+    } else {
+      console.error('Chat room not found');
+      // Handle the case where chatRoom is null
     }
+
+    // If no unanswered questions remain, proceed with normal AI response
+    const aiResponse = await prepareChatResponse(
+      customerMessage,
+      null,
+      chatbotId
+    );
+
+    // Save the AI response in the chatroom
+    await createMessageInChatRoom(chatRoomId, aiResponse, 'chatbot');
+    
+    // Check if AI response contains "(realtime)"
+    if (aiResponse.includes('(realtime)')) {
+      const customerName = chatRoom?.Customer?.name ?? 'Unknown';
+      const customerEmail = chatRoom?.Customer?.email ?? 'Unknown';
+      const chatbotName = chatRoom?.Chatbot?.name ?? 'Unknown';
+      const accountName = chatRoom?.Chatbot?.Account?.name ?? 'Unknown';
+      const chatbotId = chatRoom?.Chatbot?.id;
+
+      // Trigger email and SMS notifications
+      await sendEmailAndSmsNotifications(
+        chatRoomId,
+        customerName,
+        customerEmail,
+        chatbotName,
+        accountName,
+        chatbotId!  // Add non-null assertion operator
+      );
+    }
+    return { aiResponse };
   } catch (error) {
     console.error('Error handling chat message:', error);
     throw error;
@@ -1551,10 +1564,10 @@ export async function fetchGoogleAppointments(chatbotId: string) {
   const appointments = events.data.items?.map(event => ({
     eventId: event.id!,
     appointmentTime: new Date(event.start?.dateTime || event.start?.date!),
-    customerId: 'N/A',  // You can link it to your customers if you have mapping
+    customerId: 'N/A',
     chatbotId,
     platform: 'google',
-  }));
+  })) || [];
 
   await db.appointment.createMany({ data: appointments });
 }
@@ -1645,13 +1658,19 @@ export async function updateAccessTokenInDb(chatbotId: string, accessToken: stri
     const existingIntegration = await db.calendarIntegration.findFirst({
       where: { chatbotId, platform: 'google' }, // Ensure to match chatbotId and platform
     });
-    await db.calendarIntegration.update({
-      where: { id: existingIntegration.id },      
-      data: {
-        accessToken,
-        expiryDate: new Date(expiryDate),
-      },
-    });
+    if (existingIntegration) {
+      await db.calendarIntegration.update({
+        where: { id: existingIntegration.id },      
+        data: {
+          accessToken,
+          expiryDate: new Date(expiryDate),
+        },
+      });
+    } else {
+      // Handle the case where no existing integration was found
+      // You might want to create a new integration or throw an error
+      throw new Error('No existing calendar integration found for this chatbot.');
+    }
   } catch (error) {
     console.error('Failed to update access token in DB:', error);
     throw new Error('Database operation failed.');
@@ -1829,24 +1848,26 @@ export async function getPlanDetailsForUser(userId: string) {
   const planPrice = billingCycle === 'monthly' ? Plan?.monthlyPrice : Plan?.yearlyPrice;
 
   const addOnsDetails = addOns.map((addon) => {
-    const addOnPrice = addon.Plan.stripeMonthlyPriceId === addon.priceId ? addon.Plan.monthlyPrice : addon.Plan.yearlyPrice;
+    const addOnPrice = addon.Plan?.stripeMonthlyPriceId === addon.priceId 
+      ? addon.Plan?.monthlyPrice 
+      : addon.Plan?.yearlyPrice ?? 0;
 
     return {
-      name: addon.Plan.name,
-      description: addon.Plan.description,
+      name: addon.Plan?.name,
+      description: addon.Plan?.description,
       price: addOnPrice,
-      billingCycle: addon.Plan.stripeMonthlyPriceId === addon.priceId ? 'monthly' : 'yearly',
-      features: addon.Plan.features.map((f) => ({
+      billingCycle: addon.Plan?.stripeMonthlyPriceId === addon.priceId ? 'monthly' : 'yearly',
+      features: addon.Plan?.features.map((f) => ({
         identifier: f.feature.identifier,
         name: f.feature.name,
         description: f.feature.description,
         planFeatureId: f.id, // Include planFeatureId for addons
         value: f.value !== null ? f.value : 'Unlimited',
-      })),
-      frontendFeatures: addon.Plan.frontendFeatures.map((f) => ({
+      })) || [],
+      frontendFeatures: addon.Plan?.frontendFeatures.map((f) => ({
         name: f.feature.name,
         description: f.feature.description,
-      })),
+      })) || [],
     };
   });
 

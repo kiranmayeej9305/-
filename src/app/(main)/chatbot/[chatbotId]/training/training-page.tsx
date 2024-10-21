@@ -16,13 +16,30 @@ import { trainChatbot } from '@/lib/train-chatbot';
 import { getChatbotTrainingsByType } from '@/lib/queries';
 import { uploadToS3 } from '@/lib/s3-upload';
 import { toast } from 'react-hot-toast';
+import { User } from '@prisma/client'; // Assuming you're using Prisma
+
+// Update the ChatbotTraining interface
+interface ChatbotTraining {
+  id: string;
+  chatbotId: string;
+  sourceType: string;
+  createdAt: Date;
+  updatedAt: Date;
+  User: User;
+  userId: string;
+  fileName: string | null;
+  websiteUrl: string | null;
+  question: string | null;
+  answer: string | null;
+}
 
 const TrainingPage = ({ params }) => {
   const { chatbotId } = params;
   const router = useRouter();
   const { trainData, setTrainData, summary, setSummary, valid, setValid } = useTrainingContext();
   const [selectedTab, setSelectedTab] = useState('text');
-  const [history, setHistory] = useState([]);
+  // Update this line to use the ChatbotTraining type
+  const [history, setHistory] = useState<ChatbotTraining[]>([]);
 
   useEffect(() => {
     const fetchHistory = async () => {

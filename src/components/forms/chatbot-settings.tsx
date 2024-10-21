@@ -83,7 +83,11 @@ const ChatbotSettings: React.FC<ChatbotSettingsProps> = ({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const chatbotId = details.id;
+      const chatbotId = details?.id;
+
+      if (!chatbotId) {
+        throw new Error("Chatbot ID is missing");
+      }
 
       const fullChatbotData = await upsertAndFetchChatbotData(
         {

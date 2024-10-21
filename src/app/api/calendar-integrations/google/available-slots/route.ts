@@ -54,7 +54,7 @@ export async function GET(req: Request) {
 
 // Helper function to find free slots based on busy and booked slots
 function findFreeSlots(timeMin: Date, timeMax: Date, busySlots: Array<any>) {
-  const availableSlots = [];
+  const availableSlots: Array<{ startTime: string; endTime: string }> = [];
   let currentTime = new Date(timeMin);
 
   const workingHoursStart = 9; // 9 AM

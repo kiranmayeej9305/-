@@ -11,7 +11,6 @@ import { CSVLink } from 'react-csv';
 import { ChevronDown, ChevronUp, Edit, Trash, UserCircle } from 'lucide-react';
 import Pagination from '@/components/pagination';
 import CustomModal from '@/components/global/custom-modal';
-import EditLeadForm from './edit-lead-form';
 import BlurPage from '@/components/global/blur-page';
 import {
   AlertDialog,
@@ -22,9 +21,18 @@ import {
   AlertDialogHeader,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import EditLeadForm from './edit-lead-form';
+
+interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  leadQuality: string;
+  responses: Array<{ id: string; question: string; responseText: string }>;
+}
 
 const LeadsPage = () => {
-  const [leads, setLeads] = useState([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [totalLeads, setTotalLeads] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,18 +43,28 @@ const LeadsPage = () => {
 
   useEffect(() => {
     fetchLeads();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, rowsPerPage]); // Add rowsPerPage to dependencies
 
   const fetchLeads = async () => {
-    const { leads, totalLeads } = await getLeads(rowsPerPage, (currentPage - 1) * rowsPerPage, searchQuery);
-    setLeads(leads);
-    setTotalLeads(totalLeads);
+    try {
+      const { leads, totalLeads } = await getLeads(rowsPerPage, (currentPage - 1) * rowsPerPage, searchQuery);
+      setLeads(leads as Lead[]);
+      setTotalLeads(totalLeads);
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+      toast({ title: 'Failed to fetch leads', description: 'Please try again later.', variant: 'destructive' });
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await deleteLead(id);
-    toast({ title: 'Lead deleted successfully!' });
-    fetchLeads();
+    try {
+      await deleteLead(id);
+      toast({ title: 'Lead deleted successfully!' });
+      fetchLeads();
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast({ title: 'Failed to delete lead', description: 'Please try again later.', variant: 'destructive' });
+    }
   };
 
   const handleEdit = (lead) => {
@@ -93,16 +111,16 @@ const LeadsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leads.map((lead) => (
+              {leads.map((lead: any) => ( // Add type annotation for lead
                 <React.Fragment key={lead.id}>
                   <TableRow>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <UserCircle className="w-5 h-5 text-muted-foreground" />
-                        {lead.name}
+                        {lead?.name || 'N/A'}
                       </div>
                     </TableCell>
-                    <TableCell>{lead.email}</TableCell>
+                    <TableCell>{lead?.email || 'N/A'}</TableCell>
                     <TableCell>
                       <span
                         className={`px-2 py-1 rounded ${

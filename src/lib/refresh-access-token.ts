@@ -29,11 +29,15 @@ export async function refreshAccessToken(chatbotId: string) {
       const newExpiryDate = credentials.expiry_date;
 
       // Update the database with the new access token and expiry date
-      await updateAccessTokenInDb(integration.chatbotId, newAccessToken, newExpiryDate);
+      if (newAccessToken && newExpiryDate) {
+        await updateAccessTokenInDb(integration.chatbotId, newAccessToken, newExpiryDate);
 
-      // Update the integration object with new values
-      integration.accessToken = newAccessToken;
-      integration.expiryDate = new Date(newExpiryDate);
+        // Update the integration object with new values
+        integration.accessToken = newAccessToken;
+        integration.expiryDate = new Date(newExpiryDate);
+      } else {
+        throw new Error('Failed to obtain new access token or expiry date');
+      }
 
     } catch (error) {
       console.error('Failed to refresh access token:', error);

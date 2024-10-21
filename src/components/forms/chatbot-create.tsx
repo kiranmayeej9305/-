@@ -32,6 +32,16 @@ import { useModal } from '@/providers/modal-provider';
 import { useQuantitativeFeature } from '@/context/use-quantitative-feature-context'; // Importing the quantitative feature context for usage tracking
 import { usePlanAddOn } from '@/context/use-plan-addon-context'; // Importing plan context
 
+// Add this interface near the top of the file
+interface ChatbotType {
+  id: string;
+  name: string;
+  description: string | null;
+  defaultPrompts: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const formSchema = z.object({
   name: z.string().nonempty(),
   chatbotTypeId: z.string().nonempty(),
@@ -47,7 +57,7 @@ interface ChatbotCreateProps {
 const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userName }) => {
   const { toast } = useToast();
   const { setClose } = useModal();
-  const [chatbotTypes, setChatbotTypes] = useState([]);
+  const [chatbotTypes, setChatbotTypes] = useState<ChatbotType[]>([]);
   const [defaultPrompt, setDefaultPrompt] = useState('');
   const [showCustomPrompts, setShowCustomPrompts] = useState(false);
   const router = useRouter();
@@ -73,7 +83,7 @@ const ChatbotCreate: React.FC<ChatbotCreateProps> = ({ accountId, userId, userNa
 
   const handleChatbotTypeChange = async (value: string) => {
     form.setValue('chatbotTypeId', value);
-    const selectedType = chatbotTypes.find(type => type.id === value);
+    const selectedType = chatbotTypes.find((type: { id: string; name: string }) => type.id === value);
     const isCustom = selectedType?.name === 'Custom';
     setShowCustomPrompts(isCustom);
 

@@ -65,7 +65,7 @@ export default function ChatRoom({ chatRoomId }: ChatRoomProps) {
     const isLive = chatRoom.agentId !== null;
     const result = await toggleLiveAgentMode(chatRoom.id, !isLive);
 
-    if (result.success) {
+    if (result.success && result.chatRoom) {
       setChatRoom(result.chatRoom);
       setIsLiveAgent(!isLive); // Update the local state
     }

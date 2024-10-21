@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { serialize } from 'next-mdx-remote/serialize';
+import { MDXRemoteSerializeResult } from 'next-mdx-remote';
 import CreatableSelect from 'react-select/creatable';
 import BlogPreview from '@/components/blog-preview';
 import { getBlogById, getTopics, getTags, createTag, createTopic, upsertBlog } from '@/lib/queries';
@@ -12,13 +13,40 @@ import { UploadDropzone } from '@/lib/uploadthing';
 
 const RichTextEditor = dynamic(() => import('@/components/rich-text-editor'), { ssr: false });
 
+interface Option {
+  value: number;
+  label: string;
+}
+
+interface BlogTag {
+  tagId: number;
+  tag: {
+    id: number;
+    name: string;
+  };
+}
+
 const BlogForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { accountId } = useParams();
-  const id: number = parseInt(searchParams.get('id') || '0');
+  const params = useParams();
+  const accountId = params?.accountId;
+  const id: number = parseInt(searchParams?.get('id') || '0');
 
-  const [blog, setBlog] = useState({
+  const [blog, setBlog] = useState<{
+    id: number;
+    title: string;
+    subTitle: string;
+    content: string;
+    author: string;
+    publishedAt: Date;
+    status: string;
+    path: string;
+    topicId: number;
+    tags: BlogTag[];
+    excerpt: string;
+    imageUrl: string;
+  }>({
     id: 0,
     title: '',
     subTitle: '',
@@ -28,24 +56,45 @@ const BlogForm = () => {
     status: 'Draft',
     path: '',
     topicId: 0,
-    tags: [], // Ensure blogTags is included
+    tags: [],
     excerpt: '',
     imageUrl: '', // Cover image URL
   });
 
-  const [topics, setTopics] = useState([]);
-  const [tags, setTags] = useState([]);
+  const [topics, setTopics] = useState<Option[]>([]);
+  const [tags, setTags] = useState<Option[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false);
-  const [mdxSource, setMdxSource] = useState(null);
+  const [mdxSource, setMdxSource] = useState<MDXRemoteSerializeResult | null>(null);
 
   // Fetch blog data using queries
   const fetchBlogData = async () => {
     if (id) {
       const blogData = await getBlogById(id);
-      setBlog({ ...blogData, tags: (blogData as any).tags || [] });
-      if (blogData.imageUrl) {
-        setImagePreview(blogData.imageUrl);
+      if (blogData) {
+        setBlog({
+          id: blogData.id ?? 0,
+          title: blogData.title ?? '',
+          subTitle: blogData.subTitle ?? '',
+          content: blogData.content ?? '',
+          author: blogData.author ?? '',
+          publishedAt: blogData.publishedAt ? new Date(blogData.publishedAt) : new Date(),
+          status: blogData.status ?? 'Draft',
+          path: blogData.path ?? '',
+          topicId: blogData.topicId ?? 0,
+          tags: blogData.blogTags?.map(bt => ({
+            tagId: bt.tagId,
+            tag: {
+              id: bt.tag.id,
+              name: bt.tag.name
+            }
+          })) ?? [],
+          excerpt: blogData.excerpt ?? '',
+          imageUrl: blogData.imageUrl ?? '',
+        });
+        if (blogData.imageUrl) {
+          setImagePreview(blogData.imageUrl);
+        }
       }
     }
   };
@@ -53,10 +102,9 @@ const BlogForm = () => {
   // Fetch topics and tags using queries
   const fetchTopicsAndTags = async () => {
     const topicsData = await getTopics(100);
-    setTopics(topicsData.map((topic: any) => ({ value: topic.id, label: topic.name })));
-
+    setTopics(topicsData.map((topic) => ({ value: topic.id, label: topic.name })));
     const tagsData = await getTags();
-    setTags(tagsData.map((tag: any) => ({ value: tag.id, label: tag.name })));
+    setTags(tagsData.map((tag) => ({ value: tag.id, label: tag.name })));
   };
 
   useEffect(() => {
@@ -147,7 +195,10 @@ const BlogForm = () => {
             author: blog.author,
             authorImg: '', // Add a default empty string or provide an actual author image URL
             tags: blog.tags.map((bt) => ({ id: bt.tag.id, name: bt.tag.name })),
-            topic: topics.find((topic) => topic.id === blog.topicId) || { id: blog.topicId, name: '' },
+            topic: {
+              id: blog.topicId,
+              name: topics.find((topic) => topic.value === blog.topicId)?.label || '',
+            },
           }}
         />
       ) : (

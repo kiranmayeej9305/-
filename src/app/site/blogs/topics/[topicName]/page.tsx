@@ -10,14 +10,14 @@ interface BlogPost {
   tags: any;
   id: number;
   title: string;
-  subTitle: string;
-  content: string;
-  author: string;
+  subTitle: string | null;
+  content: string | null;
+  author: string | null;
   path: string; // Use path for SEO-friendly URLs
   publishedAt: string;
   status: string;
-  excerpt: string;
-  imageUrl: string;
+  excerpt: string | null;
+  imageUrl: string | null;
   topic: { id: number; name: string };
   blogTags: { tag: { id: number; name: string } }[];
 }
@@ -41,7 +41,9 @@ export default function Blog() {
           ...post,
           authorImg: post.author || undefined,
           tags: post.blogTags.map(bt => bt.tag),
-          publishedAt: post.publishedAt.toString() // Convert Date to string
+          publishedAt: post.publishedAt.toString(),
+          excerpt: post.excerpt || '',
+          imageUrl: post.imageUrl || '' // Ensure imageUrl is always a string
         })));
         setTotalPages(data.totalPages);
       } catch (error) {
@@ -84,13 +86,13 @@ export default function Blog() {
                       key={postIndex}
                       id={post.id}
                       title={post.title}
-                      subTitle={post.subTitle}
-                      summary={post.excerpt}
+                      subTitle={post.subTitle ?? undefined}
+                      summary={post.excerpt ?? ''}
                       slug={post.path}
-                      author={post.author}
+                      author={post.author ?? ''}
                       authorImg={post.authorImg}
                       publishedAt={post.publishedAt}
-                      imageUrl={post.imageUrl}
+                      imageUrl={post.imageUrl ?? undefined}
                       topic={post.topic}
                     />
                   ))}

@@ -29,5 +29,7 @@ export async function fetchGoogleAppointments(chatbotId: string) {
     platform: 'google',
   }));
 
-  await db.appointment.createMany({ data: appointments });
+  if (appointments && appointments.length > 0) {
+    await db.appointment.createMany({ data: appointments });
+  }
 }

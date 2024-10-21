@@ -82,7 +82,7 @@ const SignUpPage = () => {
     try {
       await signUp.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/sso-callback',
+        redirectUrl: '/account',
         redirectUrlComplete: '/account',
       });
     } catch (err) {
@@ -93,13 +93,13 @@ const SignUpPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-transparent py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-sm p-10 rounded-xl shadow-lg">
         <div>
-        <Logo aria-label="Logo" />
+          <Logo aria-label="Logo" />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/account/sign-in" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/account/sign-in" className="font-medium text-black hover:text-gray-800 transition-colors duration-300">
               Sign in here
             </Link>
           </p>
@@ -118,7 +118,7 @@ const SignUpPage = () => {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-black focus:border-black focus:z-10 sm:text-sm"
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -134,7 +134,7 @@ const SignUpPage = () => {
                   type="password"
                   autoComplete="new-password"
                   required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-black focus:border-black focus:z-10 sm:text-sm"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -148,7 +148,7 @@ const SignUpPage = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors duration-300"
               >
                 {isLoading ? 'Signing up...' : 'Sign up'}
               </button>
@@ -167,7 +167,7 @@ const SignUpPage = () => {
                     ref={(el) => (verificationInputs.current[index] = el)}
                     type="text"
                     maxLength={1}
-                    className="w-10 h-10 text-center rounded-md border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-12 h-12 text-center rounded-md border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-black focus:border-black"
                     value={digit}
                     onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
                   />
@@ -181,7 +181,7 @@ const SignUpPage = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors duration-300"
               >
                 {isLoading ? 'Verifying...' : 'Verify Email'}
               </button>
@@ -189,21 +189,22 @@ const SignUpPage = () => {
           </form>
         )}
 
-        <div className="mt-10">
+        <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              <span className="px-2 bg-white text-gray-500">Or</span>
             </div>
           </div>
 
           <div className="mt-6">
             <button
               onClick={() => handleOAuthSignUp('oauth_google')}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-300"
+              className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-300"
             >
+              <img className="h-5 w-5 mr-2" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" />
               Sign up with Google
             </button>
           </div>

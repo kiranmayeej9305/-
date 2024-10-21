@@ -45,7 +45,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
               chatbotId: chatbotId,
               ...chatMessagesData 
             });
-            setChats(chatMessagesData.ChatMessages || []);
+            setChats(chatMessagesData?.ChatMessages ?? []);
           }
         }
       } catch (error) {
@@ -105,7 +105,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatbotId, isPlayground }) => {
           agentId: '', // Adding agentId as it's required in ChatRoom type
           ...chatMessagesData 
         });
-        setChats(chatMessagesData.ChatMessages || []);
+        setChats(chatMessagesData?.ChatMessages ?? []);
       } else {
         await handleChatMessage(chatRoom.id, chatbotId, newMessage);
         // await createMessageInChatRoom(chatRoom.id, newMessage, 'customer');

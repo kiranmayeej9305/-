@@ -54,6 +54,22 @@ interface ExtendedChatbot extends Chatbot {
   };
 }
 
+interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  // Add other properties as needed
+}
+
+interface ChatbotType {
+  id: string;
+  name: string;
+  description: string | null;
+  defaultPrompts: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const formSchema = z.object({
   name: z.string().nonempty(),
   welcomeMessage: z.string().optional(),
@@ -80,8 +96,8 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
 }) => {
   const { toast } = useToast();
   const { setClose } = useModal();
-  const [aiModels, setAiModels] = useState([]);
-  const [chatbotTypes, setChatbotTypes] = useState([]);
+  const [aiModels, setAiModels] = useState<AIModel[]>([]);
+  const [chatbotTypes, setChatbotTypes] = useState<ChatbotType[]>([]);
   const [defaultPrompt, setDefaultPrompt] = useState('');
   const [filteredQuestions, setFilteredQuestions] = useState([{ question: '' }]);
   const router = useRouter();
@@ -150,14 +166,14 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      console.log('Form is being submitted with values:', values); // Debugging log
-      const chatbotId = details.id;
+      console.log('Form is being submitted with values:', values);
+      const chatbotId = details?.id ?? '';
 
       const fullChatbotData = await upsertAndFetchChatbotData(
         {
-          id: chatbotId,
+          id: details?.id,
           name: values.name,
-          createdAt: details.createdAt,
+          createdAt: details?.createdAt ?? new Date(),
           updatedAt: new Date(),
           accountId: accountDetails.id,
           connectAccountId: '',
@@ -171,7 +187,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
           creativityLevel: values.creativityLevel,
           customPrompts: values.customPrompts || defaultPrompt,
           scheduleAppointment: values.scheduleAppointment,
-          createdAt: details.createdAt,
+          createdAt: details?.createdAt,
           updatedAt: new Date(),
         },
         false
@@ -187,7 +203,7 @@ const ChatbotDetails: React.FC<ChatbotDetailsProps> = ({
 
       toast({
         title: 'Chatbot details saved',
-        description: 'Successfully saved your Chatbot details.',
+        description: 'Successfully saved your ChatBot details.',
       });
 
       setClose();

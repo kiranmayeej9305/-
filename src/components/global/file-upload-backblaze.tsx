@@ -6,7 +6,7 @@ import { useDropzone } from "react-dropzone";
 import { toast } from "react-hot-toast";
 
 const FileUpload = ({ onFileSelect }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "application/pdf": [".pdf"] },
@@ -19,7 +19,7 @@ const FileUpload = ({ onFileSelect }) => {
       }
 
       setSelectedFile(file);
-      onFileSelect(file);  // Pass the file to the parent component
+      onFileSelect(file);
     },
   });
 

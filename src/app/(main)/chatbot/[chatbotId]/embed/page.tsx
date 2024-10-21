@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { updateChatbotStatus, fetchChatbotStatus } from '@/lib/queries';
-
 const EmbedPage = () => {
-  const { chatbotId } = useParams();
+  const params = useParams();
+  const chatbotId = params?.chatbotId as string;
   const [isPublic, setIsPublic] = useState(false);
   const [copiedIframe, setCopiedIframe] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
@@ -19,7 +19,7 @@ const EmbedPage = () => {
   useEffect(() => {
     const getStatus = async () => {
       const status = await fetchChatbotStatus(chatbotId);
-      setIsPublic(status);
+      setIsPublic(status ?? false);
     };
     getStatus();
   }, [chatbotId]);

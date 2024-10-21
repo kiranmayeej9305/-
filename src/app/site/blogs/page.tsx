@@ -40,9 +40,14 @@ export default function Blog() {
         const data = await getPaginatedBlogs(currentPage, postsPerPage);
         setPosts(data.posts.map(post => ({
           ...post,
-          authorImg: undefined, // Set a default value or fetch it separately if needed
-          tags: post.blogTags.map(bt => bt.tag), // Transform blogTags to tags
-          publishedAt: new Date(post.publishedAt).toISOString() // Convert Date to string
+          authorImg: post.author || undefined,
+          tags: post.blogTags.map(bt => bt.tag),
+          publishedAt: new Date(post.publishedAt).toISOString(),
+          subTitle: post.subTitle || '',
+          content: post.content || '',
+          path: post.path || '',
+          excerpt: post.excerpt || '',
+          imageUrl: post.imageUrl || '',
         })));
         setTotalPages(data.totalPages);
       } catch (error) {

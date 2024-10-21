@@ -42,15 +42,19 @@ const BlogPost = ({ params }: BlogPostProps) => {
     const fetchBlogData = async () => {
       try {
         const blogData = await getBlogByPath(path);
-        setBlog({
-          ...blogData,
-          publishedAt: new Date(blogData.publishedAt).toISOString()
-        });
+        if (blogData) {
+          setBlog({
+            ...blogData,
+            id: blogData.id ?? 0,
+            publishedAt: new Date(blogData.publishedAt).toISOString(),
+          } as Blog);
 
-        // Dynamically import the serialize function for MDX
-        const { serialize } = await import('next-mdx-remote/serialize');
-        const mdxSource = await serialize(blogData.content);
-        setMdxSource(mdxSource);
+          const { serialize } = await import('next-mdx-remote/serialize');
+          const mdxSource = await serialize(blogData.content);
+          setMdxSource(mdxSource);
+        } else {
+          console.error('Blog data not found');
+        }
       } catch (error) {
         console.error('Error fetching blog:', error);
       }

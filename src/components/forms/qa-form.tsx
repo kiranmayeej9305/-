@@ -6,7 +6,7 @@ import { Plus, Trash2 } from 'lucide-react';
 
 const QAForm = ({ onFormChange, setValid }) => {
   const [qas, setQAs] = useState([{ question: '', answer: '' }]);
-  const [errors, setErrors] = useState([]);
+  const [errors, setErrors] = useState<boolean[]>([]);
 
   useEffect(() => {
     const allValid = qas.every((qa) => qa.question && qa.answer);

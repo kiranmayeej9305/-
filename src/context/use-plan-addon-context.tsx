@@ -5,21 +5,23 @@ import { getPlanDetailsForUser } from '@/lib/queries';
 
 const PlanAddOnContext = createContext<any | undefined>(undefined);
 
-export const PlanAddOnProvider = ({ userId, children }: { userId: string; children: React.ReactNode }) => {
+export const PlanAddOnProvider = ({ userId, children }: { userId?: string; children: React.ReactNode }) => {
   const [planData, setPlanData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPlanAndAddOnDetails = async () => {
       if (!userId) {
-        console.error('userId is missing');
+        setLoading(false);
         return;
       }
 
       try {
         const data = await getPlanDetailsForUser(userId);
         console.log('Fetched Plan Data: ', data);
-        setPlanData(data.plan);
+        if (data) {
+          setPlanData(data.plan);
+        }
       } catch (error) {
         console.error('Error fetching plan and add-on details:', error);
       } finally {

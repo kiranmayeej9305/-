@@ -30,20 +30,26 @@ const AiSettingPage = async ({ params }: Props) => {
     include: { Chatbot: true },
   });
 
+  if (!chatbot || !accountDetails) return null;
+
   return (
     <BlurPage>
       <div className="container mx-auto p-4 lg:p-8">
           <ChatbotDetails
-            accountDetails={accountDetails}
-            details={{
-              ...chatbot,
-              ChatbotSettings: {
+          accountDetails={accountDetails}
+          details={{
+            ...chatbot,
+            ChatbotSettings: chatbot.ChatbotSettings
+              ? {
                 ...chatbot.ChatbotSettings,
-                knowledgeSources: chatbot.ChatbotSettings.knowledgeSources as "training" | "generic" | "both"
+                welcomeMessage: chatbot.ChatbotSettings.welcomeMessage ?? undefined,
+                knowledgeSources: chatbot.ChatbotSettings.knowledgeSources as "training" | "generic" | "both",
+                customPrompts: chatbot.ChatbotSettings.customPrompts ?? undefined
               }
-            }}
-            userId={userDetails.id}
-            userName={userDetails.name}
+              : undefined
+          }}
+          userId={userDetails.id}
+          userName={userDetails.name}
           />
       </div>
     </BlurPage>

@@ -48,7 +48,19 @@ export const InterfaceSettingsProvider: React.FC<{ chatbotId: string; children: 
     const fetchSettings = async () => {
       try {
         const fetchedSettings = await getInterfaceSettings(chatbotId);
-        setSettings(fetchedSettings || null);
+        if (fetchedSettings) {
+          const sanitizedSettings: InterfaceSettings = {
+            ...fetchedSettings,
+            ...Object.fromEntries(
+              Object.entries(fetchedSettings)
+                .filter(([_, value]) => typeof value === 'string')
+                .map(([key, value]) => [key, (value as string) ?? ''])
+            )
+          } as InterfaceSettings;
+          setSettings(sanitizedSettings);
+        } else {
+          setSettings(null);
+        }
       } catch (error) {
         console.error('Error fetching interface settings:', error);
       } finally {

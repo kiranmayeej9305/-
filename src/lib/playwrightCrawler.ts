@@ -8,7 +8,7 @@ export async function crawlWebsite(url: string, depth: number): Promise<{ url: s
   let links = new Set<string>();
   await recursiveCrawl(page, url, depth, 0, links);
 
-  const result = [];
+  const result: { url: string, charCount: number }[] = [];
 
   for (const link of Array.from(links)) {
     const content = await fetchContent(link, browser);
@@ -78,7 +78,7 @@ export async function crawlSitemap(sitemapUrl: string): Promise<{ url: string, c
     return locs.map(loc => loc.textContent || '');
   });
 
-  const result = [];
+  const result: { url: string, charCount: number }[] = [];
 
   for (const url of urls) {
     const content = await fetchContent(url, browser);

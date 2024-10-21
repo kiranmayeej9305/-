@@ -4,10 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Trash2 } from 'lucide-react';
 
+interface Link {
+  link: string;
+  charCount: number;
+}
+
 const WebsiteForm = ({ setValid, onFormChange }) => {
   const [urlType, setUrlType] = useState('website');
   const [url, setUrl] = useState('');
-  const [links, setLinks] = useState([]);
+  const [links, setLinks] = useState<Link[]>([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [totalCharCount, setTotalCharCount] = useState(0);

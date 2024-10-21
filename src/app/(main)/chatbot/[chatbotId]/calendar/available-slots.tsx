@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
+// Define an interface for the slot
+interface Slot {
+  startTime: string;
+  endTime: string;
+}
+
 export default function AvailableSlots({ chatbotId, customerEmail }) {
-  const [availableSlots, setAvailableSlots] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,7 +50,7 @@ export default function AvailableSlots({ chatbotId, customerEmail }) {
       {availableSlots.length === 0 ? (
         <p>No available slots</p>
       ) : (
-        availableSlots.map((slot) => (
+        availableSlots.map((slot: Slot) => (
           <Button key={slot.startTime} onClick={() => handleBookAppointment(slot)}>
             {slot.startTime} - {slot.endTime}
           </Button>

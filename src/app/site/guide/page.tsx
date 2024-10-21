@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, SetStateAction } from 'react';
 import { getTopicsWithBlogs, getBlogByPath } from '@/lib/queries';
 import { ChevronDown, ChevronRight } from 'lucide-react'; // For tree view icons
 import BlogPreview from './blog-preview';
@@ -79,13 +79,25 @@ export default function BlogMenu() {
   const handleBlogClick = async (blogPath: string) => {
     try {
       const blogData = await getBlogByPath(blogPath);
+      if (!blogData) {
+        console.error('Blog data not found');
+        return;
+      }
       const serialized = await serialize(blogData.content);
       setSelectedBlog({
-        ...blogData,
-        summary: (blogData as any).summary || '', // Type assertion to avoid TypeScript error
-        publishedAt: blogData.publishedAt instanceof Date ? blogData.publishedAt.toISOString() : blogData.publishedAt
+        id: blogData.id,
+        title: blogData.title,
+        subTitle: blogData.subTitle || '',
+        content: blogData.content,
+        author: blogData.author || '',
+        path: blogData.path,
+        publishedAt: blogData.publishedAt instanceof Date ? blogData.publishedAt.toISOString() : blogData.publishedAt,
+        imageUrl: blogData.imageUrl || '',
+        topic: blogData.topic,
+        blogTags: blogData.blogTags || [],
+        summary: '' // Add a default empty string for the summary property
       });
-      setSerializedContent(serialized);
+      setSerializedContent(serialized as unknown as SetStateAction<null>);
     } catch (error) {
       console.error('Error fetching blog:', error);
     }

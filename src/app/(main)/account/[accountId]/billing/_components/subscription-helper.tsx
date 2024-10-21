@@ -16,7 +16,7 @@ interface SubscriptionHelperProps {
 const SubscriptionHelper: React.FC<SubscriptionHelperProps> = ({ customerId, planExists }) => {
   const { setOpen } = useModal();
   const searchParams = useSearchParams();
-  const plan = searchParams.get('plan');
+  const plan = searchParams?.get('plan');
   const { planData, loading } = usePlanAddOn();
 
   useEffect(() => {

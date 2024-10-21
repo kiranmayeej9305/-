@@ -105,7 +105,10 @@ const InterfaceSettings = ({ chatbotId }: Props) => {
       try {
         const settings = await getInterfaceSettings(chatbotId);
         if (settings) {
-          form.reset({ ...settings });
+          const formattedSettings = Object.fromEntries(
+            Object.entries(settings).map(([key, value]) => [key, value === null ? undefined : value])
+          ) as InterfaceForm;
+          form.reset(formattedSettings);
         }
       } catch (error) {
         toast({
@@ -427,7 +430,7 @@ const InterfaceSettings = ({ chatbotId }: Props) => {
             <CardContent className="p-4 md:p-6">
               <Preview settings={form.watch()} />
               <div className="flex justify-end mt-4">
-                <ChatBubblePreview color={form.watch('chatBubbleButtonColor')} />
+                <ChatBubblePreview color={form.watch('chatBubbleButtonColor') ?? '#000000'} />
               </div>
             </CardContent>
           </Card>

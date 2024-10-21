@@ -30,7 +30,7 @@ async function fetchAvailableSlots(chatbotId: string) {
     },
   });
 
-  const busyTimes = data.calendars[calendarId]?.busy || [];
+  const busyTimes = data.calendars?.[calendarId]?.busy || [];
   // Convert busyTimes to the expected format
   const formattedBusyTimes = busyTimes.map(time => ({
     start: time.start || '',
@@ -44,7 +44,7 @@ async function fetchAvailableSlots(chatbotId: string) {
 }
 
 function getAvailableSlots(busyTimes: Array<{ start: string, end: string }>, startOfDay: Date, endOfDay: Date) {
-  const availableSlots = [];
+  const availableSlots: Array<{ start: Date, end: Date }> = [];
   let currentTime = new Date(startOfDay);
 
   while (currentTime < endOfDay) {

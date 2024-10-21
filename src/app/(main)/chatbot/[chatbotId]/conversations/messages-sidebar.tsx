@@ -7,11 +7,29 @@ import DirectMessages from './direct-messages';
 import { useFlyoutContext } from '@/context/flyout-context';
 import { useInterfaceSettings } from '@/context/use-interface-settings-context';
 
+// Define an interface for the ChatRoom type
+interface ChatRoom {
+  id: string;
+  Customer: { email: string | null };
+  chatbotId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  customerId: string;
+  live: boolean;
+  mailed: boolean;
+  ChatMessages: {
+    createdAt: Date;
+    message: string;
+    seen: boolean;
+    sender: string | null;
+  }[];
+}
+
 export default function MessagesSidebar({ chatbotId, onChatSelect }: { chatbotId: string, onChatSelect: (roomId: string) => void }) {
   const { flyoutOpen } = useFlyoutContext();
   const { setChatRoom, setChats } = useChatContext();
   const { settings, loading } = useInterfaceSettings(); 
-  const [chatRooms, setChatRooms] = useState([]);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
 
   useEffect(() => {
     const fetchChatRooms = async () => {
@@ -29,8 +47,20 @@ export default function MessagesSidebar({ chatbotId, onChatSelect }: { chatbotId
   const handleChatSelect = async (roomId: string) => {
     try {
       const messages = await getChatMessages(roomId);
-      setChatRoom((prevRoom) => ({ ...prevRoom, id: roomId }));
-      setChats(messages?.ChatMessages || []);
+      setChatRoom((prevRoom) => ({
+        ...prevRoom,
+        id: roomId,
+        live: prevRoom?.live ?? false,
+        mailed: prevRoom?.mailed ?? false,
+        createdAt: prevRoom?.createdAt ?? new Date(),
+        updatedAt: prevRoom?.updatedAt ?? new Date(),
+        customerId: prevRoom?.customerId ?? '',
+        chatbotId: prevRoom?.chatbotId ?? chatbotId,
+        Customer: prevRoom?.customerId ?? { email: null },
+        ChatMessages: messages?.ChatMessages ?? [],
+        agentId: prevRoom?.agentId ?? '',
+      }));
+      setChats(messages?.ChatMessages ?? []);
       onChatSelect(roomId);
     } catch (error) {
       console.error('Failed to fetch chat messages:', error);
@@ -49,7 +79,17 @@ export default function MessagesSidebar({ chatbotId, onChatSelect }: { chatbotId
       } md:translate-x-0 md:static md:w-80`}
     >
       <div className="px-4 py-4">
-        <DirectMessages chatRooms={chatRooms} onChatSelect={handleChatSelect} settings={settings} />
+        <DirectMessages 
+          chatRooms={chatRooms.map(room => ({
+            ...room,
+            Customer: {
+              ...room.Customer,
+              email: room.Customer.email || ''
+            }
+          }))} 
+          onChatSelect={handleChatSelect} 
+          settings={settings} 
+        />
       </div>
     </div>
   );

@@ -40,12 +40,7 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
   const [selectedMenu, setSelectedMenu] = useState<string | null>(null);
   const [context, setContext] = useState(type);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  const openState = useMemo(
-    () => (defaultOpen ? { open: true } : {}),
-    [defaultOpen]
-  );
+  const [isOpen, setIsOpen] = useState(false); // Track open state
 
   useEffect(() => {
     const fetchSidebarOptions = async () => {
@@ -59,7 +54,7 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
     fetchSidebarOptions();
   }, [context, id]);
 
-  const handleMenuClick = useCallback((optionId: string, hasSubmenu: boolean, parentId?: string) => {
+  const handleMenuClick = useCallback((optionId: string, hasSubmenu: boolean, parentId?: string | null) => {
     if (hasSubmenu) {
       setExpandedMenu(prev => (prev === optionId ? null : optionId));
     } else {
@@ -81,7 +76,6 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
     return options
       .filter(option => option.parentId === parentId)
       .map(option => {
-        // Conditionally hide "Manage Blogs" if the user's email doesn't contain "dipuoec"
         if (option.name === 'Manage Blogs' && !user.email.includes('dipuoec')) {
           return null; // Skip rendering this option
         }
@@ -137,105 +131,95 @@ const MenuOptions: React.FC<Props> = ({ details, id, chatbots, user, defaultOpen
   }, [chatbots, searchQuery]);
 
   const toggleMenu = () => {
-    setIsOpen(!isOpen);
+    setIsOpen(prev => !prev); // Toggle menu open/close state
   };
 
   if (!isMounted) return null;
 
+  const sidebarContent = (
+    <div className="flex flex-col h-full">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="lg" className="flex items-center justify-between w-full mb-4">
+            <span className="font-bold text-lg">
+              {context === 'account' ? 'Select Chatbot' : 'Select Account'}
+            </span>
+            <ChevronsUpDown size={16} className="ml-2" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
+          <DropdownMenuLabel>Accounts</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => {
+            setContext('account');
+            handleNavigation(`/account/${user.Account.id}`);
+          }}>
+            {user.Account.name}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Chatbots</DropdownMenuLabel>
+          <div className="px-2 pb-2">
+            <input
+              type="text"
+              placeholder="Search Chatbots..."
+              className="w-full p-2 rounded-md border"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {filteredChatbots.map(chatbot => (
+            <DropdownMenuItem
+              key={chatbot.id}
+              onClick={() => {
+                setContext('chatbot');
+                handleNavigation(`/chatbot/${chatbot.id}`);
+              }}
+            >
+              {chatbot.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Card className="mb-4 p-4 text-center bg-blue-100 text-primary rounded-lg shadow-lg">
+        {context === 'account' ? (
+          <Landmark size={32} className="text-primary mb-2 mx-auto" />
+        ) : (
+          <Bot size={32} className="text-primary mb-2 mx-auto" />
+        )}
+        <div className="font-bold text-lg">
+          {context === 'account' ? user.Account.name : details.name}
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {context === 'account' ? 'Free Tier' : `${details?.ChatbotSettings?.ChatbotType?.name || 'Custom Type'} - ${details?.ChatbotSettings?.AIModel?.name || 'Unknown Model'}`}
+        </div>
+      </Card>
+
+      <nav className="overflow-y-auto flex-grow">
+        {renderMenuOptions(sidebarOptions)}
+      </nav>
+    </div>
+  );
+
   return (
     <>
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed left-4 top-4 z-[100] md:hidden"
-        onClick={toggleMenu}
-      >
-        <Menu />
-      </Button>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-[300px] border-r p-6 h-screen overflow-y-auto fixed left-0 top-0 bg-background z-50">
+        {sidebarContent}
+      </aside>
 
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent
-          side="left"
-          className="w-[300px] sm:w-[400px] p-0"
-        >
-          <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center p-4 border-b">
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+      {/* Mobile Menu with always-visible hamburger */}
+      <div className="lg:hidden">
+        {/* Always visible hamburger button */}
+        <Button variant="ghost" className="fixed top-4 left-4 z-50" onClick={toggleMenu}>
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </Button>
 
-            <div className="flex-grow overflow-y-auto p-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="lg" className="flex items-center justify-between w-full mb-4">
-                    <span className="font-bold text-lg">
-                      {context === 'account' ? 'Select Chatbot' : 'Select Account'}
-                    </span>
-                    <ChevronsUpDown size={16} className="ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-full max-h-60 overflow-y-auto">
-                  <DropdownMenuLabel>Accounts</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => {
-                    setContext('account');
-                    handleNavigation(`/account/${user.Account.id}`);
-                  }}>
-                    {user.Account.name}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Chatbots</DropdownMenuLabel>
-                  <div className="px-2 pb-2">
-                    <input
-                      type="text"
-                      placeholder="Search Chatbots..."
-                      className="w-full p-2 rounded-md border"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  {filteredChatbots.map(chatbot => (
-                    <DropdownMenuItem
-                      key={chatbot.id}
-                      onClick={() => {
-                        setContext('chatbot');
-                        handleNavigation(`/chatbot/${chatbot.id}`);
-                      }}
-                    >
-                      {chatbot.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Card className="mb-4 p-4 text-center bg-blue-100 text-primary rounded-lg shadow-lg">
-                {context === 'account' ? (
-                  <Landmark size={32} className="text-primary mb-2 mx-auto" />
-                ) : (
-                  <Bot size={32} className="text-primary mb-2 mx-auto" />
-                )}
-                <div className="font-bold text-lg">
-                  {context === 'account' ? user.Account.name : details.name}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {context === 'account' ? 'Free Tier' : `${details?.ChatbotSettings?.ChatbotType?.name || 'Custom Type'} - ${details?.ChatbotSettings?.AIModel?.name || 'Unknown Model'}`}
-                </div>
-              </Card>
-
-              <nav>
-                {renderMenuOptions(sidebarOptions)}
-              </nav>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {defaultOpen && (
-        <aside className="hidden md:block w-[300px] border-r p-6">
-          {/* Desktop sidebar content */}
-          {/* ... (include the same content as in the mobile menu) */}
-        </aside>
-      )}
+        <Sheet open={isOpen} onOpenChange={toggleMenu}>
+          <SheetContent side="left" className="p-6">
+            {sidebarContent}
+          </SheetContent>
+        </Sheet>
+      </div>
     </>
   );
 };

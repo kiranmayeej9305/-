@@ -13,7 +13,8 @@ import { Search, Plus } from 'lucide-react';
 import Pagination from '@/components/pagination';
 
 export default function BlogsTable() {
-  const { accountId } = useParams(); // Fetch the accountId from the route
+  const params = useParams(); // Fetch the params from the route
+  const accountId = params?.accountId as string; // Type assertion for accountId
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [currentPage, setCurrentPage] = useState(1);

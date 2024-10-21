@@ -55,15 +55,14 @@ export default function CalendarIntegrationEmbed({ chatbotId }: CalendarIntegrat
           <>
             {isIntegrated ? (
               <div className="flex flex-col items-center">
-                <iframe
-                  src={integrationUrl}  // Use the integrationUrl that includes the calendarId
-                  width="100%"
-                  height="600"
-                  frameBorder="0"
-                  allowFullScreen
-                  className="border rounded-md"
-                  title="Google Calendar"
-                />
+                {integrationUrl && (
+                  <iframe
+                    src={integrationUrl!}
+                    width="100%"
+                    height="600"
+                    frameBorder="0"
+                  />
+                )}
                 <p className="text-gray-500 text-sm mt-4">
                   Google Calendar is integrated. You can view and manage your appointments here.
                 </p>

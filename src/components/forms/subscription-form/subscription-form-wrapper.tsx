@@ -19,10 +19,20 @@ type Props = {
   planExists: boolean;
 };
 
+type Plan = {
+  id: string;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  stripeMonthlyPriceId: string;
+  stripeYearlyPriceId: string;
+};
+
 const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
   const { planData, loading } = usePlanAddOn(); // Fetch current plan data
   const router = useRouter();
-  const [allPlans, setAllPlans] = useState([]);
+  const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [selectedPriceId, setSelectedPriceId] = useState<string | ''>('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [subscription, setSubscription] = useState<{
@@ -34,8 +44,18 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
   useEffect(() => {
     const fetchAllPlans = async () => {
       try {
-        const plans = await getPricingPlans(); // Fetch plans directly from the database
-        const filteredPlans = plans.filter((plan) => plan.name !== 'Free'); // Remove Free Plan
+        const plans = await getPricingPlans();
+        const filteredPlans = plans
+          .filter((plan) => plan.name !== 'Free')
+          .map((plan) => ({
+            id: plan.id,
+            name: plan.name,
+            description: plan.description || '',
+            monthlyPrice: plan.monthlyPrice ?? 0,
+            yearlyPrice: plan.yearlyPrice ?? 0,
+            stripeMonthlyPriceId: plan.stripeMonthlyPriceId ?? '',
+            stripeYearlyPriceId: plan.stripeYearlyPriceId ?? '',
+          }));
         setAllPlans(filteredPlans);
       } catch (error) {
         console.error('Error fetching pricing plans:', error);
@@ -101,7 +121,7 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-4">
-        {allPlans.map((plan) => {
+        {allPlans.map((plan: Plan) => {
           const isBestValue = plan.name === 'Standard';
           const isCurrentPlan = plan.id === currentPlanId;
           const planPrice = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;

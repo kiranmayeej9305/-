@@ -12,9 +12,16 @@ import { Clock } from 'lucide-react';
 import 'react-calendar/dist/Calendar.css';
 import { addMonths } from 'date-fns';
 
+// Add this interface near the top of the file
+interface Slot {
+  startTime: string;
+  endTime: string;
+  booked: boolean;
+}
+
 export default function AvailableSlots({ chatbotId, customerEmail }) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableSlots, setAvailableSlots] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
   const { setOpen: openModal, setClose: closeModal } = useModal(); // Open and close modal
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;

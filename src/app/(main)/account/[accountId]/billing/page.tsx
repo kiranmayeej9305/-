@@ -79,11 +79,14 @@ const page = async () => {
         <h2 className="text-2xl p-4">Current Plan</h2>
         <div className="flex flex-col lg:!flex-row justify-between gap-8">
           <PricingCard
-            title={planDetails.plan.planName}
-            description={planDetails.plan.planDescription}
-            amt={`$${planDetails.plan.price / 100}`}
-            duration={` / ${planDetails.plan.billingCycle}`}
-            features={planDetails.plan.frontendFeatures} // Use frontendFeatures here
+            title={planDetails.plan.planName || 'No Plan Name'}
+            description={planDetails.plan.planDescription || 'No description available'}
+            amt={`$${(planDetails.plan.price || 0) / 100}`}
+            duration={` / ${planDetails.plan.billingCycle || 'N/A'}`}
+            features={planDetails.plan.frontendFeatures?.map(feature => ({
+              ...feature,
+              description: feature.description || ''
+            }))}
             buttonCta="Change Plan"
             customerId={planDetails.customerId}
             planExists={planExists} 
@@ -94,12 +97,15 @@ const page = async () => {
 
           {planDetails.addons.map((addOn) => (
             <PricingCard
-              key={addOn.name}
-              title={addOn.name}
-              description={addOn.description}
-              amt={`$${addOn.price / 100}`}
-              duration={` / ${addOn.billingCycle}`}
-              features={addOn.frontendFeatures} // Use frontendFeatures here
+              key={addOn.name ?? ''}
+              title={addOn.name ?? ''}
+              description={addOn.description ?? ''}
+              amt={`$${(addOn.price ?? 0) / 100}`}
+              duration={` / ${addOn.billingCycle ?? 'N/A'}`}
+              features={addOn.frontendFeatures?.map(feature => ({
+                ...feature,
+                description: feature.description || ''
+              }))}
               buttonCta="Manage Add-on"
               customerId={planDetails.customerId}
               planExists={planExists} 
