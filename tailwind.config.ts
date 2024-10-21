@@ -8,6 +8,7 @@ module.exports = withUt({
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    './src/app/globals.css', 
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}', // Tremor module
   ],
   theme: {

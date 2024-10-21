@@ -101,6 +101,15 @@ B (255 */
 .animate-infinite-scroll-inverse {
   animation: infinite-scroll-inverse 30s linear infinite;
 }
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  .bg-background {
+    background-color: hsl(var(--background));
+  }
+}
 
 @layer base {
   * {
