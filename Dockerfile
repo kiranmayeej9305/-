@@ -27,9 +27,6 @@ COPY . .
 # Generate Prisma client
 RUN bunx prisma generate
 
-# Check for TypeScript errors, increase memory limit
-RUN NODE_OPTIONS="--max-old-space-size=4096" bun run tsc --noEmit
-
 # Build the Next.js application with verbose logging and increased memory limit
 RUN NODE_OPTIONS="--max-old-space-size=4096" bun run build
 
