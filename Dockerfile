@@ -27,8 +27,12 @@ COPY . .
 # Generate Prisma client
 RUN bunx prisma generate
 
-# Build the Next.js application
-RUN bun run build
+
+# Check for TypeScript errors
+RUN bun run tsc --noEmit
+
+# Build the Next.js application with verbose logging
+RUN bun run build 
 
 # Remove development dependencies
 RUN rm -rf node_modules && bun install --production
