@@ -1,13 +1,4 @@
-import {
-  Contact,
-  Lane,
-  Notification,
-  Prisma,
-  Role,
-  Tag,
-  Ticket,
-  User,
-} from '@prisma/client'
+import { Prisma, PrismaClient, Role } from '@prisma/client'
 import {
   getAuthUserDetails,
   getUserPermissions,
@@ -64,15 +55,7 @@ export type UsersWithAccountChatbotPermissionsSidebarOptions =
 
 export type CreateMediaType = Prisma.MediaCreateWithoutChatbotInput
 
-export type TicketAndTags = Ticket & {
-  Tags: Tag[]
-  Assigned: User | null
-  Customer: Contact | null
-}
 
-export type LaneDetail = Lane & {
-  Tickets: TicketAndTags[]
-}
 
 export const CreatePipelineFormSchema = z.object({
   name: z.string().min(1),
@@ -127,3 +110,5 @@ export type StripeCustomerType = {
 }
 
 export type PricesList = Stripe.ApiList<Stripe.Price>
+
+type PromiseReturnType<T extends (...args: any) => Promise<any>> = Prisma.PromiseReturnType<T>
