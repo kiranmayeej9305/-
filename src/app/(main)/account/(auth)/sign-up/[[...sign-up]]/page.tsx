@@ -165,7 +165,11 @@ const SignUpPage: React.FC = () => {
                 {verificationCode.map((digit, index) => (
                   <input
                     key={index}
-                    ref={(el) => (verificationInputs.current[index] = el)}
+                    ref={(el) => {
+                      if (el) {
+                        verificationInputs.current[index] = el;
+                      }
+                    }}
                     type="text"
                     maxLength={1}
                     className="w-12 h-12 text-center rounded-md border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-black focus:border-black"
